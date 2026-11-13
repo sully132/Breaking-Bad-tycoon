@@ -17,7 +17,8 @@ function newGame() {
     labLevel: 0,
     staff: ["jesse"],
     upgrades: [],
-    flags: { cookPenalty: 1, priceBonus: 1 },
+    flags: { cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 },
+    taps: 0,
     gameOver: false,
     victory: false,
     log: [],
@@ -68,7 +69,11 @@ function lab() {
 }
 
 function purityNow() {
-  return cap(state.purity + staffEffect("purity") + (hasUpgrade("mask") ? 8 : 0) + (hasUpgrade("gear") ? 5 : 0), 0, 100);
+  let bonus = staffEffect("purity");
+  if (hasUpgrade("mask")) bonus += 8;
+  if (hasUpgrade("gear")) bonus += 5;
+  if (hasUpgrade("generator")) bonus += 10;
+  return cap(state.purity + bonus, 0, 100);
 }
 
 function cookMult() {
@@ -79,6 +84,7 @@ function cookMult() {
   }
   if (hasUpgrade("gear")) m *= 1.2;
   if (hasUpgrade("methylamine")) m *= 1.4;
+  if (hasUpgrade("generator")) m *= 1.25;
   m *= state.flags.cookPenalty;
   return m;
 }
@@ -89,6 +95,7 @@ function pricePerKg() {
   p *= 1 + state.respect / 200;
   const gus = STAFF.find((s) => s.id === "gus");
   if (hasStaff("gus") && gus) p *= gus.effect.priceMult;
+  if (hasUpgrade("railnetwork")) p *= 1.3;
   return p;
 }
 
@@ -112,6 +119,43 @@ function log(msg, kind = "") {
   if (state.log.length > 60) state.log.pop();
 }
 
+function playSfx(name) {
+  try {
+    if (typeof sfx !== "undefined" && sfx && typeof sfx[name] === "function") sfx[name]();
+  } catch (e) { /* audio indisponible */ }
+}
+
+// ---------- Popups flottants sur la scène ----------
+function spawnPopup(text, kind = "info") {
+  try {
+    const layer = document.getElementById("popup-layer");
+    if (!layer) return;
+    const el = document.createElement("div");
+    el.className = `popup ${kind}`;
+    el.textContent = text;
+    el.style.left = `${25 + Math.random() * 50}%`;
+    el.style.top = `${30 + Math.random() * 35}%`;
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  } catch (e) { /* pas de DOM */ }
+}
+
+// ---------- Bonus de tap sur la scène ----------
+function tapBoost(x = 0.5, y = 0.5) {
+  if (state.gameOver || state.victory) return;
+  state.taps += 1;
+  const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE));
+  state.cash += gain;
+  spawnPopup(`+${fmt(gain)}$`, "money");
+  playSfx("tap");
+  if (state.taps % 25 === 0) {
+    state.respect = cap(state.respect + 1, 0, 100);
+    spawnPopup("La rue vous remarque ! Respect +1", "info");
+  }
+  render();
+  save();
+}
+
 // ---------- Actions (coûtent 1 PA) ----------
 const ACTIONS = [
   {
@@ -120,10 +164,10 @@ const ACTIONS = [
     name: "Cuisiner",
     desc: () => {
       const kg = (lab().cook * cookMult()).toFixed(1);
-      return `Produit ~${kg} kg (${lab().name}). Précurseurs : ${fmt(PRECURSOR_COST_PER_KG)}$/kg.`;
+      return `Produit ~${kg} kg (${lab().name}). Précurseurs : ${fmt(PRECURSOR_COST_PER_KG * state.flags.precursorDiscount)}$/kg.`;
     },
     can(s) {
-      return s.ap > 0 && s.cash >= PRECURSOR_COST_PER_KG && s.stock < lab().cap;
+      return s.ap > 0 && s.cash >= PRECURSOR_COST_PER_KG * s.flags.precursorDiscount && s.stock < lab().cap;
     },
     run(s) {
       const kgRaw = lab().cook * cookMult() * rand(0.85, 1.15);
@@ -133,10 +177,14 @@ const ACTIONS = [
         log("🍳 Plus de place pour stocker ! Vendez d'abord.", "bad");
         return;
       }
-      const cost = Math.ceil(kg * PRECURSOR_COST_PER_KG);
+      const cost = Math.ceil(kg * PRECURSOR_COST_PER_KG * s.flags.precursorDiscount);
       s.cash -= cost;
       s.stock = Math.round((s.stock + kg) * 10) / 10;
       s.flags.cookPenalty = 1;
+      s.flags.precursorDiscount = 1;
+      spawnPopup(`+${kg.toFixed(1)} kg`, "crystal");
+      playSfx("cook");
+      if (typeof scene !== "undefined" && scene) scene.FX.cook = performance.now();
       log(`🍳 Cuisson : +${kg.toFixed(1)} kg (pureté ${purityNow()}%) pour ${fmt(cost)}$.`, "good");
     },
   },
@@ -151,6 +199,7 @@ const ACTIONS = [
     run(s) {
       let qty = Math.min(s.stock, 2 + state.respect / 10);
       if (hasStaffEffect("sellMult")) qty *= 2;
+      if (hasUpgrade("railnetwork")) qty *= 1.5;
       qty = Math.min(qty, s.stock);
       const price = pricePerKg() * rand(0.9, 1.1);
       let revenue = qty * price;
@@ -163,6 +212,9 @@ const ACTIONS = [
       if (hasUpgrade("van")) heatGain *= 0.5;
       if (hasStaffEffect("sellHeatMult")) heatGain *= 0.6;
       addHeat(Math.round(heatGain));
+      spawnPopup(`+${fmt(revenue)}$ (sale)`, "money");
+      playSfx("cash");
+      if (typeof scene !== "undefined" && scene) scene.FX.sell = performance.now();
       log(`💸 Vente : ${qty.toFixed(1)} kg pour ${fmt(revenue)}$ (argent sale). Chaleur +${Math.round(heatGain)}.`, "good");
     },
   },
@@ -179,6 +231,9 @@ const ACTIONS = [
       const clean = Math.round(amount * launderRate());
       s.dirty -= amount;
       s.cash += clean;
+      spawnPopup(`+${fmt(clean)}$ propres`, "money");
+      playSfx("cash");
+      if (typeof scene !== "undefined" && scene) scene.FX.launder = performance.now();
       log(`🧽 Blanchiment : ${fmt(amount)}$ → ${fmt(clean)}$ propres.`, "good");
     },
   },
@@ -192,6 +247,8 @@ const ACTIONS = [
     },
     run(s) {
       addHeat(-18);
+      spawnPopup("Chaleur −18", "info");
+      playSfx("click");
       log("🕶️ Journée tranquille, aucune trace. Chaleur −18.", "good");
     },
   },
@@ -231,6 +288,7 @@ function endDay() {
 
   if (state.cash >= VICTORY_CASH) {
     state.victory = true;
+    playSfx("win");
     render();
     showOverlay(true);
     return;
@@ -253,10 +311,12 @@ function maybeEvent() {
   for (const e of pool) {
     roll -= e.weight;
     if (roll <= 0) {
+      playSfx("event");
       if (e.type === "choice") {
         showEventModal(e);
       } else {
         e.apply(state);
+        spawnPopup(e.emoji + " " + e.title, "info");
       }
       return;
     }
@@ -274,6 +334,8 @@ function checkRaid() {
     }
   }
   if (state.gameOver) {
+    playSfx("alarm");
+    setTimeout(() => playSfx("lose"), 1200);
     render();
     showOverlay(false);
   }
@@ -285,6 +347,8 @@ function hire(id) {
   if (!member || hasStaff(id) || state.cash < member.cost) return;
   state.cash -= member.cost;
   state.staff.push(id);
+  spawnPopup(`${member.emoji} ${member.name} !`, "info");
+  playSfx("upgrade");
   log(`🤝 ${member.name} rejoint l'équipe (−${fmt(member.cost)}$).`, "good");
   render();
   save();
@@ -295,6 +359,8 @@ function buyUpgrade(id) {
   if (!up || hasUpgrade(id) || state.cash < up.cost) return;
   state.cash -= up.cost;
   state.upgrades.push(id);
+  spawnPopup(`${up.emoji} ${up.name}`, "info");
+  playSfx("upgrade");
   log(`🏗️ ${up.name} installé (−${fmt(up.cost)}$).`, "good");
   render();
   save();
@@ -310,6 +376,8 @@ function upgradeLab() {
   if (state.cash < next.cost) return;
   state.cash -= next.cost;
   state.labLevel += 1;
+  spawnPopup(`${next.emoji} ${next.name} !`, "info");
+  playSfx("upgrade");
   log(`🏗️ Nouveau labo : ${next.name} (−${fmt(next.cost)}$).`, "good");
   render();
   save();
@@ -328,18 +396,22 @@ function render() {
   document.getElementById("btn-next-day").disabled = state.gameOver || state.victory;
 }
 
+function bar(pct, cls = "") {
+  return `<div class="bar"><div class="fill ${cls}" style="width:${cap(pct, 0, 100)}%"></div></div>`;
+}
+
 function renderStats() {
   const stats = [
-    { label: "Argent propre", value: `${fmt(state.cash)}$`, cls: "good" },
-    { label: "Argent sale", value: `${fmt(state.dirty)}$`, cls: state.dirty > 100_000 ? "warn" : "" },
-    { label: "Stock", value: `${state.stock.toFixed(1)} / ${lab().cap} kg`, cls: "blue" },
-    { label: "Pureté", value: `${purityNow()}%`, cls: "blue" },
-    { label: "Chaleur DEA", value: `${state.heat}/100`, cls: state.heat >= 70 ? "warn" : "" },
-    { label: "Respect", value: state.respect, cls: "" },
-    { label: "Prix du kg", value: `${fmt(pricePerKg())}$`, cls: "" },
+    { label: "💰 Propre", value: `${fmt(state.cash)}$`, cls: "good" },
+    { label: "🖤 Sale", value: `${fmt(state.dirty)}$`, cls: state.dirty > 100_000 ? "warn" : "" },
+    { label: "📦 Stock", value: `${state.stock.toFixed(1)} / ${lab().cap} kg`, cls: "blue", bar: (state.stock / lab().cap) * 100, barCls: "stock" },
+    { label: "💎 Pureté", value: `${purityNow()}%`, cls: "blue", bar: purityNow() },
+    { label: "🚨 Chaleur", value: `${state.heat}/100`, cls: state.heat >= 70 ? "warn" : "", bar: state.heat, barCls: "heat" },
+    { label: "🏙️ Respect", value: state.respect, cls: "", bar: state.respect },
+    { label: "🏷️ Prix/kg", value: `${fmt(pricePerKg())}$`, cls: "" },
   ];
   document.getElementById("statbar").innerHTML = stats
-    .map((s) => `<div class="stat ${s.cls}"><div class="label">${s.label}</div><div class="value">${s.value}</div></div>`)
+    .map((s) => `<div class="stat ${s.cls}"><div class="label">${s.label}</div><div class="value">${s.value}</div>${s.bar !== undefined ? bar(s.bar, s.barCls || "") : ""}</div>`)
     .join("");
 }
 
@@ -403,7 +475,7 @@ function renderUpgrades() {
   container.innerHTML = UPGRADES.map((u) => {
     const owned = hasUpgrade(u.id);
     return `
-    <div class="card ${owned ? "owned" : ""}">
+    <div class="card ${owned ? "owned" : ""} ${u.rarity}">
       <div class="icon">${u.emoji}</div>
       <h3>${u.name}</h3>
       <p>${u.desc}</p>
@@ -422,7 +494,7 @@ function renderStaff() {
   container.innerHTML = STAFF.map((m) => {
     const hired = hasStaff(m.id);
     return `
-    <div class="card ${hired ? "owned" : ""}">
+    <div class="card ${hired ? "owned" : ""} ${m.rarity}">
       <div class="icon">${m.emoji}</div>
       <h3>${m.name}</h3>
       <p>${m.desc}</p>
@@ -501,6 +573,7 @@ function load() {
     const data = JSON.parse(raw);
     if (!data || typeof data.day !== "number") return false;
     state = Object.assign(newGame(), data);
+    state.flags = Object.assign({ cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 }, data.flags || {});
     return true;
   } catch (e) {
     return false;
@@ -526,9 +599,23 @@ document.getElementById("btn-reset").addEventListener("click", () => {
 });
 document.getElementById("btn-save").addEventListener("click", () => {
   save();
+  spawnPopup("💾 Sauvegardé", "info");
   log("💾 Partie sauvegardée.");
   render();
 });
+document.getElementById("btn-sound").addEventListener("click", () => {
+  if (typeof sfx !== "undefined" && sfx) {
+    const muted = sfx.toggle();
+    document.getElementById("btn-sound").textContent = muted ? "🔇" : "🔊";
+  }
+});
+if (typeof sfx !== "undefined" && sfx && sfx.muted) {
+  document.getElementById("btn-sound").textContent = "🔇";
+}
+setTimeout(() => {
+  const hint = document.getElementById("tap-hint");
+  if (hint) hint.remove();
+}, 12_000);
 
 if (!load()) {
   log("🎬 Albuquerque, Nouveau-Mexique. Un RV, un tablier, un rêve.");
