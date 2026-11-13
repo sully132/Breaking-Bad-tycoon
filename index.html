@@ -13,6 +13,7 @@
       <h1>HEISENBERG TYCOON</h1>
     </div>
     <div class="topbar-actions">
+      <button id="btn-prestige" class="btn small prestige" title="Nouvelle identité (prestige)" style="display:none">🎭</button>
       <button id="btn-ach" class="btn small" title="Succès">🏆</button>
       <button id="btn-sound" class="btn small" title="Son">🔊</button>
       <button id="btn-save" class="btn small" title="Sauvegarder">💾</button>
@@ -26,6 +27,7 @@
     <canvas id="game-canvas"></canvas>
     <div class="popup-layer" id="popup-layer"></div>
     <div class="tap-hint" id="tap-hint">👆 Tape le labo pour booster la production !</div>
+    <div class="frenzy-banner hidden" id="frenzy-banner">💎 FRÉNÉSIE ×2 !</div>
   </div>
 
   <main class="layout">
@@ -40,6 +42,9 @@
 
       <h2 class="section-title">📋 Contrats</h2>
       <div class="cards small-cards" id="contracts"></div>
+
+      <h2 class="section-title">📈 Investissements</h2>
+      <div class="cards small-cards" id="investments"></div>
 
       <h2 class="section-title">🏗️ Améliorations</h2>
       <div class="cards small-cards" id="upgrades"></div>
