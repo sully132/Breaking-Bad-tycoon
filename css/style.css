@@ -273,3 +273,72 @@ body {
 .overlay-box h2 { font-size: 1.8rem; }
 .overlay-box.lose { border-color: var(--red); }
 .overlay-box.lose h2 { color: var(--red); }
+
+
+/* ---------- Contrats ---------- */
+.contract-progress {
+  height: 10px;
+  background: rgba(0,0,0,0.45);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+.contract-progress .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), #a8d8f0);
+  transition: width 0.3s ease;
+}
+.contract-deadline { font-size: 0.75rem; color: var(--yellow); font-weight: 700; }
+.contract-deadline.urgent { color: var(--red); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.4; } }
+
+/* ---------- Toasts (succès) ---------- */
+.toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+.toast {
+  background: linear-gradient(135deg, #2c3818, #1a2010);
+  border: 1px solid var(--yellow);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-width: 240px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  animation: toastIn 0.3s ease-out;
+  font-size: 0.85rem;
+}
+.toast .t-title { color: var(--yellow); font-weight: 800; }
+.toast .t-desc { color: var(--muted); font-size: 0.75rem; }
+.toast.out { animation: toastOut 0.3s ease-in forwards; }
+@keyframes toastIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes toastOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(120%); opacity: 0; }
+}
+
+/* ---------- Panneau des succès ---------- */
+.ach-list { text-align: left; max-height: 50vh; overflow-y: auto; margin-bottom: 14px; }
+.ach-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-bottom: 1px dashed #2e3a1c;
+}
+.ach-item .a-icon { font-size: 1.4rem; }
+.ach-item .a-name { font-weight: 700; font-size: 0.9rem; }
+.ach-item .a-desc { color: var(--muted); font-size: 0.75rem; }
+.ach-item.locked { opacity: 0.4; }
+.ach-item.unlocked .a-icon { filter: drop-shadow(0 0 6px rgba(217,195,60,0.7)); }
+
+/* ---------- Marché ---------- */
+.stat .value.up::after { content: " ↗"; color: var(--green); }
+.stat .value.down::after { content: " ↘"; color: var(--red); }
