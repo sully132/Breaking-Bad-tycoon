@@ -342,3 +342,65 @@ body {
 /* ---------- Marché ---------- */
 .stat .value.up::after { content: " ↗"; color: var(--green); }
 .stat .value.down::after { content: " ↘"; color: var(--red); }
+
+
+/* ============================================================
+   v4 — Prestige, investissements, frénésie, cristal doré
+   ============================================================ */
+
+/* ---------- Bouton prestige (topbar + overlay) ---------- */
+.btn.prestige {
+  border-color: #a86ff0;
+  color: #d9c2ff;
+  background: linear-gradient(135deg, rgba(90, 40, 160, 0.35), rgba(160, 90, 240, 0.25));
+  font-weight: 700;
+}
+.btn.prestige:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(120, 60, 200, 0.55), rgba(180, 110, 255, 0.4));
+  box-shadow: 0 0 12px rgba(168, 111, 240, 0.5);
+}
+.btn.prestige:disabled { opacity: 0.5; }
+
+/* ---------- Badge de niveau des investissements ---------- */
+.inv-level {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.72em;
+  background: rgba(122, 182, 72, 0.2);
+  border: 1px solid var(--green);
+  color: var(--green);
+  vertical-align: middle;
+}
+
+/* ---------- Bannière de frénésie ---------- */
+.frenzy-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.95em;
+  letter-spacing: 1px;
+  color: #fff3b0;
+  background: linear-gradient(135deg, rgba(180, 110, 20, 0.9), rgba(255, 180, 40, 0.85));
+  border: 1px solid #ffd94e;
+  box-shadow: 0 0 18px rgba(255, 200, 60, 0.6);
+  animation: frenzyPulse 0.8s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 5;
+}
+.frenzy-banner.hidden { display: none; }
+@keyframes frenzyPulse {
+  from { transform: translateX(-50%) scale(1); }
+  to   { transform: translateX(-50%) scale(1.06); }
+}
+
+/* ---------- Popup doré (frénésie / série) ---------- */
+.popup.golden {
+  color: #ffd94e;
+  text-shadow: 0 0 10px rgba(255, 215, 80, 0.8);
+}
