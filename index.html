@@ -13,12 +13,19 @@
       <h1>HEISENBERG TYCOON</h1>
     </div>
     <div class="topbar-actions">
-      <button id="btn-save" class="btn small" title="Sauvegarder">💾 Sauver</button>
-      <button id="btn-reset" class="btn small danger" title="Recommencer une nouvelle vie">♻️ Nouvelle vie</button>
+      <button id="btn-sound" class="btn small" title="Son">🔊</button>
+      <button id="btn-save" class="btn small" title="Sauvegarder">💾</button>
+      <button id="btn-reset" class="btn small danger" title="Recommencer">♻️</button>
     </div>
   </header>
 
   <section class="statbar" id="statbar"></section>
+
+  <div class="scene-wrap">
+    <canvas id="game-canvas"></canvas>
+    <div class="popup-layer" id="popup-layer"></div>
+    <div class="tap-hint" id="tap-hint">👆 Tape le labo pour booster la production !</div>
+  </div>
 
   <main class="layout">
     <section class="col main-col">
@@ -60,6 +67,8 @@
   </div>
 
   <script src="js/data.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/scene.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>
