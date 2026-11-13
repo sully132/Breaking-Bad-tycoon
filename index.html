@@ -13,6 +13,7 @@
       <h1>HEISENBERG TYCOON</h1>
     </div>
     <div class="topbar-actions">
+      <button id="btn-ach" class="btn small" title="Succès">🏆</button>
       <button id="btn-sound" class="btn small" title="Son">🔊</button>
       <button id="btn-save" class="btn small" title="Sauvegarder">💾</button>
       <button id="btn-reset" class="btn small danger" title="Recommencer">♻️</button>
@@ -37,6 +38,9 @@
         <button id="btn-next-day" class="btn primary big">🌙 Fin de journée</button>
       </div>
 
+      <h2 class="section-title">📋 Contrats</h2>
+      <div class="cards small-cards" id="contracts"></div>
+
       <h2 class="section-title">🏗️ Améliorations</h2>
       <div class="cards small-cards" id="upgrades"></div>
 
@@ -50,6 +54,8 @@
     </aside>
   </main>
 
+  <div class="toasts" id="toasts"></div>
+
   <div class="modal hidden" id="modal">
     <div class="modal-box">
       <h3 id="modal-title"></h3>
@@ -62,7 +68,7 @@
     <div class="overlay-box">
       <h2 id="overlay-title"></h2>
       <p id="overlay-text"></p>
-      <button class="btn primary" id="btn-restart">Recommencer</button>
+      <div class="modal-choices" id="overlay-buttons"></div>
     </div>
   </div>
 
