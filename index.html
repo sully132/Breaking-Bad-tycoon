@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heisenberg Tycoon — Breaking Bad</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="br">Br</span><span class="ba">Ba</span>
+      <h1>HEISENBERG TYCOON</h1>
+    </div>
+    <div class="topbar-actions">
+      <button id="btn-save" class="btn small" title="Sauvegarder">💾 Sauver</button>
+      <button id="btn-reset" class="btn small danger" title="Recommencer une nouvelle vie">♻️ Nouvelle vie</button>
+    </div>
+  </header>
+
+  <section class="statbar" id="statbar"></section>
+
+  <main class="layout">
+    <section class="col main-col">
+      <h2 class="section-title">⏳ Jour <span id="day-num">1</span> — Actions restantes : <span id="ap-num">3</span></h2>
+
+      <div class="cards" id="actions"></div>
+
+      <div class="day-bar">
+        <button id="btn-next-day" class="btn primary big">🌙 Fin de journée</button>
+      </div>
+
+      <h2 class="section-title">🏗️ Améliorations</h2>
+      <div class="cards small-cards" id="upgrades"></div>
+
+      <h2 class="section-title">👥 Équipe</h2>
+      <div class="cards small-cards" id="staff"></div>
+    </section>
+
+    <aside class="col side-col">
+      <h2 class="section-title">📜 Journal</h2>
+      <div class="log" id="log"></div>
+    </aside>
+  </main>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-box">
+      <h3 id="modal-title"></h3>
+      <p id="modal-text"></p>
+      <div class="modal-choices" id="modal-choices"></div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="overlay">
+    <div class="overlay-box">
+      <h2 id="overlay-title"></h2>
+      <p id="overlay-text"></p>
+      <button class="btn primary" id="btn-restart">Recommencer</button>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
