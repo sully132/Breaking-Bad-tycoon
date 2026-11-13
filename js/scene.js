@@ -1,7 +1,8 @@
 // ============================================================
 // HEISENBERG TYCOON — Scène animée (canvas, style idle tycoon)
 // Désert d'Albuquerque, cycle jour/nuit, labos qui évoluent,
-// fumée de cuisson, cristaux bleus, gyrophares de la DEA.
+// fumée de cuisson, cristaux bleus, gyrophares de la DEA,
+// cristal doré à attraper, frénésie.
 // ============================================================
 
 const scene = (() => {
@@ -10,6 +11,7 @@ const scene = (() => {
   let crystals = [];   // cristaux bleus {x,y,vy,r,rot,life}
   let bills = [];      // billets (blanchiment) {x,y,vy,life,phase}
   let stars = [];      // étoiles fixes {x,y,r,phase}
+  let golden = null;   // cristal doré {x,y,born,ttl}
   let popupAnchor = { x: 0.5, y: 0.4 };
 
   // FX alimenté par game.js : { cook: timestamp, sell: timestamp, launder: timestamp }
@@ -45,7 +47,100 @@ const scene = (() => {
     const x = (ev.clientX - rect.left) / rect.width;
     const y = (ev.clientY - rect.top) / rect.height;
     popupAnchor = { x, y };
+    if (golden) {
+      const px = x * W;
+      const py = y * H;
+      const dist = Math.hypot(px - golden.x, py - golden.y);
+      if (dist < 30) {
+        golden = null;
+        if (typeof goldenCollect === "function") goldenCollect();
+        else if (typeof tapBoost === "function") tapBoost(x, y);
+        return;
+      }
+    }
     if (typeof tapBoost === "function") tapBoost(x, y);
+  }
+
+  function spawnGolden() {
+    if (golden) return;
+    golden = {
+      x: W * (0.12 + Math.random() * 0.76),
+      y: H * (0.2 + Math.random() * 0.5),
+      born: performance.now(),
+      ttl: 12_000,
+    };
+  }
+
+  function frenzy() {
+    try {
+      return typeof frenzyActive === "function" && frenzyActive();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function drawGolden(t) {
+    if (!golden) return;
+    const age = t - golden.born;
+    if (age > golden.ttl) {
+      golden = null;
+      return;
+    }
+    const pulse = 1 + Math.sin(t / 150) * 0.15;
+    const fade = age > golden.ttl - 2000 ? (golden.ttl - age) / 2000 : 1;
+    const r = 14 * pulse;
+    ctx.save();
+    ctx.globalAlpha = fade;
+    const halo = ctx.createRadialGradient(golden.x, golden.y, 2, golden.x, golden.y, 42 * pulse);
+    halo.addColorStop(0, "rgba(255,215,80,0.85)");
+    halo.addColorStop(1, "rgba(255,215,80,0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(golden.x, golden.y, 42 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.translate(golden.x, golden.y);
+    ctx.rotate(Math.sin(t / 400) * 0.3);
+    ctx.shadowColor = "#ffd94e";
+    ctx.shadowBlur = 18;
+    const g = ctx.createLinearGradient(0, -r * 1.6, 0, r * 1.6);
+    g.addColorStop(0, "#fff3b0");
+    g.addColorStop(0.5, "#ffd94e");
+    g.addColorStop(1, "#d9a410");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 1.6);
+    ctx.lineTo(r, 0);
+    ctx.lineTo(0, r * 1.6);
+    ctx.lineTo(-r, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,220,0.9)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFrenzy(t) {
+    if (!frenzy()) return;
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, "rgba(255,200,40,0.10)");
+    g.addColorStop(0.5, "rgba(255,140,20,0.06)");
+    g.addColorStop(1, "rgba(255,200,40,0.10)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    if (Math.random() < 0.25) {
+      crystals.push({
+        x: Math.random() * W,
+        y: H * 0.9,
+        vy: -(1 + Math.random() * 1.5),
+        r: 2 + Math.random() * 3,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.2,
+        life: 1,
+        gold: true,
+      });
+    }
   }
 
   function labLevel() {
@@ -293,6 +388,10 @@ const scene = (() => {
     crystals.push({ x: x + (Math.random() - 0.5) * 120, y, vy: -(1.5 + Math.random() * 2), r: 3 + Math.random() * 4, rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.2, life: 1 });
   }
 
+  function crystalColor(p) {
+    return p.gold ? "#ffd94e" : "#6fd3ff";
+  }
+
   function spawnBill(x, y) {
     bills.push({ x: x + (Math.random() - 0.5) * 160, y, vy: -(1 + Math.random() * 1.5), phase: Math.random() * Math.PI * 2, life: 1 });
   }
@@ -331,8 +430,8 @@ const scene = (() => {
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);
-      ctx.fillStyle = "#6fd3ff";
-      ctx.shadowColor = "#6fd3ff";
+      ctx.fillStyle = crystalColor(p);
+      ctx.shadowColor = crystalColor(p);
       ctx.shadowBlur = 8;
       ctx.beginPath();
       ctx.moveTo(0, -p.r * 1.6);
@@ -406,13 +505,15 @@ const scene = (() => {
     drawBuilding(level, f, t);
     drawHeisenberg(W * 0.5 + (level === 0 ? 130 : level === 1 ? 160 : level === 2 ? 240 : 260), H * 0.86, f);
     drawParticles();
+    drawGolden(t);
+    drawFrenzy(t);
     drawPoliceLights();
     drawVignette();
 
     requestAnimationFrame(loop);
   }
 
-  return { init, FX };
+  return { init, FX, spawnGolden };
 })();
 
 if (typeof document !== "undefined") {
