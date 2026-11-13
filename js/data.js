@@ -150,7 +150,8 @@ const EVENTS = [
         apply(s) {
           s.dirty += 120_000;
           addHeat(15);
-          log("🇲🇽 Le cartel paie comptant. Chaleur +15.", "bad");
+          scheduleEvent("cartelRetaliation", 3);
+          log("🇲🇽 Le cartel paie comptant. Chaleur +15. On vous recontactera...", "bad");
         },
       },
       {
@@ -292,7 +293,7 @@ const EVENTS = [
     title: "Marché noir",
     text: "Un ancien contact vous revend de la marchandise confisquée.",
     apply(s) {
-      const gain = Math.min(2, lab().cap - s.stock);
+      const gain = Math.min(2, stockCap() - s.stock);
       if (gain > 0) {
         s.stock = Math.round((s.stock + gain) * 10) / 10;
         log(`🕶️ Stock mystérieux récupéré : +${gain.toFixed(1)} kg gratuits.`, "good");
@@ -342,6 +343,7 @@ const EVENTS = [
     text: "Un jeune chimier en galère propose de travailler pour la réputation.",
     apply(s) {
       s.respect += 3;
+      s.flags.cookPenalty = Math.min(s.flags.cookPenalty, 1) * 1;
       log("🧑‍🔬 Nouveau visage au labo. Respect +3.", "good");
     },
   },
@@ -438,7 +440,149 @@ const EVENTS = [
       log("📺 Votre rival fait la une des infos. Le marché est à vous. Respect +8, Chaleur −8.", "good");
     },
   },
-];
+  // ---------- Événements v3 ----------
+  {
+    id: "tucoJail", emoji: "⛓️", weight: 6,
+    type: "auto",
+    cond(s) { return s.day >= 30; },
+    title: "Tuco est derrière les barreaux",
+    text: "La DEA a enfin attrapé Tuco Salamanca. Le quartier respire.",
+    apply(s) { s.respect += 10; addHeat(-5); log("⛓️ Tuco en prison ! Respect +10, Chaleur −5.", "good"); },
+  },
+  {
+    id: "gusMeeting", emoji: "🐔", weight: 7,
+    type: "choice",
+    cond(s) { return s.staff.includes("gus"); },
+    title: "Gus vous convoque",
+    text: "« Mon labo, mes règles. Mais je suis prêt à vous accorder ma confiance. »",
+    choices: [
+      {
+        label: "Accepter ses conditions (Pureté +5, Chaleur −5)",
+        apply(s) {
+          s.purity = cap(s.purity + 5, 0, 100);
+          addHeat(-5);
+          log("🐔 Accord conclu avec Gus. Pureté +5, Chaleur −5.", "good");
+        },
+      },
+      {
+        label: "Rester indépendant (Respect −6)",
+        apply(s) {
+          s.respect -= 6;
+          log("🐔 Gus le regrette, mais respecte votre choix. Respect −6.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "stashSeized", emoji: "📦", weight: 7,
+    type: "auto",
+    cond(s) { return s.heat >= 40; },
+    title: "Une cachette saisie",
+    text: "Les chiens de la DEA ont flairé une de vos planques.",
+    apply(s) {
+      const lost = Math.round(s.dirty * 0.2);
+      s.dirty -= lost;
+      log(`📦 Argent saisi dans la cachette : −${fmt(lost)}$ d'argent sale.`, "bad");
+    },
+  },
+  {
+    id: "newTerrain", emoji: "🏗️", weight: 5,
+    type: "choice",
+    title: "Un terrain à saisir",
+    text: "Un entrepôt est à vendre, idéal pour stocker davantage.",
+    choices: [
+      {
+        label: "Acheter l'entrepôt (−50 000$, Stock max +10 kg définitif)",
+        can(s) { return s.cash >= 50_000; },
+        apply(s) {
+          s.cash -= 50_000;
+          s.capBonus += 10;
+          log("🏗️ Entrepôt acheté ! Stock max +10 kg.", "good");
+        },
+      },
+      {
+        label: "Passer son tour",
+        apply(s) { log("🏗️ Trop cher pour aujourd'hui.", "info"); },
+      },
+    ],
+  },
+  {
+    id: "purityDuel", emoji: "⚔️", weight: 6,
+    type: "choice",
+    title: "Défi de pureté",
+    text: "Un chimiste rival parie 20 000$ que son produit est plus pur que le vôtre.",
+    choices: [
+      {
+        label: "Relever le défi (mise : 20 000$)",
+        can(s) { return s.cash >= 20_000; },
+        apply(s) {
+          s.cash -= 20_000;
+          if (Math.random() < 0.6) {
+            s.cash += 60_000;
+            s.purity = cap(s.purity + 3, 0, 100);
+            log("⚔️ Victoire écrasante ! +60 000$ et Pureté +3.", "good");
+          } else {
+            s.purity = cap(s.purity - 2, 0, 100);
+            log("⚔️ Défaite amère. −20 000$ et Pureté −2.", "bad");
+          }
+        },
+      },
+      {
+        label: "Refuser poliment (Respect −3)",
+        apply(s) {
+          s.respect -= 3;
+          log("⚔️ Vous déclinez le duel. Respect −3.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "generatorBreakdown", emoji: "🔧", weight: 5,
+    type: "auto",
+    cond(s) { return s.upgrades.includes("generator"); },
+    title: "Générateur en panne",
+    text: "Le générateur industriel surchauffe et lâche en pleine cuisson.",
+    apply(s) {
+      s.purity = cap(s.purity - 4, 0, 100);
+      s.flags.cookPenalty = 0.8;
+      log("🔧 Générateur HS ! Pureté −4, prochaine cuisson ×0.8.", "bad");
+    },
+  },
+  {
+    id: "interview", emoji: "🎤", weight: 5,
+    type: "choice",
+    title: "Le journal local vous cherche",
+    text: "Un reporter veut écrire sur « le cuisinier qui a changé la ville ».",
+    choices: [
+      {
+        label: "Accepter l'interview (Respect +10, Chaleur +10)",
+        apply(s) {
+          s.respect += 10;
+          addHeat(10);
+          log("🎤 Article à la une ! Respect +10, Chaleur +10.", "bad");
+        },
+      },
+      {
+        label: "Rester dans l'ombre (Respect −4)",
+        apply(s) {
+          s.respect -= 4;
+          log("🎤 Vous déclinez. La discrétion a un prix. Respect −4.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "wholesale", emoji: "🏪", weight: 5,
+    type: "auto",
+    title: "Vente en gros",
+    text: "Un distributeur régional veut un lot immédiatement, cash.",
+    apply(s) {
+      s.dirty += 60_000;
+      addHeat(8);
+      log("🏪 Vente en gros : +60 000$ d'argent sale. Chaleur +8.", "bad");
+    },
+  },
+]
 
 // Descente de police quand la chaleur atteint 100
 const RAID = {
@@ -457,3 +601,150 @@ const RAID = {
     return null;
   },
 };
+
+// ------------------------------------------------------------
+// CONTRATS — clients et génération des deals
+// ------------------------------------------------------------
+const CONTRACT_CLIENTS = [
+  { emoji: "🧴", name: "Krazy-8" },
+  { emoji: "🕶️", name: "Emilio" },
+  { emoji: "🤵", name: "Don Eladio" },
+  { emoji: "🐔", name: "Chaînes Los Pollos" },
+  { emoji: "💀", name: "Le Cartel" },
+  { emoji: "🧢", name: "Le gang de la rue" },
+  { emoji: "🎩", name: "Un intermédiaire mystérieux" },
+  { emoji: "🧑‍🍳", name: "Un cuisinier rival revendeur" },
+];
+
+// Délai (en jours) avant qu'un nouveau contrat apparaisse
+const CONTRACT_COOLDOWN_DAYS = 2;
+
+// ------------------------------------------------------------
+// SUCCÈS — check(s) est appelé avec l'état, reward appliqué à l'unlock
+// ------------------------------------------------------------
+const ACHIEVEMENTS = [
+  { id: "firstkg", icon: "🥇", name: "Première fournée", desc: "Cuisiner 1 kg au total", check: (s) => s.stats.cooked >= 1, reward: { cash: 500 } },
+  { id: "cook10", icon: "🍳", name: "Cuisinier sérieux", desc: "Cuisiner 10 kg au total", check: (s) => s.stats.cooked >= 10, reward: { cash: 2_000 } },
+  { id: "cook100", icon: "⚗️", name: "Chimiste de génie", desc: "Cuisiner 100 kg au total", check: (s) => s.stats.cooked >= 100, reward: { cash: 20_000 } },
+  { id: "sell10", icon: "💸", name: "Dealer de quartier", desc: "Vendre 10 kg", check: (s) => s.stats.sold >= 10, reward: { respect: 5 } },
+  { id: "sell100", icon: "👑", name: "Baron de la drogue", desc: "Vendre 100 kg", check: (s) => s.stats.sold >= 100, reward: { respect: 10 } },
+  { id: "launder", icon: "🧽", name: "Lavage clean", desc: "Blanchir 100 000$ au total", check: (s) => s.stats.laundered >= 100_000, reward: { cash: 5_000 } },
+  { id: "team", icon: "👥", name: "Casting parfait", desc: "Recruter les 7 personnages", check: (s) => s.staff.length >= 7, reward: { cash: 50_000 } },
+  { id: "empire", icon: "🏭", name: "Empire chimique", desc: "Atteindre le labo niveau 4", check: (s) => s.labLevel >= 3, reward: { respect: 10 } },
+  { id: "purity99", icon: "💎", name: "99,1% pur", desc: "Atteindre 99% de pureté", check: () => purityNow() >= 99, reward: { cash: 100_000 } },
+  { id: "million", icon: "🤑", name: "Millionnaire", desc: "1 000 000$ d'argent propre", check: (s) => s.cash >= 1_000_000, reward: {} },
+  { id: "day50", icon: "📅", name: "Survivant", desc: "Atteindre le jour 50", check: (s) => s.day >= 50, reward: { respect: 5 } },
+  { id: "respect80", icon: "🏙️", name: "Légende de la rue", desc: "Atteindre 80 de respect", check: (s) => s.respect >= 80, reward: { cash: 10_000 } },
+  { id: "contracts3", icon: "📋", name: "Homme de parole", desc: "Réussir 3 contrats", check: (s) => s.stats.contractsDone >= 3, reward: { cash: 15_000 } },
+  { id: "tapper", icon: "👆", name: "Doigt de fer", desc: "Taper 100 fois sur le labo", check: (s) => s.taps >= 100, reward: { cash: 10_000 } },
+  { id: "victory", icon: "🏆", name: "SAY MY NAME", desc: "Atteindre l'objectif final", check: (s) => s.victory || s.endless, reward: {} },
+];
+
+// ------------------------------------------------------------
+// v4 — INVESTISSEMENTS répétables (coût croissant, effet cumulatif)
+// ------------------------------------------------------------
+const INVESTMENTS = [
+  { id: "street", icon: "🛣️", name: "Réseau de rue", desc: "+15% volume de vente / niveau", base: 8_000, growth: 1.7, max: 20 },
+  { id: "chemists", icon: "👨‍🔬", name: "Chimistes", desc: "+10% cuisson / niveau", base: 12_000, growth: 1.75, max: 20 },
+  { id: "marketing", icon: "📣", name: "Bouche-à-oreille", desc: "+3% prix de vente / niveau", base: 10_000, growth: 1.7, max: 20 },
+  { id: "security", icon: "🛡️", name: "Sécurité", desc: "−1 chaleur/jour / niveau", base: 15_000, growth: 1.8, max: 10 },
+  { id: "accountants", icon: "🏦", name: "Comptables", desc: "+2% taux de blanchiment / niveau", base: 20_000, growth: 1.8, max: 10 },
+];
+
+// ------------------------------------------------------------
+// v4 — PRESTIGE (« Nouvelle identité »)
+// 1 point de légende par tranche de PRESTIGE_MIN_EARNED gagnée (ventes brutes).
+// Chaque point : +PRESTIGE_POINT_BONUS de cuisson et de prix, PERMANENT.
+// ------------------------------------------------------------
+const PRESTIGE_MIN_EARNED = 5_000_000;
+const PRESTIGE_POINT_BONUS = 0.10;
+
+// ------------------------------------------------------------
+// v4 — Événements supplémentaires (weight 0 = uniquement déclenché en chaîne)
+// ------------------------------------------------------------
+EVENTS.push(
+  {
+    id: "cartelRetaliation", emoji: "🔫", weight: 0,
+    type: "auto",
+    title: "Représailles du cartel",
+    text: "Vous aviez accepté leur marché... ils veulent plus que prévu.",
+    apply(s) {
+      addHeat(15);
+      if (s.stock > 0) {
+        const lost = Math.min(s.stock, s.stock * 0.3);
+        s.stock = Math.round((s.stock - lost) * 10) / 10;
+        log(`🔫 Le cartel se sert ! −${lost.toFixed(1)} kg. Chaleur +15.`, "bad");
+      } else {
+        log("🔫 Le cartel passe... et repart bredouille. Chaleur +15.", "bad");
+      }
+    },
+  },
+  {
+    id: "mysteryPackage", emoji: "📦", weight: 4,
+    type: "auto",
+    title: "Colis anonyme",
+    text: "Un paquet sans expéditeur est posé devant votre porte...",
+    apply(s) {
+      if (Math.random() < 0.5) {
+        const gain = Math.min(3, stockCap() - s.stock);
+        s.stock = Math.round((s.stock + gain) * 10) / 10;
+        log(`📦 Colis mystère : +${gain.toFixed(1)} kg !`, "good");
+      } else {
+        s.dirty += 20_000;
+        log("📦 Colis mystère : +20 000$ d'argent sale !", "good");
+      }
+    },
+  },
+  {
+    id: "gusInspection", emoji: "🐔", weight: 5,
+    type: "auto",
+    cond(s) { return s.staff.includes("gus"); },
+    title: "Inspection de Gus",
+    text: "Gus passe le labo au peigne fin... et il est impressionné.",
+    apply(s) {
+      s.purity = cap(s.purity + 8, 0, 100);
+      addHeat(-10);
+      log("🐔 Gus valide la qualité. Pureté +8, Chaleur −10.", "good");
+    },
+  },
+  {
+    id: "muleRumor", emoji: "🐴", weight: 5,
+    type: "auto",
+    title: "Rumeur de mule",
+    text: "On murmure que vos produits circulent jusqu'en Arizona.",
+    apply(s) {
+      s.respect += 5;
+      addHeat(8);
+      log("🐴 Votre réseau s'étend. Respect +5, Chaleur +8.", "bad");
+    },
+  },
+  {
+    id: "overbid", emoji: "📈", weight: 5,
+    type: "auto",
+    title: "Surenchère sur le marché",
+    text: "Deux gros acheteurs se disputent votre marchandise.",
+    apply(s) {
+      s.market = cap(s.market + 0.2, 0.7, 1.4);
+      log("📈 Le marché s'emballe ! Prix au plus haut.", "good");
+    },
+  },
+  {
+    id: "jesseLate", emoji: "⏰", weight: 5,
+    type: "auto",
+    title: "Jesse ne se pointe pas",
+    text: "Réveil à midi, excuses douteuses. La cuisson prend du retard.",
+    apply(s) {
+      s.flags.cookPenalty = 0.9;
+      log("⏰ Jesse en retard ! Prochaine cuisson ×0.9.", "bad");
+    },
+  }
+);
+
+// ------------------------------------------------------------
+// v4 — Succès supplémentaires
+// ------------------------------------------------------------
+ACHIEVEMENTS.push(
+  { id: "invest10", icon: "🏢", name: "Investisseur", desc: "Niveau 10 sur un investissement", check: (s) => Object.values(s.investments || {}).some((v) => v >= 10), reward: { cash: 50_000 } },
+  { id: "prestige1", icon: "🎭", name: "Nouvelle identité", desc: "Changer d'identité une fois", check: (s) => s.prestiges >= 1, reward: {} },
+  { id: "streak7", icon: "🔥", name: "Série chaude", desc: "Vendre 7 jours de suite", check: (s) => s.streak >= 7, reward: { cash: 25_000 } }
+);
