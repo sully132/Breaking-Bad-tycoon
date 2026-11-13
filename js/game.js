@@ -1,6 +1,8 @@
 // ============================================================
-// HEISENBERG TYCOON — Moteur de jeu
-// État, actions, boucle de journée, événements, UI, sauvegarde.
+// HEISENBERG TYCOON — Moteur de jeu (v4)
+// État, actions, boucle de journée, idle, contrats, succès,
+// marché, événements + chaînes, investissements, prestige,
+// séries de vente, frénésie, cristal doré, UI, sauvegarde.
 // ============================================================
 
 // ---------- État ----------
@@ -15,10 +17,26 @@ function newGame() {
     heat: 0,
     respect: 10,
     labLevel: 0,
+    capBonus: 0,
+    market: 1,
     staff: ["jesse"],
     upgrades: [],
     flags: { cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 },
+    stats: { cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0 },
+    achievements: [],
+    contract: null,
+    contractCooldown: 0,
+    goal: VICTORY_CASH,
+    endless: false,
     taps: 0,
+    investments: {},
+    legendPoints: 0,
+    prestiges: 0,
+    streak: 0,
+    soldToday: false,
+    frenzyUntil: 0,
+    pendingEvents: [],
+    goldenCaught: 0,
     gameOver: false,
     victory: false,
     log: [],
@@ -68,6 +86,30 @@ function lab() {
   return LABS[state.labLevel];
 }
 
+function stockCap() {
+  return lab().cap + (state.capBonus || 0);
+}
+
+function invLevel(id) {
+  return (state.investments && state.investments[id]) || 0;
+}
+
+function legendMult() {
+  return 1 + PRESTIGE_POINT_BONUS * (state.legendPoints || 0);
+}
+
+function frenzyActive() {
+  return performance.now() < (state.frenzyUntil || 0);
+}
+
+function streakBonus() {
+  return 1 + Math.min(state.streak || 0, 10) * 0.02;
+}
+
+function prestigePoints() {
+  return Math.floor((state.stats.totalEarned || 0) / PRESTIGE_MIN_EARNED);
+}
+
 function purityNow() {
   let bonus = staffEffect("purity");
   if (hasUpgrade("mask")) bonus += 8;
@@ -85,7 +127,10 @@ function cookMult() {
   if (hasUpgrade("gear")) m *= 1.2;
   if (hasUpgrade("methylamine")) m *= 1.4;
   if (hasUpgrade("generator")) m *= 1.25;
+  m *= 1 + invLevel("chemists") * 0.10;
   m *= state.flags.cookPenalty;
+  m *= legendMult();
+  if (frenzyActive()) m *= 2;
   return m;
 }
 
@@ -93,9 +138,13 @@ function pricePerKg() {
   let p = 20_000 + purityNow() * 400;
   p *= state.flags.priceBonus;
   p *= 1 + state.respect / 200;
+  p *= state.market || 1;
   const gus = STAFF.find((s) => s.id === "gus");
   if (hasStaff("gus") && gus) p *= gus.effect.priceMult;
   if (hasUpgrade("railnetwork")) p *= 1.3;
+  p *= 1 + invLevel("marketing") * 0.03;
+  p *= legendMult();
+  p *= streakBonus();
   return p;
 }
 
@@ -103,6 +152,7 @@ function launderRate() {
   let r = 0.65;
   if (hasStaffEffect("launderRate")) r = 0.9;
   if (hasUpgrade("carwash")) r += 0.1;
+  r += invLevel("accountants") * 0.02;
   return cap(r, 0, 0.98);
 }
 
@@ -140,11 +190,111 @@ function spawnPopup(text, kind = "info") {
   } catch (e) { /* pas de DOM */ }
 }
 
+// ---------- Toasts (succès, infos) ----------
+function toast(title, desc = "") {
+  try {
+    const box = document.getElementById("toasts");
+    if (!box) return;
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.innerHTML = `<div class="t-title">${title}</div>${desc ? `<div class="t-desc">${desc}</div>` : ""}`;
+    box.appendChild(el);
+    setTimeout(() => el.classList.add("out"), 3600);
+    setTimeout(() => el.remove(), 4000);
+  } catch (e) { /* pas de DOM */ }
+}
+
+// ---------- Succès ----------
+function checkAchievements() {
+  for (const a of ACHIEVEMENTS) {
+    if (state.achievements.includes(a.id)) continue;
+    let unlocked = false;
+    try { unlocked = a.check(state); } catch (e) { unlocked = false; }
+    if (unlocked) {
+      state.achievements.push(a.id);
+      if (a.reward.cash) state.cash += a.reward.cash;
+      if (a.reward.respect) state.respect = cap(state.respect + a.reward.respect, 0, 100);
+      toast(`${a.icon} Succès : ${a.name}`, a.desc + (a.reward.cash ? ` — +${fmt(a.reward.cash)}$` : "") + (a.reward.respect ? ` — +${a.reward.respect} respect` : ""));
+      playSfx("upgrade");
+      log(`${a.icon} Succès débloqué : ${a.name}.`, "good");
+    }
+  }
+}
+
+// ---------- Contrats ----------
+function generateContract() {
+  const client = CONTRACT_CLIENTS[Math.floor(Math.random() * CONTRACT_CLIENTS.length)];
+  const kg = Math.max(1, Math.round(lab().cook * cookMult() * rand(1.5, 3) * 10) / 10);
+  state.contract = {
+    emoji: client.emoji,
+    client: client.name,
+    kg,
+    days: 4 + Math.floor(kg / 3),
+    reward: Math.round(kg * pricePerKg() * rand(1.3, 1.6)),
+    progress: 0,
+  };
+  log(`📋 Nouveau contrat : ${kg} kg pour ${client.name} en ${state.contract.days} jours.`, "event");
+  toast("📋 Nouveau contrat", `${client.name} veut ${kg} kg !`);
+}
+
+function deliverContract() {
+  const c = state.contract;
+  if (!c || state.stock <= 0) return;
+  const move = Math.min(state.stock, c.kg - c.progress);
+  if (move <= 0) return;
+  state.stock = Math.round((state.stock - move) * 10) / 10;
+  c.progress = Math.round((c.progress + move) * 10) / 10;
+  spawnPopup(`Livré : ${c.progress}/${c.kg} kg`, "info");
+  playSfx("click");
+  if (c.progress >= c.kg) completeContract(true);
+  render();
+  save();
+}
+
+function completeContract(success) {
+  const c = state.contract;
+  if (!c) return;
+  if (success) {
+    state.dirty += c.reward;
+    state.respect = cap(state.respect + 4, 0, 100);
+    state.stats.contractsDone += 1;
+    state.stats.totalEarned += c.reward;
+    state.soldToday = true;
+    spawnPopup(`Contrat réussi ! +${fmt(c.reward)}$`, "money");
+    playSfx("cash");
+    log(`📋 Contrat honoré : ${c.kg} kg livrés à ${c.client} pour ${fmt(c.reward)}$. Respect +4.`, "good");
+  } else {
+    state.respect = cap(state.respect - 5, 0, 100);
+    playSfx("spend");
+    log(`📋 Contrat raté : ${c.client} est furieux. Respect −5.`, "bad");
+    toast("📋 Contrat échoué", `${c.client} ne vous fera plus confiance...`);
+  }
+  state.contract = null;
+  state.contractCooldown = CONTRACT_COOLDOWN_DAYS;
+}
+
+// ---------- Production idle (temps réel) ----------
+function idleTick() {
+  if (state.gameOver || state.victory) return;
+  const kg = lab().cook * cookMult() * 0.04;
+  if (kg <= 0 || state.stock >= stockCap()) return;
+  const space = stockCap() - state.stock;
+  const gain = Math.min(kg, space);
+  state.stock = Math.round((state.stock + gain) * 100) / 100;
+  state.stats.cooked = Math.round((state.stats.cooked + gain) * 100) / 100;
+  if (typeof scene !== "undefined" && scene) scene.FX.cook = performance.now();
+  if (Math.random() < 0.2) spawnPopup(`+${gain.toFixed(2)} kg (idle)`, "crystal");
+  checkAchievements();
+  render();
+  save();
+}
+
 // ---------- Bonus de tap sur la scène ----------
 function tapBoost(x = 0.5, y = 0.5) {
   if (state.gameOver || state.victory) return;
   state.taps += 1;
-  const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE));
+  const mult = frenzyActive() ? 2 : 1;
+  const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE)) * mult;
   state.cash += gain;
   spawnPopup(`+${fmt(gain)}$`, "money");
   playSfx("tap");
@@ -152,8 +302,74 @@ function tapBoost(x = 0.5, y = 0.5) {
     state.respect = cap(state.respect + 1, 0, 100);
     spawnPopup("La rue vous remarque ! Respect +1", "info");
   }
+  checkAchievements();
   render();
   save();
+}
+
+// ---------- Cristal doré ----------
+function goldenCollect() {
+  if (state.gameOver || state.victory) return;
+  state.goldenCaught += 1;
+  const roll = Math.floor(Math.random() * 5);
+  if (roll === 0) {
+    const gain = Math.max(500, Math.round(pricePerKg() * TAP_CASH_RATE * 15));
+    state.cash += gain;
+    spawnPopup(`💎 +${fmt(gain)}$ !`, "money");
+    toast("💎 Cristal doré", `Jackpot : +${fmt(gain)}$ !`);
+  } else if (roll === 1) {
+    addHeat(-10);
+    spawnPopup("💎 Chaleur −10", "info");
+    toast("💎 Cristal doré", "Les flics perdent votre trace. Chaleur −10.");
+  } else if (roll === 2) {
+    state.purity = cap(state.purity + 5, 0, 100);
+    spawnPopup("💎 Pureté +5%", "crystal");
+    toast("💎 Cristal doré", "Un échantillon parfait. Pureté +5%.");
+  } else if (roll === 3) {
+    state.frenzyUntil = performance.now() + 30_000;
+    spawnPopup("💎 FRÉNÉSIE ×2 !", "golden");
+    toast("💎 FRÉNÉSIE !", "Cuisson et taps ×2 pendant 30 secondes !");
+  } else {
+    const gain = Math.min(2, stockCap() - state.stock);
+    state.stock = Math.round((state.stock + gain) * 10) / 10;
+    spawnPopup(`💎 +${gain.toFixed(1)} kg`, "crystal");
+    toast("💎 Cristal doré", `Un petit cadeau du ciel : +${gain.toFixed(1)} kg.`);
+  }
+  playSfx("golden");
+  checkAchievements();
+  render();
+  save();
+}
+
+// ---------- Événements planifiés (chaînes) ----------
+function scheduleEvent(id, days) {
+  state.pendingEvents.push({ id, days });
+}
+
+function fireScheduled(ev) {
+  playSfx("event");
+  log(`${ev.emoji} ${ev.title}`, "event");
+  if (ev.type === "choice") {
+    showEventModal(ev);
+  } else {
+    ev.apply(state);
+    spawnPopup(ev.emoji + " " + ev.title, "info");
+  }
+}
+
+function processPendingEvents() {
+  if (state.pendingEvents.length === 0) return;
+  const stillPending = [];
+  for (const p of state.pendingEvents) {
+    p.days -= 1;
+    if (p.days <= 0) {
+      const ev = EVENTS.find((e) => e.id === p.id);
+      if (ev) fireScheduled(ev);
+    } else {
+      stillPending.push(p);
+    }
+  }
+  state.pendingEvents = stillPending;
 }
 
 // ---------- Actions (coûtent 1 PA) ----------
@@ -167,12 +383,13 @@ const ACTIONS = [
       return `Produit ~${kg} kg (${lab().name}). Précurseurs : ${fmt(PRECURSOR_COST_PER_KG * state.flags.precursorDiscount)}$/kg.`;
     },
     can(s) {
-      return s.ap > 0 && s.cash >= PRECURSOR_COST_PER_KG * s.flags.precursorDiscount && s.stock < lab().cap;
+      return s.ap > 0 && s.cash >= PRECURSOR_COST_PER_KG * s.flags.precursorDiscount && s.stock < stockCap();
     },
     run(s) {
       const kgRaw = lab().cook * cookMult() * rand(0.85, 1.15);
-      const space = lab().cap - s.stock;
-      const kg = Math.min(kgRaw, space);
+      const space = stockCap() - s.stock;
+      const affordable = s.cash / (PRECURSOR_COST_PER_KG * s.flags.precursorDiscount);
+      const kg = Math.min(kgRaw, space, affordable);
       if (kg <= 0.05) {
         log("🍳 Plus de place pour stocker ! Vendez d'abord.", "bad");
         return;
@@ -180,6 +397,7 @@ const ACTIONS = [
       const cost = Math.ceil(kg * PRECURSOR_COST_PER_KG * s.flags.precursorDiscount);
       s.cash -= cost;
       s.stock = Math.round((s.stock + kg) * 10) / 10;
+      s.stats.cooked = Math.round((s.stats.cooked + kg) * 10) / 10;
       s.flags.cookPenalty = 1;
       s.flags.precursorDiscount = 1;
       spawnPopup(`+${kg.toFixed(1)} kg`, "crystal");
@@ -192,7 +410,7 @@ const ACTIONS = [
     id: "sell",
     icon: "💸",
     name: "Vendre",
-    desc: () => `Écouler de la marchandise. Prix actuel : ~${fmt(pricePerKg())}$/kg. Génère de la chaleur.`,
+    desc: () => `Écouler de la marchandise. Prix actuel : ~${fmt(pricePerKg())}$/kg.${state.streak > 0 ? ` Série 🔥${state.streak} (+${Math.round((streakBonus() - 1) * 100)}% prix).` : ""} Génère de la chaleur.`,
     can(s) {
       return s.ap > 0 && s.stock >= 0.5;
     },
@@ -200,6 +418,7 @@ const ACTIONS = [
       let qty = Math.min(s.stock, 2 + state.respect / 10);
       if (hasStaffEffect("sellMult")) qty *= 2;
       if (hasUpgrade("railnetwork")) qty *= 1.5;
+      qty *= 1 + invLevel("street") * 0.15;
       qty = Math.min(qty, s.stock);
       const price = pricePerKg() * rand(0.9, 1.1);
       let revenue = qty * price;
@@ -208,6 +427,9 @@ const ACTIONS = [
       s.stock = Math.round((s.stock - qty) * 10) / 10;
       s.dirty += revenue;
       s.respect += 1;
+      s.stats.sold = Math.round((s.stats.sold + qty) * 10) / 10;
+      s.stats.totalEarned += revenue;
+      s.soldToday = true;
       let heatGain = qty * 1.5;
       if (hasUpgrade("van")) heatGain *= 0.5;
       if (hasStaffEffect("sellHeatMult")) heatGain *= 0.6;
@@ -231,6 +453,7 @@ const ACTIONS = [
       const clean = Math.round(amount * launderRate());
       s.dirty -= amount;
       s.cash += clean;
+      s.stats.laundered += amount;
       spawnPopup(`+${fmt(clean)}$ propres`, "money");
       playSfx("cash");
       if (typeof scene !== "undefined" && scene) scene.FX.launder = performance.now();
@@ -277,16 +500,45 @@ function endDay() {
   if (state.dirty > 30_000) heatDrift += 3;
   heatDrift += staffEffect("heatPerDay");
   if (hasUpgrade("cameras")) heatDrift -= 5;
+  heatDrift -= invLevel("security");
   addHeat(Math.round(heatDrift));
+
+  state.market = cap(state.market + rand(-0.06, 0.06) + (1 - state.market) * 0.1, 0.7, 1.4);
+
+  if (state.soldToday) {
+    state.streak = (state.streak || 0) + 1;
+    if (state.streak >= 3) {
+      spawnPopup(`🔥 Série de ${state.streak} jours ! +${Math.round((streakBonus() - 1) * 100)}% prix`, "golden");
+    }
+  } else {
+    state.streak = 0;
+  }
+  state.soldToday = false;
 
   state.day += 1;
   state.ap = AP_PER_DAY;
   state.flags.priceBonus = 1;
   state.respect = cap(state.respect, 0, 100);
 
-  log(`🌙 Jour ${state.day}. Chaleur ${state.heat}/100.`);
+  log(`🌙 Jour ${state.day}. Chaleur ${state.heat}/100. Marché ${Math.round(state.market * 100)}%.`);
 
-  if (state.cash >= VICTORY_CASH) {
+  processPendingEvents();
+
+  if (state.contract) {
+    state.contract.days -= 1;
+    if (state.contract.days <= 0) {
+      completeContract(state.contract.progress >= state.contract.kg);
+    }
+  } else if (state.contractCooldown > 0) {
+    state.contractCooldown -= 1;
+    if (state.contractCooldown <= 0) generateContract();
+  } else {
+    generateContract();
+  }
+
+  checkAchievements();
+
+  if (state.cash >= state.goal) {
     state.victory = true;
     playSfx("win");
     render();
@@ -301,7 +553,7 @@ function endDay() {
 }
 
 function maybeEvent() {
-  const pool = EVENTS.filter((e) => !e.cond || e.cond(state));
+  const pool = EVENTS.filter((e) => (e.weight || 0) > 0 && (!e.cond || e.cond(state)));
   if (pool.length === 0) return;
   const chance = 0.15 + state.heat / 300;
   if (Math.random() > chance) return;
@@ -312,6 +564,7 @@ function maybeEvent() {
     roll -= e.weight;
     if (roll <= 0) {
       playSfx("event");
+      log(`${e.emoji} ${e.title}`, "event");
       if (e.type === "choice") {
         showEventModal(e);
       } else {
@@ -350,6 +603,7 @@ function hire(id) {
   spawnPopup(`${member.emoji} ${member.name} !`, "info");
   playSfx("upgrade");
   log(`🤝 ${member.name} rejoint l'équipe (−${fmt(member.cost)}$).`, "good");
+  checkAchievements();
   render();
   save();
 }
@@ -362,6 +616,7 @@ function buyUpgrade(id) {
   spawnPopup(`${up.emoji} ${up.name}`, "info");
   playSfx("upgrade");
   log(`🏗️ ${up.name} installé (−${fmt(up.cost)}$).`, "good");
+  checkAchievements();
   render();
   save();
 }
@@ -379,21 +634,88 @@ function upgradeLab() {
   spawnPopup(`${next.emoji} ${next.name} !`, "info");
   playSfx("upgrade");
   log(`🏗️ Nouveau labo : ${next.name} (−${fmt(next.cost)}$).`, "good");
+  checkAchievements();
   render();
   save();
+}
+
+// ---------- Investissements (v4) ----------
+function investCost(inv) {
+  return Math.ceil(inv.base * Math.pow(inv.growth, invLevel(inv.id)));
+}
+
+function buyInvestment(id) {
+  const inv = INVESTMENTS.find((i) => i.id === id);
+  if (!inv) return;
+  const level = invLevel(id);
+  if (level >= inv.max) return;
+  const cost = investCost(inv);
+  if (state.cash < cost) return;
+  state.cash -= cost;
+  state.investments[id] = level + 1;
+  spawnPopup(`${inv.icon} ${inv.name} niv. ${level + 1}`, "info");
+  playSfx("upgrade");
+  log(`📈 ${inv.name} niveau ${level + 1} (−${fmt(cost)}$).`, "good");
+  checkAchievements();
+  render();
+  save();
+}
+
+// ---------- Prestige (v4) ----------
+function doPrestige() {
+  const pts = prestigePoints();
+  if (pts < 1) return;
+  showModal(
+    "🎭 Nouvelle identité",
+    `Vous disparaissez, et un inconnu au chapeau noir reprend l'empire.\n\nVous gagnez ${pts} point(s) de légende : +${Math.round(pts * PRESTIGE_POINT_BONUS * 100)}% de cuisson et de prix, PERMANENT.\n\nL'argent, l'équipe, les labos et les investissements repartent de zéro. Les succès et vos points de légende sont conservés.`,
+    [
+      {
+        label: `Disparaître (+${pts} 🎭)`,
+        apply(s) {
+          const keep = {
+            achievements: s.achievements,
+            legendPoints: (s.legendPoints || 0) + pts,
+            prestiges: (s.prestiges || 0) + 1,
+            taps: s.taps,
+            goldenCaught: s.goldenCaught || 0,
+          };
+          state = Object.assign(newGame(), keep);
+          playSfx("prestige");
+          log(`🎭 Nouvelle identité ! +${pts} point(s) de légende (bonus permanent ×${legendMult().toFixed(2)}).`, "event");
+          toast("🎭 Nouvelle identité", `Bonus permanent : +${Math.round(state.legendPoints * PRESTIGE_POINT_BONUS * 100)}% !`);
+          checkAchievements();
+          render();
+          save();
+        },
+      },
+      { label: "Pas encore", apply() {} },
+    ]
+  );
 }
 
 // ---------- Rendu UI ----------
 function render() {
   renderStats();
   renderActions();
+  renderContracts();
   renderLab();
+  renderInvestments();
   renderUpgrades();
   renderStaff();
   renderLog();
   document.getElementById("day-num").textContent = state.day;
   document.getElementById("ap-num").textContent = state.ap;
   document.getElementById("btn-next-day").disabled = state.gameOver || state.victory;
+
+  const prestigeBtn = document.getElementById("btn-prestige");
+  if (prestigeBtn) {
+    const pts = prestigePoints();
+    prestigeBtn.style.display = pts >= 1 ? "" : "none";
+    prestigeBtn.textContent = `🎭 ${pts}`;
+    prestigeBtn.disabled = state.gameOver;
+  }
+  const banner = document.getElementById("frenzy-banner");
+  if (banner) banner.classList.toggle("hidden", !frenzyActive());
 }
 
 function bar(pct, cls = "") {
@@ -403,12 +725,16 @@ function bar(pct, cls = "") {
 function renderStats() {
   const stats = [
     { label: "💰 Propre", value: `${fmt(state.cash)}$`, cls: "good" },
-    { label: "🖤 Sale", value: `${fmt(state.dirty)}$`, cls: state.dirty > 100_000 ? "warn" : "" },
-    { label: "📦 Stock", value: `${state.stock.toFixed(1)} / ${lab().cap} kg`, cls: "blue", bar: (state.stock / lab().cap) * 100, barCls: "stock" },
+    { label: "🤍 Sale", value: `${fmt(state.dirty)}$`, cls: state.dirty > 100_000 ? "warn" : "" },
+    { label: "📦 Stock", value: `${state.stock.toFixed(1)} / ${stockCap()} kg`, cls: "blue", bar: (state.stock / stockCap()) * 100, barCls: "stock" },
     { label: "💎 Pureté", value: `${purityNow()}%`, cls: "blue", bar: purityNow() },
     { label: "🚨 Chaleur", value: `${state.heat}/100`, cls: state.heat >= 70 ? "warn" : "", bar: state.heat, barCls: "heat" },
     { label: "🏙️ Respect", value: state.respect, cls: "", bar: state.respect },
+    { label: "📈 Marché", value: `${Math.round(state.market * 100)}%`, cls: state.market >= 1 ? "good" : "warn" },
     { label: "🏷️ Prix/kg", value: `${fmt(pricePerKg())}$`, cls: "" },
+    { label: "🔥 Série", value: state.streak > 0 ? `${state.streak} j (+${Math.round((streakBonus() - 1) * 100)}%)` : "—", cls: state.streak >= 3 ? "good" : "" },
+    { label: "🎭 Légende", value: `×${legendMult().toFixed(2)}${state.prestiges ? ` (${state.prestiges})` : ""}`, cls: state.legendPoints > 0 ? "good" : "" },
+    { label: "🎯 Objectif", value: `${fmt(Math.min(state.cash, state.goal))} / ${fmt(state.goal)}$`, cls: "", bar: (state.cash / state.goal) * 100 },
   ];
   document.getElementById("statbar").innerHTML = stats
     .map((s) => `<div class="stat ${s.cls}"><div class="label">${s.label}</div><div class="value">${s.value}</div>${s.bar !== undefined ? bar(s.bar, s.barCls || "") : ""}</div>`)
@@ -432,10 +758,39 @@ function renderActions() {
       if (!action || !action.can(state)) return;
       action.run(state);
       state.ap -= 1;
+      checkAchievements();
       render();
       save();
     });
   });
+}
+
+function renderContracts() {
+  const container = document.getElementById("contracts");
+  const c = state.contract;
+  if (!c) {
+    container.innerHTML = `
+      <div class="card locked">
+        <div class="icon">📞</div>
+        <h3>Aucun contrat en cours</h3>
+        <p>Les clients vous rappelleront dans ${Math.max(0, state.contractCooldown)} jour(s)...</p>
+      </div>`;
+    return;
+  }
+  const pct = (c.progress / c.kg) * 100;
+  const urgent = c.days <= 1;
+  container.innerHTML = `
+    <div class="card" style="border-color: var(--blue);">
+      <div class="icon">${c.emoji}</div>
+      <h3>${c.client}</h3>
+      <p>Livrer <b>${c.kg} kg</b>. Récompense : <b>${fmt(c.reward)}$</b> (sale) + 4 respect.</p>
+      <div class="contract-progress"><div class="fill" style="width:${cap(pct, 0, 100)}%"></div></div>
+      <div class="meta">${c.progress.toFixed(1)} / ${c.kg} kg livrés</div>
+      <div class="contract-deadline ${urgent ? "urgent" : ""}">⏳ ${c.days} jour(s) restant(s)</div>
+      <button class="btn primary" id="btn-deliver" ${state.stock > 0 && c.progress < c.kg ? "" : "disabled"}>Livrer le stock (gratuit)</button>
+    </div>`;
+  const btn = container.querySelector("#btn-deliver");
+  if (btn) btn.addEventListener("click", deliverContract);
 }
 
 function renderLab() {
@@ -444,7 +799,7 @@ function renderLab() {
     `<div class="card owned">
       <div class="icon">${lab().emoji}</div>
       <h3>${lab().name}</h3>
-      <p>Production : ${lab().cook} kg/action. Stock max : ${lab().cap} kg.</p>
+      <p>Production : ${lab().cook} kg/action. Stock max : ${stockCap()} kg.</p>
       <div class="meta">Niveau ${state.labLevel + 1} / ${LABS.length}</div>
     </div>`,
   ];
@@ -464,10 +819,33 @@ function renderLab() {
   container.innerHTML = cards.join("");
   const old = document.getElementById("lab-cards");
   if (old) old.replaceWith(container);
-  else document.getElementById("upgrades").before(container);
+  else document.getElementById("investments").before(container);
   container.id = "lab-cards";
   const btn = container.querySelector("#btn-lab");
   if (btn) btn.addEventListener("click", upgradeLab);
+}
+
+function renderInvestments() {
+  const container = document.getElementById("investments");
+  if (!container) return;
+  container.innerHTML = INVESTMENTS.map((inv) => {
+    const level = invLevel(inv.id);
+    const maxed = level >= inv.max;
+    const cost = investCost(inv);
+    const affordable = state.cash >= cost && !maxed;
+    return `
+    <div class="card ${level > 0 ? "owned" : ""}">
+      <div class="icon">${inv.icon}</div>
+      <h3>${inv.name} ${level > 0 ? `<span class="inv-level">Niv. ${level}</span>` : ""}</h3>
+      <p>${inv.desc}</p>
+      ${maxed
+        ? '<div class="meta">✔ Niveau maximum</div>'
+        : `<button class="btn" data-invest="${inv.id}" ${affordable ? "" : "disabled"}>${level > 0 ? "Améliorer" : "Investir"} (${fmt(cost)}$)</button>`}
+    </div>`;
+  }).join("");
+  container.querySelectorAll("[data-invest]").forEach((btn) => {
+    btn.addEventListener("click", () => buyInvestment(btn.dataset.invest));
+  });
 }
 
 function renderUpgrades() {
@@ -544,6 +922,24 @@ function showEventModal(event) {
   showModal(`${event.emoji} ${event.title}`, event.text, event.choices);
 }
 
+function showAchievements() {
+  const items = ACHIEVEMENTS.map((a) => {
+    const got = state.achievements.includes(a.id);
+    return `
+      <div class="ach-item ${got ? "unlocked" : "locked"}">
+        <div class="a-icon">${a.icon}</div>
+        <div>
+          <div class="a-name">${a.name}</div>
+          <div class="a-desc">${a.desc}${got ? " ✔" : ""}</div>
+        </div>
+      </div>`;
+  }).join("");
+  showModal(`🏆 Succès (${state.achievements.length}/${ACHIEVEMENTS.length})`,
+    `<div class="ach-list">${items}</div>`,
+    [{ label: "Fermer", apply() {} }]);
+  document.getElementById("modal-text").innerHTML = `<div class="ach-list">${items}</div>`;
+}
+
 function showOverlay(win) {
   const overlay = document.getElementById("overlay");
   const box = overlay.querySelector(".overlay-box");
@@ -551,9 +947,48 @@ function showOverlay(win) {
   document.getElementById("overlay-title").textContent = win
     ? "👑 SAY MY NAME."
     : "🚨 FIN DE PARTIE";
+  const prestigeLine = state.prestiges > 0 ? ` Légende ×${legendMult().toFixed(2)} (${state.prestiges} identité(s)).` : "";
   document.getElementById("overlay-text").textContent = win
-    ? `Vous avez bâti un empire de ${fmt(state.cash)}$ en ${state.day} jours. L'argent propre a triomphé... pour l'instant.`
+    ? `Vous avez bâti un empire de ${fmt(state.cash)}$ en ${state.day} jours.${prestigeLine} L'argent propre a triomphé... pour l'instant.`
     : "Menottes, flashs, une cellule à Albuquerque. Votre empire s'arrête ici.";
+
+  const buttons = document.getElementById("overlay-buttons");
+  buttons.innerHTML = "";
+  const restart = document.createElement("button");
+  restart.className = "btn danger";
+  restart.textContent = "Recommencer";
+  restart.addEventListener("click", () => {
+    overlay.classList.add("hidden");
+    reset();
+  });
+  buttons.appendChild(restart);
+  if (win) {
+    const cont = document.createElement("button");
+    cont.className = "btn primary";
+    cont.textContent = `Mode Légende : objectif ×10 (${fmt(state.goal * 10)}$)`;
+    cont.addEventListener("click", () => {
+      state.endless = true;
+      state.victory = false;
+      state.goal *= 10;
+      overlay.classList.add("hidden");
+      log("👑 Mode Légende activé ! Nouvel objectif : " + fmt(state.goal) + "$.", "event");
+      checkAchievements();
+      render();
+      save();
+    });
+    buttons.appendChild(cont);
+    if (prestigePoints() >= 1) {
+      const pres = document.createElement("button");
+      pres.className = "btn prestige";
+      pres.textContent = `🎭 Nouvelle identité (+${prestigePoints()} 🎭)`;
+      pres.addEventListener("click", () => {
+        overlay.classList.add("hidden");
+        state.victory = false;
+        doPrestige();
+      });
+      buttons.appendChild(pres);
+    }
+  }
   overlay.classList.remove("hidden");
 }
 
@@ -574,6 +1009,10 @@ function load() {
     if (!data || typeof data.day !== "number") return false;
     state = Object.assign(newGame(), data);
     state.flags = Object.assign({ cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 }, data.flags || {});
+    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0 }, data.stats || {});
+    state.investments = Object.assign({}, data.investments || {});
+    state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
+    if (typeof state.frenzyUntil !== "number") state.frenzyUntil = 0;
     return true;
   } catch (e) {
     return false;
@@ -583,7 +1022,7 @@ function load() {
 function reset() {
   localStorage.removeItem(SAVE_KEY);
   state = newGame();
-  log("🎬 Nouvelle vie. Un RV, un tablier, un rêve.");
+  log("🎓 Nouvelle vie. Un RV, un tablier, un rêve.");
   render();
   save();
 }
@@ -609,6 +1048,9 @@ document.getElementById("btn-sound").addEventListener("click", () => {
     document.getElementById("btn-sound").textContent = muted ? "🔇" : "🔊";
   }
 });
+document.getElementById("btn-ach").addEventListener("click", showAchievements);
+const prestigeBtn = document.getElementById("btn-prestige");
+if (prestigeBtn) prestigeBtn.addEventListener("click", doPrestige);
 if (typeof sfx !== "undefined" && sfx && sfx.muted) {
   document.getElementById("btn-sound").textContent = "🔇";
 }
@@ -617,8 +1059,18 @@ setTimeout(() => {
   if (hint) hint.remove();
 }, 12_000);
 
+if (typeof window !== "undefined") {
+  setInterval(idleTick, 5_000);
+  setInterval(() => {
+    if (!state.gameOver && !state.victory && typeof scene !== "undefined" && scene && typeof scene.spawnGolden === "function") {
+      scene.spawnGolden();
+    }
+  }, 45_000);
+}
+
 if (!load()) {
-  log("🎬 Albuquerque, Nouveau-Mexique. Un RV, un tablier, un rêve.");
+  log("🎓 Albuquerque, Nouveau-Mexique. Un RV, un tablier, un rêve.");
   log("💡 Objectif : 10 000 000$ d'argent propre. Attention à la chaleur DEA (100 = arrestation).");
+  generateContract();
 }
 render();
