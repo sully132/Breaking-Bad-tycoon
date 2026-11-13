@@ -748,3 +748,405 @@ ACHIEVEMENTS.push(
   { id: "prestige1", icon: "🎭", name: "Nouvelle identité", desc: "Changer d'identité une fois", check: (s) => s.prestiges >= 1, reward: {} },
   { id: "streak7", icon: "🔥", name: "Série chaude", desc: "Vendre 7 jours de suite", check: (s) => s.streak >= 7, reward: { cash: 25_000 } }
 );
+
+// ------------------------------------------------------------
+// v5 — CARTE INTERACTIVE d'Albuquerque
+// x/y : position sur la carte (0..1). unlock(state) optionnel.
+// interactions : { id, icon, label, apCost, effect(s), dialogue }
+// apCost 0 = gratuit ; chaque lieu/interaction = 1 fois par jour.
+// ------------------------------------------------------------
+const MAP_LOCATIONS = [
+  {
+    id: "rv", name: "RV dans le désert", emoji: "🚙", x: 0.13, y: 0.3, color: "#d8c79b",
+    desc: "Le RV grise, cloquamant sous le soleil. Ça sent le chou-fleur et la dangerosité.",
+    interactions: [
+      {
+        id: "cookwild", icon: "🍳", label: "Cuisson sauvage", apCost: 1,
+        effect(s) {
+          const space = stockCap() - s.stock;
+          const kg = Math.min(lab().cook * cookMult() * 0.5, space);
+          if (kg <= 0.05) { log("🍳 Stock plein, cuisson sauvage impossible.", "bad"); return; }
+          s.stock = Math.round((s.stock + kg) * 10) / 10;
+          s.stats.cooked = Math.round((s.stats.cooked + kg) * 10) / 10;
+          addHeat(6);
+          spawnPopup(`+${kg.toFixed(1)} kg (sauvage)`, "crystal");
+          if (typeof scene !== "undefined" && scene) scene.FX.cook = performance.now();
+          log(`🍳 Cuisson sauvage dans le désert : +${kg.toFixed(1)} kg. Chaleur +6.`, "good");
+        },
+      },
+      {
+        id: "scavenge", icon: "🔍", label: "Fouiller les alentours", apCost: 0,
+        effect(s) {
+          const roll = Math.random();
+          if (roll < 0.4) {
+            const cash = 300 + Math.floor(Math.random() * 700);
+            s.cash += cash;
+            spawnPopup(`+${fmt(cash)}$`, "money");
+            log(`🔍 Trouvé dans le sable : ${fmt(cash)}$.`, "good");
+          } else if (roll < 0.7 && s.stock < stockCap()) {
+            s.stock = Math.round((s.stock + 0.5) * 10) / 10;
+            log("🔍 Un bidon oublié : +0,5 kg.", "good");
+          } else {
+            log("🔍 Rien que des cailloux et un squelette d'ours.", "info");
+          }
+        },
+      },
+      {
+        id: "talkJesse", icon: "💬", label: "Parler à Jesse", apCost: 0, dialogue: "jesse",
+      },
+    ],
+  },
+  {
+    id: "house", name: "Maison des White", emoji: "🏠", x: 0.42, y: 0.36, color: "#d9e2ce",
+    desc: "Piscine bleue, garage impeccable, et un dîner qui refroidit.",
+    interactions: [
+      {
+        id: "rest", icon: "🛋️", label: "Se reposer un moment", apCost: 0,
+        effect(s) {
+          addHeat(-6);
+          spawnPopup("Chaleur −6", "info");
+          log("🛋️ Après-midi en famille, aucun appel suspect. Chaleur −6.", "good");
+        },
+      },
+      {
+        id: "talkSkyler", icon: "💬", label: "Parler à Skyler", apCost: 0, dialogue: "skyler",
+      },
+    ],
+  },
+  {
+    id: "carwash", name: "Laverie A1A", emoji: "🧽", x: 0.63, y: 0.52, color: "#bcd7e8",
+    desc: "A1A Car Wash : la meilleure laverie de la ville... et le pire endroit pour laver de l'argent.",
+    interactions: [
+      {
+        id: "nightshift", icon: "🌅", label: "Shift de nuit (blanchiment +5%)", apCost: 1,
+        effect(s) {
+          const amount = Math.min(s.dirty, launderVolume());
+          if (amount <= 0) { log("🌅 Aucun argent sale à laver.", "bad"); return; }
+          const rate = Math.min(0.98, launderRate() + 0.05);
+          const clean = Math.round(amount * rate);
+          s.dirty -= amount;
+          s.cash += clean;
+          s.stats.laundered += amount;
+          spawnPopup(`+${fmt(clean)}$ propres`, "money");
+          if (typeof scene !== "undefined" && scene) scene.FX.launder = performance.now();
+          log(`🌅 Shift de nuit : ${fmt(amount)}$ → ${fmt(clean)}$ propres (taux ${Math.round(rate * 100)}%).`, "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "pollos", name: "Los Pollos Hermanos", emoji: "🍗", x: 0.78, y: 0.34, color: "#f2d38c",
+    desc: "L'odeur de friture masque parfaitement celle de la méthylamine.",
+    interactions: [
+      {
+        id: "order", icon: "📦", label: "Commander des précurseurs (−30% prix)", apCost: 1,
+        effect(s) {
+          s.flags.precursorDiscount = 0.7;
+          log("📦 Livraison « de poulet » programmée. Précurseurs à −30%.", "good");
+        },
+      },
+      {
+        id: "watchGus", icon: "🐔", label: "Observer Gus", apCost: 0,
+        effect(s) {
+          if (hasStaff("gus")) {
+            s.purity = cap(s.purity + 2, 0, 100);
+            s.respect = cap(s.respect + 1, 0, 100);
+            log("🐔 Gus vous montre un geste de préparation. Pureté +2, Respect +1.", "good");
+          } else {
+            s.respect = cap(s.respect + 1, 0, 100);
+            log("🐔 Le gérant sourit. Tout est sous contrôle. Respect +1.", "good");
+          }
+        },
+      },
+      {
+        id: "talkGus", icon: "💬", label: "Parler à Gus", apCost: 0, dialogue: "gus",
+        cond: (s) => hasStaff("gus"),
+      },
+    ],
+  },
+  {
+    id: "superlab", name: "Superlab", emoji: "🧪", x: 0.86, y: 0.62, color: "#c9d4dc",
+    desc: "Une halle industrielle stérile, tenue par des gens en combinaison blanche.",
+    unlock: (s) => s.labLevel >= 2,
+    interactions: [
+      {
+        id: "industrial", icon: "⚗️", label: "Cuisson industrielle (×1,5)", apCost: 1,
+        effect(s) {
+          const space = stockCap() - s.stock;
+          const kg = Math.min(lab().cook * cookMult() * 1.5, space);
+          if (kg <= 0.05) { log("⚗️ Stock plein, cuisson industrielle impossible.", "bad"); return; }
+          s.stock = Math.round((s.stock + kg) * 10) / 10;
+          s.stats.cooked = Math.round((s.stats.cooked + kg) * 10) / 10;
+          addHeat(5);
+          spawnPopup(`+${kg.toFixed(1)} kg (industrie)`, "crystal");
+          if (typeof scene !== "undefined" && scene) scene.FX.cook = performance.now();
+          log(`⚗️ Cuisson industrielle : +${kg.toFixed(1)} kg. Chaleur +5.`, "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "saul", name: "Bureau de Saul", emoji: "⚖️", x: 0.3, y: 0.6, color: "#e8cfa0",
+    desc: "« Better Call Saul » clignote dans la vitrine. L'homme qui vous sauvera, contre facture.",
+    unlock: (s) => hasStaff("saul"),
+    interactions: [
+      {
+        id: "consult", icon: "🗣️", label: "Consultation juridique", apCost: 0,
+        effect(s) {
+          addHeat(-8);
+          spawnPopup("Chaleur −8", "info");
+          log("🗣️ Saul fait disparaître des pièces du dossier. Chaleur −8.", "good");
+        },
+      },
+      {
+        id: "offshore", icon: "🏝️", label: "Blanchiment offshore (+10% taux)", apCost: 1,
+        effect(s) {
+          const amount = Math.min(s.dirty, launderVolume() * 2);
+          if (amount <= 0) { log("🏝️ Aucun argent sale à expédier.", "bad"); return; }
+          const rate = Math.min(0.98, launderRate() + 0.1);
+          const clean = Math.round(amount * rate);
+          s.dirty -= amount;
+          s.cash += clean;
+          s.stats.laundered += amount;
+          spawnPopup(`+${fmt(clean)}$ propres`, "money");
+          log(`🏝️ Offshore (Cayman, naturellement) : ${fmt(amount)}$ → ${fmt(clean)}$.`, "good");
+        },
+      },
+      {
+        id: "talkSaul", icon: "💬", label: "Parler à Saul", apCost: 0, dialogue: "saul",
+      },
+    ],
+  },
+  {
+    id: "tuco", name: "Désert de Tuco", emoji: "🤯", x: 0.08, y: 0.68, color: "#e0b48a",
+    desc: "Une cabane isolée, une voiture calcinée, et un homme très imprévisible.",
+    unlock: (s) => s.day >= 10,
+    interactions: [
+      {
+        id: "deal", icon: "💰", label: "Deal à haut risque (prix ×1,6)", apCost: 1,
+        effect(s) {
+          if (s.stock < 1) { log("🤯 Il faut au moins 1 kg pour ce deal.", "bad"); return; }
+          s.stock = Math.round((s.stock - 1) * 10) / 10;
+          if (Math.random() < 0.25) {
+            const lost = Math.min(s.stock, 2);
+            s.stock = Math.round((s.stock - lost) * 10) / 10;
+            addHeat(10);
+            log(`🤯 Tuco a « oublié » son portefeuille... et pris ${lost.toFixed(1)} kg. Chaleur +10.`, "bad");
+          } else {
+            const revenue = Math.round(pricePerKg() * 1.6);
+            s.dirty += revenue;
+            s.stats.sold = Math.round((s.stats.sold + 1) * 10) / 10;
+            s.stats.totalEarned += revenue;
+            s.soldToday = true;
+            addHeat(4);
+            spawnPopup(`+${fmt(revenue)}$ (sale)`, "money");
+            log(`🤯 Tuco paie comptant, prix ×1,6 : +${fmt(revenue)}$. Chaleur +4.`, "good");
+          }
+        },
+      },
+      {
+        id: "talkTuco", icon: "💬", label: "Parler à Tuco", apCost: 0, dialogue: "tuco",
+      },
+    ],
+  },
+  {
+    id: "junkyard", name: "Casse de Old Joe", emoji: "🔧", x: 0.52, y: 0.78, color: "#c4b8a8",
+    desc: "Des carcasses à perte de vue. Parfait pour faire disparaître un RV.",
+    interactions: [
+      {
+        id: "parts", icon: "🏗️", label: "Pièces pour agrandir le stock (−5 000$, +2 kg max)", apCost: 1,
+        effect(s) {
+          if ((s.capBonus || 0) >= 30) { log("🏗️ Vos planques sont déjà énormes.", "info"); return; }
+          if (s.cash < 5_000) { log("🏗️ Pas assez d'argent propre (5 000$).", "bad"); return; }
+          s.cash -= 5_000;
+          s.capBonus = (s.capBonus || 0) + 2;
+          log(`🏗️ Conteneurs achetés à la casse : stock max +2 kg (${stockCap()} kg total).`, "good");
+        },
+      },
+      {
+        id: "scrap", icon: "♻️", label: "Vendre de la ferraille", apCost: 0,
+        effect(s) {
+          const cash = 200 + Math.floor(Math.random() * 600);
+          s.cash += cash;
+          spawnPopup(`+${fmt(cash)}$`, "money");
+          log(`♻️ Vente de ferraille : +${fmt(cash)}$.`, "good");
+        },
+      },
+      {
+        id: "talkMike", icon: "💬", label: "Parler à Mike", apCost: 0, dialogue: "mike",
+        cond: (s) => hasStaff("mike"),
+      },
+    ],
+  },
+  {
+    id: "plaza", name: "Place centrale", emoji: "🏙️", x: 0.55, y: 0.18, color: "#d5d9c8",
+    desc: "La ville entière passe par ici. Les rumeurs aussi.",
+    interactions: [
+      {
+        id: "rumors", icon: "👂", label: "Écouter les rumeurs", apCost: 0,
+        effect(s) {
+          s.market = cap(s.market + 0.05, 0.7, 1.4);
+          log(`👂 Les rumeurs font grimper le marché : ${Math.round(s.market * 100)}%.`, "good");
+        },
+      },
+      {
+        id: "samples", icon: "🎁", label: "Distribuer des échantillons", apCost: 1,
+        effect(s) {
+          s.respect = cap(s.respect + 3, 0, 100);
+          s.dirty += 10_000;
+          addHeat(5);
+          spawnPopup("Respect +3", "info");
+          log("🎁 Échantillons gratuits dans la rue : Respect +3, +10 000$ sale. Chaleur +5.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "dea", name: "Parking DEA", emoji: "🚔", x: 0.24, y: 0.14, color: "#c8ccd8",
+    desc: "Le fourmobile orange de Hank est garé là. Mauvaise idée. Excellente idée.",
+    unlock: (s) => s.heat >= 50,
+    interactions: [
+      {
+        id: "distract", icon: "🎭", label: "Distraction (risqué)", apCost: 1,
+        effect(s) {
+          if (Math.random() < 0.5) {
+            addHeat(-15);
+            spawnPopup("Chaleur −15", "info");
+            log("🎭 Un appel anonyme envoie la DEA de l'autre côté de la ville. Chaleur −15.", "good");
+          } else {
+            addHeat(8);
+            log("🎭 Un agent vous a reconnu près du parking. Chaleur +8.", "bad");
+          }
+        },
+      },
+    ],
+  },
+];
+
+// ------------------------------------------------------------
+// v5 — DIALOGUES de personnages (tirés au hasard lors d'un « Parler à ... »)
+// line.choices : { label, effect(s) }
+// ------------------------------------------------------------
+const DIALOGUES = {
+  jesse: {
+    name: "Jesse Pinkman", emoji: "🧢",
+    lines: [
+      {
+        text: "« Ouais science ! T'as vu ça, M. White ? J'ai presque rien cassé aujourd'hui. »",
+        choices: [
+          { label: "« Fier de toi, Jesse. » (Respect +2)", effect(s) { s.respect = cap(s.respect + 2, 0, 100); } },
+          { label: "« Retourne bosser. » (Respect −2)", effect(s) { s.respect = cap(s.respect - 2, 0, 100); } },
+        ],
+      },
+      {
+        text: "« Y'a un nouveau dans le quartier... il pose trop de questions. »",
+        choices: [
+          { label: "« Occupe-toi de lui. » (Respect +4, Chaleur +6)", effect(s) { s.respect = cap(s.respect + 4, 0, 100); addHeat(6); } },
+          { label: "« On reste prudents. » (Chaleur −4)", effect(s) { addHeat(-4); } },
+        ],
+      },
+      {
+        text: "« Mon ami Combo dit qu'on pourrait vendre dans l'Est... plus loin, plus risqué. »",
+        choices: [
+          { label: "« On tente. » (+15 000$ sale, Chaleur +6)", effect(s) { s.dirty += 15_000; addHeat(6); } },
+          { label: "« Pas encore. » (Respect −1)", effect(s) { s.respect = cap(s.respect - 1, 0, 100); } },
+        ],
+      },
+    ],
+  },
+  skyler: {
+    name: "Skyler White", emoji: "💁‍♀️",
+    lines: [
+      {
+        text: "« Où tu étais toute la nuit, Walter ? »",
+        choices: [
+          { label: "« Au travail. Rien d'important. » (Chaleur −3)", effect(s) { addHeat(-3); } },
+          { label: "« Ne pose pas de questions. » (Respect −3, Chaleur +2)", effect(s) { s.respect = cap(s.respect - 3, 0, 100); addHeat(2); } },
+        ],
+      },
+      {
+        text: "« On devrait refaire la cuisine... et payer la fac de Walter Jr. »",
+        choices: [
+          { label: "« Bientôt, promis. » (Respect +2)", effect(s) { s.respect = cap(s.respect + 2, 0, 100); } },
+          { label: "« L'argent n'est pas tout. » (Respect −2)", effect(s) { s.respect = cap(s.respect - 2, 0, 100); } },
+        ],
+      },
+    ],
+  },
+  saul: {
+    name: "Saul Goodman", emoji: "⚖️",
+    lines: [
+      {
+        text: "« Name's McGill. Je suis un avocat... tout à fait légal. »",
+        choices: [
+          { label: "« J'ai besoin d'un » meilleur « avocat. » (Chaleur −8)", effect(s) { addHeat(-8); } },
+          { label: "« On verra plus tard. » (Rien)", effect() {} },
+        ],
+      },
+      {
+        text: "« Pour 10 000$, un témoin disparaît de la liste. Compris ? »",
+        choices: [
+          { label: "Payer (−10 000$, Chaleur −12)", can(s) { return s.cash >= 10_000; }, effect(s) { s.cash -= 10_000; addHeat(-12); } },
+          { label: "Refuser (Chaleur +5)", effect(s) { addHeat(5); } },
+        ],
+      },
+    ],
+  },
+  gus: {
+    name: "Gus Fring", emoji: "🐔",
+    lines: [
+      {
+        text: "« Je suis déçu. La qualité fluctue. Un empire exige la constance. »",
+        choices: [
+          { label: "« Cela ne se reproduira plus. » (Pureté +4)", effect(s) { s.purity = cap(s.purity + 4, 0, 100); } },
+          { label: "« Mon produit, mes règles. » (Respect +3, Chaleur +3)", effect(s) { s.respect = cap(s.respect + 3, 0, 100); addHeat(3); } },
+        ],
+      },
+      {
+        text: "« Un homme de famille... c'est respectable. Nous dînerons un jour. »",
+        choices: [
+          { label: "« Avec plaisir. » (Respect +4)", effect(s) { s.respect = cap(s.respect + 4, 0, 100); } },
+          { label: "« Je préfère rester discret. » (Chaleur −5)", effect(s) { addHeat(-5); } },
+        ],
+      },
+    ],
+  },
+  mike: {
+    name: "Mike Ehrmantraut", emoji: "🎩",
+    lines: [
+      {
+        text: "« Vous voulez que ça reste propre ? Payez pour du propre. »",
+        choices: [
+          { label: "« Nommez votre prix. » (−15 000$, Chaleur −10)", can(s) { return s.cash >= 15_000; }, effect(s) { s.cash -= 15_000; addHeat(-10); } },
+          { label: "« Je me débrouille. » (Chaleur +4)", effect(s) { addHeat(4); } },
+        ],
+      },
+      {
+        text: "« Half measures. Vous connaissez le problème des demi-mesures ? »",
+        choices: [
+          { label: "« Plus de demi-mesures. » (Respect +5, Chaleur +4)", effect(s) { s.respect = cap(s.respect + 5, 0, 100); addHeat(4); } },
+          { label: "« La prudence d'abord. » (Chaleur −5)", effect(s) { addHeat(-5); } },
+        ],
+      },
+    ],
+  },
+  tuco: {
+    name: "Tuco Salamanca", emoji: "🤯",
+    lines: [
+      {
+        text: "« TIGHT TIGHT TIGHT ! Ton produit, c'est de la bombe, tonton ! »",
+        choices: [
+          { label: "« Merci, ça fait plaisir. » (Respect +3)", effect(s) { s.respect = cap(s.respect + 3, 0, 100); } },
+          { label: "« Alors paie le prix fort. » (+8 000$ sale)", effect(s) { s.dirty += 8_000; } },
+        ],
+      },
+      {
+        text: "« Des flics rôdent autour de ma cabane. T'as un problème avec ça ?! »",
+        choices: [
+          { label: "« On déménage. » (Chaleur −6)", effect(s) { addHeat(-6); } },
+          { label: "« Calme-toi. » (Respect +2, Chaleur +5)", effect(s) { s.respect = cap(s.respect + 2, 0, 100); addHeat(5); } },
+        ],
+      },
+    ],
+  },
+};
