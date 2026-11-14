@@ -57,8 +57,14 @@ const sfx = (() => {
     src.start(t0);
   }
 
-  return {
+   return {
     get muted() { return muted; },
+    unlock() {
+      try {
+        if (!ctx) ensureCtx();
+        if (ctx && ctx.state === "suspended") ctx.resume();
+      } catch (e) {}
+    },
     toggle() {
       muted = !muted;
       try { localStorage.setItem("heisenberg-tycoon-muted", muted ? "1" : "0"); } catch (e) {}
