@@ -340,7 +340,12 @@ function runInteraction(loc, it) {
   state.visitedToday[key] = true;
   playSfx("click");
   if (typeof haptic === "function") haptic(15);
+  state.visitedToday[key] = true;
+  playSfx("click");
+  if (typeof haptic === "function") haptic(15);
+  if (typeof trackMission === "function") trackMission("map", 1);
 
+ 
   if (it.dialogue && DIALOGUES[it.dialogue]) {
     playDialogue(DIALOGUES[it.dialogue]);
   } else if (typeof it.effect === "function") {
