@@ -44,6 +44,7 @@
     if (typeof state === "undefined") return;
     if (kind === "cook") mg = newCook();
     else if (kind === "tuco") mg = newTuco();
+    else if (kind === "sell") mg = newSell();
     else return;
     if (!mg) return;
     if (titleEl) titleEl.textContent = mg.title;
@@ -198,6 +199,11 @@
           const gain = Math.round((400 + 500 * score) * (1 + totalBizLevels() * 0.15));
           state.dirty += gain;
           state.mgCookDay = state.day;
+          if (typeof state.stats.mgPlayed !== "number") state.stats.mgPlayed = 0;
+          state.stats.mgPlayed += 1;
+          if (typeof state.stats.mgBest !== "number") state.stats.mgBest = 0;
+          state.stats.mgBest = Math.max(state.stats.mgBest, score);
+          if (typeof checkAchievements === "function") checkAchievements();
           log("⚗️ Cuisson de précision : " + gradeText() + " — pureté +" + purityBonus + ", +" + fmt(gain) + "$ sale.", score >= 4 ? "good" : "info");
           playSfx(score >= 4 ? "good" : "event");
           if (typeof render === "function") render();
@@ -285,6 +291,11 @@
         if (ri >= 3 || rages >= 2) {
           finished = true; g.finished = true;
           state.mgTucoDay = state.day;
+          if (typeof state.stats.mgPlayed !== "number") state.stats.mgPlayed = 0;
+          state.stats.mgPlayed += 1;
+          if (typeof state.stats.mgTucoBest !== "number") state.stats.mgTucoBest = 0;
+          state.stats.mgTucoBest = Math.max(state.stats.mgTucoBest, mult);
+          if (typeof checkAchievements === "function") checkAchievements();
           if (rages < 2 && mult > 0) {
             const gain = Math.round(1200 * mult * (1 + totalBizLevels() * 0.2));
             state.dirty += gain;
@@ -294,6 +305,122 @@
             log("🤝 Tuco a failli te casser la figure. Tu t'es tiré sans rien. Chaleur +8 au total.", "bad");
           }
           playSfx(rages < 2 ? "good" : "bad");
+          if (typeof render === "function") render();
+          if (typeof save === "function") save();
+        }
+      },
+    };
+    return g;
+  }
+
+  // ---------- Mini-jeu 3 : Vente express (v29) ----------
+  function newSell() {
+    const rounds = [
+      { zone: 0.30, speed: 1.3 },
+      { zone: 0.24, speed: 1.65 },
+      { zone: 0.18, speed: 2.0 },
+    ];
+    const centers = [0.35 + Math.random() * 0.35, 0.35 + Math.random() * 0.35, 0.35 + Math.random() * 0.35];
+    const faces = ["🧢", "🕶️", "🎒"];
+    let ri = 0, pos = 0, dir = 1, results = [], finished = false, flash = 0, lastResult = "";
+
+    function gradeText() {
+      const score = results.reduce((a, b) => a + b, 0);
+      return score >= 6 ? "Triple vente parfaite !" :
+             score >= 4 ? "Bon vendeur" :
+             score >= 2 ? "Ça passe" : "Ils sont repartis";
+    }
+
+    const g = {
+      title: "Vente express",
+      sub: "Négocie le prix avec 3 clients — vise la zone dorée",
+      emoji: "🥫",
+      finished: false,
+      update(dt) {
+        if (finished) { flash *= 0.92; return; }
+        const r = rounds[ri];
+        pos += dir * r.speed * dt;
+        if (pos > 1) { pos = 1; dir = -1; }
+        if (pos < 0) { pos = 0; dir = 1; }
+        if (flash > 0) flash *= 0.9;
+      },
+      draw(c, w, h, t) {
+        c.clearRect(0, 0, w, h);
+        const barY = h * 0.40, barH = 26, mx = 14, bw = w - mx * 2;
+        c.fillStyle = "#1a1608";
+        rr(c, mx, barY, bw, barH, 8); c.fill();
+        c.strokeStyle = "#5a4a1a"; c.lineWidth = 2;
+        rr(c, mx, barY, bw, barH, 8); c.stroke();
+        const r = rounds[Math.min(ri, rounds.length - 1)];
+        const cz = centers[Math.min(ri, centers.length - 1)];
+        if (!finished) {
+          const zx = mx + bw * (cz - r.zone / 2), zw = bw * r.zone;
+          const zg = c.createLinearGradient(zx, 0, zx + zw, 0);
+          zg.addColorStop(0, "rgba(217,195,60,0.35)");
+          zg.addColorStop(0.5, "rgba(217,195,60,0.8)");
+          zg.addColorStop(1, "rgba(217,195,60,0.35)");
+          c.fillStyle = zg;
+          c.fillRect(zx, barY + 3, zw, barH - 6);
+          const pw = zw * 0.5;
+          c.fillStyle = "rgba(255,244,200,0.9)";
+          c.fillRect(mx + bw * cz - pw / 2, barY + 6, pw, barH - 12);
+          const cx = mx + bw * pos;
+          c.fillStyle = flash > 0.3 ? "#ffe9a0" : "#ffd970";
+          c.shadowColor = "#d9c33c"; c.shadowBlur = 12;
+          c.fillRect(cx - 3, barY - 7, 6, barH + 14);
+          c.shadowBlur = 0;
+        }
+        c.font = "22px sans-serif"; c.textAlign = "left";
+        c.fillText(faces[Math.min(ri, 2)], mx, barY - 16);
+        c.font = "bold 12px sans-serif"; c.fillStyle = "#c9b87a";
+        c.fillText("Client " + Math.min(ri + 1, 3) + "/3", mx + 30, barY - 12);
+        results.forEach((res, i) => {
+          c.fillStyle = res >= 2 ? "#b6ff6e" : res === 1 ? "#ffd970" : "#ff7a6a";
+          c.fillText((i + 1) + ": " + (res >= 2 ? "PARFAIT" : res === 1 ? "ok" : "parti"), mx + 130 + i * 92, barY - 12);
+        });
+        if (lastResult) {
+          c.font = "bold 16px sans-serif"; c.textAlign = "center";
+          c.fillStyle = flash > 0.2 ? "#ffe9a0" : "#e8dfc0";
+          c.globalAlpha = Math.min(1, flash + 0.25);
+          c.fillText(lastResult, w / 2, barY + barH + 28);
+          c.globalAlpha = 1;
+        }
+        if (finished) {
+          c.font = "bold 17px sans-serif"; c.textAlign = "center";
+          c.fillStyle = "#ffe9a0";
+          c.fillText(gradeText(), w / 2, h - 12);
+        }
+      },
+      status() {
+        return finished ? "Journée de vente terminée." : "Zone dorée = meilleur prix. Trop gourmand = client furieux.";
+      },
+      btnLabel() { return finished ? "Terminé ✔" : "💵 Conclure le deal"; },
+      tap() {
+        if (finished) return;
+        const r = rounds[ri];
+        const d = Math.abs(pos - centers[ri]);
+        let res = 0;
+        if (d <= r.zone * 0.25) res = 2;
+        else if (d <= r.zone * 0.7) res = 1;
+        results.push(res);
+        flash = 1;
+        lastResult = res === 2 ? "Prix parfait ! 💵" : res === 1 ? "Deal correct." : "Le client est parti...";
+        playSfx(res >= 2 ? "good" : res === 1 ? "tap" : "bad");
+        if (typeof haptic === "function") haptic(res === 2 ? 25 : 10);
+        ri += 1;
+        if (ri >= rounds.length) {
+          finished = true; g.finished = true;
+          const score = results.reduce((a, b) => a + b, 0);
+          const gain = Math.round((600 + 900 * score) * (1 + totalBizLevels() * 0.2));
+          state.dirty += gain;
+          state.mgSellDay = state.day;
+          if (typeof state.stats.mgPlayed !== "number") state.stats.mgPlayed = 0;
+          state.stats.mgPlayed += 1;
+          if (typeof state.stats.mgSellBest !== "number") state.stats.mgSellBest = 0;
+          state.stats.mgSellBest = Math.max(state.stats.mgSellBest, score);
+          log("🥫 Vente express : " + gradeText() + " +" + fmt(gain) + "$ sale.", score >= 4 ? "good" : "info");
+          playSfx(score >= 4 ? "good" : "event");
+          if (typeof checkAchievements === "function") checkAchievements();
           if (typeof render === "function") render();
           if (typeof save === "function") save();
         }

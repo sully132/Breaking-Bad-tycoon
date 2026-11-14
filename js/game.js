@@ -22,7 +22,7 @@ function newGame() {
     staff: ["jesse"],
     upgrades: [],
     flags: { cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 },
-    stats: { cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0 },
+    stats: { cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, mgPlayed: 0, mgBest: 0, mgTucoBest: 0, mgSellBest: 0 },
     achievements: [],
     contract: null,
     contractCooldown: 0,
@@ -1956,13 +1956,14 @@ function load() {
     if (!data || typeof data.day !== "number") return false;
     state = Object.assign(newGame(), data);
     state.flags = Object.assign({ cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 }, data.flags || {});
-    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0, pubUsed: 0 }, data.stats || {});
+    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0, pubUsed: 0, mgPlayed: 0, mgBest: 0, mgTucoBest: 0, mgSellBest: 0 }, data.stats || {});
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
     if (state.goal === 10_000_000) state.goal = VICTORY_CASH; // v27 : anciennes parties passees au nouvel objectif
     if (typeof state.mgCookDay !== "number") state.mgCookDay = 0; // v28
     if (typeof state.mgTucoDay !== "number") state.mgTucoDay = 0; // v28
+    if (typeof state.mgSellDay !== "number") state.mgSellDay = 0; // v29
     if (typeof state.combo !== "number") state.combo = 0;
     if (typeof state.comboUntil !== "number") state.comboUntil = 0;
     if (typeof state.maxCombo !== "number") state.maxCombo = 0;

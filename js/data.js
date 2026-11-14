@@ -2477,9 +2477,113 @@ EVENTS.push(
 );
 
 // ------------------------------------------------------------
+// v29 — SUCCÈS MINI-JEUX
+// ------------------------------------------------------------
+ACHIEVEMENTS.push(
+  { id: "mgPerfect", icon: "🧪", name: "Main de chimiste", desc: "Grade S à la Cuisson de précision", check: (s) => (s.stats.mgBest || 0) >= 6, reward: { respect: 5 } },
+  { id: "mgTucoMax", icon: "🤝", name: "Partenaire de Tuco", desc: "×4,0 de multiplicateur en négociation", check: (s) => (s.stats.mgTucoBest || 0) >= 4, reward: { cash: 50_000 } },
+  { id: "mgSellPerfect", icon: "🥫", name: "Trois clients, trois deals", desc: "Vente express parfaite (3/3)", check: (s) => (s.stats.mgSellBest || 0) >= 6, reward: { cash: 25_000 } },
+  { id: "mg10", icon: "🎯", name: "Joueur né", desc: "Jouer 10 mini-jeux", check: (s) => (s.stats.mgPlayed || 0) >= 10, reward: { respect: 5 } },
+);
+
+// ------------------------------------------------------------
+// v29 — ÉVÉNEMENTS SUPPLÉMENTAIRES
+// ------------------------------------------------------------
+EVENTS.push(
+  {
+    id: "carwashCrowd", loc: "carwash", emoji: "🚗", weight: 5, type: "auto", cond: (s) => s.day >= 3,
+    title: "Embouteillage au lave-auto",
+    text: "Samedi improvisé : la file de voitures s'étire jusqu'au carrefour.",
+    apply(s) {
+      const lvl = (s.businesses && s.businesses.carwash && s.businesses.carwash.level) || 1;
+      const gain = 500 + 300 * lvl;
+      s.dirty += gain;
+      log("🚗 Rush au lave-auto : +" + fmt(gain) + "$ sale.", "good");
+    },
+  },
+  {
+    id: "lydiaList", loc: "hq", emoji: "📋", weight: 4, type: "choice", cond: (s) => s.day >= 12,
+    title: "La liste de Lydia",
+    text: "Lydia déroule une liste de consignes aussi longue que ton bras. « Chaque détail compte. »",
+    choices: [
+      {
+        label: "Suivre la liste à la lettre (Pureté +2, Chaleur +4)",
+        apply(s) {
+          s.purity = cap(s.purity + 2, 0, 100);
+          addHeat(4);
+          log("📋 Procédures respectées au gramme près. Pureté +2, Chaleur +4.", "info");
+        },
+      },
+      {
+        label: "Improviser (Marché +10%, Respect +2)",
+        apply(s) {
+          s.market = cap(s.market + 0.1, 0.7, 1.6);
+          s.respect = cap(s.respect + 2, 0, 100);
+          log("📋 Tu fais à ta façon — et ça marche. Marché +10%, Respect +2. Lydia grince des dents.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "comboMessage", loc: "street", emoji: "🛴", weight: 5, type: "choice", cond: (s) => s.day >= 4,
+    title: "Combo a un plan",
+    text: "« Un pote revend un lot en bloc, prix cassé. On achète, on découpe, on revend. T'assures le cash ? »",
+    choices: [
+      {
+        label: "Financer le plan (−5 000$, gain aléatoire)",
+        can: (s) => s.cash >= 5_000,
+        apply(s) {
+          s.cash -= 5_000;
+          if (Math.random() < 0.55) {
+            s.dirty += 20_000;
+            log("🛴 Le lot est écoulé en une soirée. +20 000$ sale.", "good");
+          } else {
+            log("🛴 Le « pote » a disparu avec le lot. Perte sèche.", "bad");
+          }
+        },
+      },
+      {
+        label: "Refuser (Respect −1)",
+        apply(s) {
+          s.respect = cap(s.respect - 1, 0, 100);
+          log("🛴 Combo boude. « C'est toi qui vois, yo. » Respect −1.", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "gasCan", loc: "rv", emoji: "⛽", weight: 4, type: "choice",
+    title: "Jerrican premium",
+    text: "Un routier te propose un jerrican d'essence « stabilisée » — parfaite pour une cuisson propre.",
+    choices: [
+      {
+        label: "Acheter le jerrican (−5 000$, Pureté +2, Stock +2 kg)",
+        can: (s) => s.cash >= 5_000,
+        apply(s) {
+          s.cash -= 5_000;
+          s.purity = cap(s.purity + 2, 0, 100);
+          s.stock = Math.min(stockCap(), s.stock + 2);
+          log("⛽ Carburant premium : pureté +2, stock +2 kg.", "good");
+        },
+      },
+      {
+        label: "Laisser le jerrican",
+        apply(s) {
+          log("⛽ Le routier repart en sifflant.", "info");
+        },
+      },
+    ],
+  },
+);
+
+// ------------------------------------------------------------
 // APPARENCES des visiteurs d'événements dans les scènes (v17)
 // ------------------------------------------------------------
 const EVENT_VISITORS = {
+  carwashCrowd: { shirt: "#4a6a8a", pants: "#2a2a30", cap: true },
+  lydiaList: CHAR_LOOKS.lydia,
+  comboMessage: CHAR_LOOKS.combo,
+  gasCan: { shirt: "#7a6a3a", pants: "#3a3428", beard: true },
   rats: { shirt: "#6a5a4a", pants: "#3a342c", cap: true },
   hankBBQ: CHAR_LOOKS.hank,
   turfwar: { shirt: "#8a3a3a", pants: "#26262c", beanie: true },
@@ -2513,6 +2617,10 @@ const EVENT_VISITORS = {
 
 // v21 : répliques d'événements (bulles des visiteurs dans les scènes)
 const EVENT_QUOTES = {
+  carwashCrowd: ["On est pressés, vous pouvez accélérer ?", "Trois voitures, un abonnement, s'il vous plaît."],
+  lydiaList: ["Je déteste les imprévus. Éliminons-les.", "La liste n'est pas négociable."],
+  comboMessage: ["Yo, mon pote a un truc ÉNORME pour nous.", "On divise le prix d'achat par trois, je te jure."],
+  gasCan: ["Essence stabilisée, monsieur. La meilleure de l'État.", "C'est du bon. Vous verrez la différence."],
   rats: ["Ils ont mangé deux sacs. DEUX.", "Grignote, grignote, petit..."],
   hankBBQ: ["T'apportes tes fameux steaks, ou on commande des pizzas ?", "Marie a refait sa salade de raisins. Sois fort."],
   turfwar: ["Ce trottoir, il est à nous maintenant.", "Tu veux régler ça à l'ancienne ?"],
@@ -2719,6 +2827,14 @@ const STORY_ARCS = [
 // ============================================================
 
 const WEEKEND_EVENTS = [
+  { id: "wkKaraoke", emoji: "🎤", weight: 5, type: "choice", title: "Karaoké de Badger",
+    text: "Badger a réservé la salle de karaoké du coin. Tout le monde y sera. Tout le monde.",
+    choices: [
+      { label: "Chanter du Fleetwood Mac (Respect +4)",
+        apply(s) { s.respect = cap(s.respect + 4, 0, 100); if (Math.random() < 0.3) { addHeat(3); log("🎤 Tu as enflammé la scène... et un client bavard y était. Respect +4, Chaleur +3.", "info"); } else { log("🎤 Légendaire. Respect +4.", "good"); } } },
+      { label: "Rester au labo (Pureté +2)",
+        apply(s) { s.purity = cap(s.purity + 2, 0, 100); log("🎤 Pendant qu'ils chantent, tu cuisines. Pureté +2.", "good"); } },
+    ] },
   { id: "wkDeaSlow", emoji: "🛋️", weight: 7, type: "auto", title: "Effectif réduit à la DEA",
     text: "Week-end oblige : les bureaux de l'agence sont à moitié vides.",
     apply(s) { addHeat(-8); log("🛋️ La DEA tourne au ralenti. Chaleur −8.", "good"); } },

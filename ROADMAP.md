@@ -76,3 +76,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] 9 nouveaux événements (rats, BBQ de Hank, guerre de trottoir, panneau de Saul, effraction, méthylamine, éclaireurs + chaîne, Mike) *(livré en v28)*
 - [x] 4 nouveaux week-ends à thème (DEA au ralenti, marché noir, orage, cadeau de Jesse) *(livré en v28)*
 - [x] Scènes d'événements animées : entrée marchée du visiteur, faisceau de lumière, braises flottantes, badge « ! » à ondes, bannière glissante, flash au déclenchement, événements plus fréquents (65%) *(livré en v28)*
+
+## Phase 8 — Maîtrise & récompenses (v29) ✅ LIVRÉE (v29)
+- [x] 3e mini-jeu : 🥫 Vente express (scène Réseau de rue) — négocie le prix avec 3 clients *(livré en v29)*
+- [x] 4 succès mini-jeux : Main de chimiste (Grade S), Partenaire de Tuco (×4,0), Trois clients trois deals, Joueur né (10 mini-jeux) *(livré en v29)*
+- [x] 4 nouveaux événements : embouteillage au lave-auto, la liste de Lydia, Combo a un plan, jerrican premium *(livré en v29)*
+- [x] 1 nouveau week-end : 🎤 Karaoké de Badger *(livré en v29)*
+- [x] Suivi des performances mini-jeux (meilleurs scores, nombre de parties jouées) *(livré en v29)*

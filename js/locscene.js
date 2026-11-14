@@ -2187,6 +2187,14 @@
           apply: () => { window.openMinigame("tuco"); },
         });
       }
+      if (loc.id === "street") {
+        const mgDone = state.mgSellDay === state.day;
+        buttons.push({
+          label: mgDone ? "🥫 Vente express — terminée aujourd'hui ✔" : "🥫 Mini-jeu : Vente express (argent sale)",
+          disabled: mgDone,
+          apply: () => { window.openMinigame("sell"); },
+        });
+      }
     }
 
     // v23 : étages du Superlab

@@ -215,7 +215,18 @@ console.log("banniere evenement:", ljs8.includes("drawEventBanner") ? "OK" : "FA
 console.log("braises evenement:", ljs8.includes("evParts") ? "OK" : "FAIL");
 console.log("boutons minijeu:", ljs8.includes("openMinigame(\"cook\")") && ljs8.includes("openMinigame(\"tuco\")") ? "OK" : "FAIL");
 console.log("migrations minijeu:", fs.readFileSync("js/game.js", "utf8").includes("mgCookDay") ? "OK" : "FAIL");
-console.log("SW cache v28:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v28") ? "OK" : "FAIL");
+console.log("SW cache v29:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v29") ? "OK" : "FAIL");
+
+// v29 : maîtrise & récompenses
+const djs9 = fs.readFileSync("js/data.js", "utf8");
+console.log("succes minijeu v29:", ["mgPerfect", "mgTucoMax", "mgSellPerfect", "mg10"].every((id) => djs9.includes('id: "' + id + '"')) ? "OK" : "FAIL");
+console.log("evenements v29:", ["carwashCrowd", "lydiaList", "comboMessage", "gasCan", "wkKaraoke"].every((id) => djs9.includes('id: "' + id + '"')) ? "OK" : "FAIL");
+const mgjs9 = fs.readFileSync("js/minigame.js", "utf8");
+console.log("minijeu vente:", mgjs9.includes("newSell") && mgjs9.includes("Vente express") ? "OK" : "FAIL");
+console.log("stats minijeu:", mgjs9.includes("mgPlayed") && mgjs9.includes("mgBest") && mgjs9.includes("mgTucoBest") && mgjs9.includes("mgSellBest") ? "OK" : "FAIL");
+console.log("bouton vente:", fs.readFileSync("js/locscene.js", "utf8").includes('openMinigame("sell")') ? "OK" : "FAIL");
+console.log("migration stats v29:", fs.readFileSync("js/game.js", "utf8").includes("mgSellBest") ? "OK" : "FAIL");
+console.log("SW cache v29:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v29") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);
