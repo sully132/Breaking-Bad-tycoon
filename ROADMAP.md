@@ -31,12 +31,12 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] **Prestige enrichi** : arbres de légende à 3 branches avec paliers intermédiaires. *(livré en v23 : améliorations 🏬 biz et 🍀 luck)*
 - **Critère** : un objectif clair toutes les 2-3 sessions.
 
-## Phase 3 — Un monde vivant (v24)
+## Phase 3 — Un monde vivant (v24) ✅ LIVRÉE
 **Objectif : la carte doit respirer.**
-- [ ] **Parallaxe au doigt** sur la carte (2-3 plans de profondeur).
-- [ ] **Trafic animé** : voitures qui circulent entre les lieux, avion cargo occasionnel.
-- [ ] **Météo sur la carte** (cohérente avec les scènes) + transitions douces.
-- [ ] **Ambiance sonore par scène** : nappes générées en WebAudio (vent désert, ville, usine).
+- [x] **Parallaxe au doigt** sur la carte (4 plans de profondeur, retour élastique). *(livré en v24)*
+- [x] **Trafic animé** : 7 véhicules (dont 2 verticaux), avion cargo avec traînée toutes les ~45 s. *(livré en v24)*
+- [x] **Météo sur la carte** : pluie/orage avec éclairs, ré-tirée à chaque retour sur la carte. *(livré en v24)*
+- [x] **Ambiance sonore par scène** : nappes WebAudio par décor (vent désert, usine, ville…) + nappe pluie, démarrage/arrêt avec la scène. *(livré en v24)*
 - **Critère** : on ouvre la carte juste pour la regarder vivre.
 
 ## Phase 4 — Récit (v25)

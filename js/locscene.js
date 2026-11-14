@@ -2099,6 +2099,12 @@
       nextBubbleAt = 3000;
       anim = 0;
       rollWeather();
+      try {
+        if (typeof sfx !== "undefined" && sfx && sfx.ambient) {
+          const d = sceneDef();
+          sfx.ambient.start((d && d.kind) || "default", weather && weather !== "clear");
+        }
+      } catch (e) { /* pas d'audio */ }
       const overlay = document.getElementById("locscene");
       canvas = document.getElementById("locscene-canvas");
       if (!overlay || !canvas) throw new Error("overlay manquant");
@@ -2119,6 +2125,7 @@
   }
 
   function closeLocScene() {
+    try { if (typeof sfx !== "undefined" && sfx && sfx.ambient) sfx.ambient.stop(); } catch (e) {}
     currentLocId = null;
     const overlay = document.getElementById("locscene");
     if (overlay) overlay.classList.add("hidden");

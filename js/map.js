@@ -9,6 +9,14 @@
   let hoverId = null;
   let anim = 0;
   let rafId = 0;
+  // v24 : parallaxe au doigt + météo de la carte
+  let panX = 0;
+  let panY = 0;
+  let dragging = false;
+  let dragSX = 0;
+  let dragSY = 0;
+  let mapWeather = "clear";
+  let mapFlash = 0;
 
   const DPR_CAP = 2;
   const HIT_RADIUS = 36;
@@ -257,6 +265,10 @@
       { t: (anim / 14) % (w + 80) - 40, y: h * 0.538, dir: 1, color: "#c94f3d" },
       { t: w - ((anim / 18) % (w + 80)) + 40 - 80, y: h * 0.562, dir: -1, color: "#4e7a8a" },
       { t: (anim / 21) % (h + 80) - 40, x: w * 0.538, vertical: true, color: "#d9c33c" },
+      { t: (anim / 11) % (w + 80) - 40, y: h * 0.545, dir: 1, color: "#7ab648" },
+      { t: w - ((anim / 26) % (w + 80)) + 40 - 80, y: h * 0.552, dir: -1, color: "#b06ab0" },
+      { t: w - ((anim / 24) % (h + 80)) + 40 - 80, x: w * 0.552, vertical: true, color: "#e8e4d8" },
+      { t: (anim / 30) % (w + 80) - 40, y: h * 0.57, dir: 1, color: "#5a5f66" },
     ];
     for (const c of defs) {
       ctx.save();
@@ -285,6 +297,67 @@
       }
       ctx.restore();
     }
+  }
+
+  // v24 : avion cargo qui traverse le ciel de temps en temps
+  function drawPlane(w, h) {
+    const cycle = 45000;
+    const p = (anim % cycle) / cycle;
+    if (p > 0.3) return;
+    const x = -70 + (p / 0.3) * (w + 140);
+    const y = h * 0.10 + Math.sin(p * 12) * 4;
+    ctx.save();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 34, y + 2);
+    ctx.lineTo(Math.min(x + 150, w + 40), y + 7);
+    ctx.stroke();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#e8e4d8";
+    roundRect(-16, -4, 32, 8, 4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-2, -2); ctx.lineTo(-10, -12); ctx.lineTo(-4, -12); ctx.lineTo(6, -2);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-2, 2); ctx.lineTo(-10, 10); ctx.lineTo(-4, 10); ctx.lineTo(6, 2);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#c94f3d";
+    roundRect(10, -3, 6, 6, 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // v24 : météo sur la carte (pluie / orage), ré- tirée de temps en temps
+  function rollMapWeather() {
+    const r = Math.random();
+    mapWeather = r < 0.62 ? "clear" : (r < 0.88 ? "rain" : "storm");
+  }
+  function drawMapWeather(w, h) {
+    if (mapWeather === "clear") return;
+    ctx.save();
+    ctx.fillStyle = mapWeather === "storm" ? "rgba(20, 26, 40, 0.30)" : "rgba(30, 40, 60, 0.18)";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(200, 220, 255, 0.35)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 36; i++) {
+      const rx = ((i * 137 + anim * 0.9) % (w + 40)) - 20;
+      const ry = ((i * 89 + anim * 1.7) % (h + 40)) - 20;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx - 3, ry + 12);
+      ctx.stroke();
+    }
+    if (mapWeather === "storm") {
+      if (Math.random() < 0.006) mapFlash = 1;
+      if (mapFlash > 0.02) {
+        ctx.fillStyle = "rgba(255, 255, 255, " + (mapFlash * 0.30).toFixed(3) + ")";
+        ctx.fillRect(0, 0, w, h);
+        mapFlash *= 0.88;
+      }
+    }
+    ctx.restore();
   }
 
   function businessForLoc(locId) {
@@ -500,6 +573,14 @@
       return;
     }
 
+    // v24 : retour élastique du parallaxe quand on lâche le doigt
+    if (!dragging) {
+      panX *= 0.85;
+      panY *= 0.85;
+      if (Math.abs(panX) < 0.4) panX = 0;
+      if (Math.abs(panY) < 0.4) panY = 0;
+    }
+
     ctx.clearRect(0, 0, w, h);
 
     const sky = ctx.createLinearGradient(0, 0, 0, h);
@@ -509,17 +590,30 @@
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
 
+    // v24 : parallaxe — chaque plan de décor bouge différemment sous le doigt
+    ctx.save(); ctx.translate(panX * 0.20, panY * 0.20);
     drawSun(w, h);
     drawClouds(w, h);
+    drawPlane(w, h);
+    ctx.restore();
+    ctx.save(); ctx.translate(panX * 0.45, panY * 0.45);
     drawMountains(w, h);
+    ctx.restore();
+    ctx.save(); ctx.translate(panX * 0.70, panY * 0.70);
     drawCityBlocks(w, h);
     drawNature(w, h);
+    ctx.restore();
+    ctx.save(); ctx.translate(panX, panY);
     drawRoads(w, h);
     drawCars(w, h);
     drawRiver(w, h);
+    ctx.restore();
     drawCompass(w, h);
     drawTimeTint(w, h);
+    drawMapWeather(w, h);
+    ctx.save(); ctx.translate(panX, panY);
     drawLocations(w, h);
+    ctx.restore();
     drawEventBanner(w, h);
     drawOpportunities(w, h);
 
@@ -602,44 +696,73 @@
     return bestDist <= HIT_RADIUS ? best : null;
   }
 
+  function handleTap(x, y) {
+    const opp = pickOpportunity(x, y);
+    if (opp && typeof grabOpportunity === "function") {
+      grabOpportunity(opp.uid);
+      return;
+    }
+    const loc = pickLocation(x - panX, y - panY);
+    if (!loc) return;
+    if (typeof haptic === "function") haptic(8);
+    if (!unlocked(loc)) {
+      spawnPopup("🔒 Lieu verrouillé", "info");
+      return;
+    }
+    if (typeof openLocScene === "function" && openLocScene(loc.id)) return;
+    visitLocation(loc.id);
+  }
+
   function init() {
     canvas = document.getElementById("map-canvas");
     if (!canvas) return;
     ctx = canvas.getContext ? canvas.getContext("2d") : null;
     if (!ctx) return;
     resize();
+    rollMapWeather();
     window.addEventListener("resize", resize);
 
     canvas.addEventListener("pointermove", (e) => {
       const r = canvas.getBoundingClientRect();
-      const loc = pickLocation(e.clientX - r.left, e.clientY - r.top);
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      if (dragging) {
+        // v24 : parallaxe au doigt
+        panX = Math.max(-60, Math.min(60, x - dragSX));
+        panY = Math.max(-60, Math.min(60, y - dragSY));
+        return;
+      }
+      const loc = pickLocation(x, y);
       hoverId = loc ? loc.id : null;
       canvas.style.cursor = loc ? "pointer" : "default";
     });
 
     canvas.addEventListener("pointerdown", (e) => {
       const r = canvas.getBoundingClientRect();
-      const opp = pickOpportunity(e.clientX - r.left, e.clientY - r.top);
-      if (opp && typeof grabOpportunity === "function") {
-        grabOpportunity(opp.uid);
-        return;
-      }
-      const loc = pickLocation(e.clientX - r.left, e.clientY - r.top);
-      if (!loc) return;
-      if (typeof haptic === "function") haptic(8);
-      if (!unlocked(loc)) {
-        spawnPopup("🔒 Lieu verrouillé", "info");
-        return;
-      }
-      if (typeof openLocScene === "function" && openLocScene(loc.id)) return;
-      visitLocation(loc.id);
+      dragging = true;
+      dragSX = e.clientX - r.left - panX;
+      dragSY = e.clientY - r.top - panY;
     });
+
+    // v24 : le tap n'est validé qu'au relâchement, si le doigt n'a pas trop bougé
+    function endDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      if (Math.abs(panX) < 8 && Math.abs(panY) < 8) {
+        const r = canvas.getBoundingClientRect();
+        handleTap(e.clientX - r.left, e.clientY - r.top);
+      }
+    }
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", () => { dragging = false; });
+    canvas.addEventListener("pointerleave", () => { dragging = false; });
 
     draw();
   }
 
   window.heismapOnShow = function () {
     resize();
+    if (Math.random() < 0.25) rollMapWeather();
   };
 
   if (document.readyState === "loading") {

@@ -125,7 +125,7 @@ const gjs3 = fs.readFileSync("js/game.js", "utf8");
 console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes("comboUntil = now + 2500") ? "OK" : "FAIL");
 console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
 const sw3 = fs.readFileSync("sw.js", "utf8");
-console.log("SW cache v23:", sw3.includes("heisenberg-v23") ? "OK" : "FAIL");
+console.log("SW cache v24:", sw3.includes("heisenberg-v24") ? "OK" : "FAIL");
 
 // v23 : étages du Superlab + reliques + prestige
 console.log("labFloors migration:", typeof G.state.labFloors === "number" ? "OK" : "FAIL");
@@ -146,7 +146,18 @@ console.log("succes v23:", djs4.includes("floors3") && djs4.includes("relic4") ?
 console.log("bouton reliques:", fs.readFileSync("index.html", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("wiring reliques:", fs.readFileSync("js/app.js", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("scene superlab v23:", fs.readFileSync("js/locscene.js", "utf8").includes("drawFloorsPanel") ? "OK" : "FAIL");
-console.log("SW cache v23:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v23") ? "OK" : "FAIL");
+console.log("SW cache v24:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v24") ? "OK" : "FAIL");
+
+// v24 : monde vivant
+const mjs5 = fs.readFileSync("js/map.js", "utf8");
+console.log("parallaxe carte:", mjs5.includes("panX") && mjs5.includes("translate(panX * 0.45") ? "OK" : "FAIL");
+console.log("avion cargo:", mjs5.includes("drawPlane") ? "OK" : "FAIL");
+console.log("meteo carte:", mjs5.includes("drawMapWeather") && mjs5.includes("rollMapWeather") ? "OK" : "FAIL");
+console.log("trafic enrichi:", mjs5.split("vertical: true").length - 1 >= 2 ? "OK" : "FAIL");
+console.log("tap au relachement:", mjs5.includes("handleTap") && mjs5.includes("pointerup") ? "OK" : "FAIL");
+const sfxjs = fs.readFileSync("js/sfx.js", "utf8");
+console.log("ambiance sonore:", sfxjs.includes("startAmbient") && sfxjs.includes("ambient:") ? "OK" : "FAIL");
+console.log("ambiance dans scenes:", fs.readFileSync("js/locscene.js", "utf8").includes("sfx.ambient") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);

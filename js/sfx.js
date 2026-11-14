@@ -57,8 +57,88 @@ const sfx = (() => {
     src.start(t0);
   }
 
+  // ---------- v24 : ambiance sonore par scène (nappes générées) ----------
+  let ambNodes = [];
+
+  function stopAmbient() {
+    const nodes = ambNodes;
+    ambNodes = [];
+    for (const n of nodes) {
+      try { n.gain.gain.exponentialRampToValueAtTime(0.001, n.ctx.currentTime + 0.4); } catch (e) {}
+      setTimeout(() => { try { n.src.stop(); if (n.lfo) n.lfo.stop(); } catch (e) {} }, 600);
+    }
+  }
+
+  function startAmbient(kind, wet) {
+    const c = ensureCtx();
+    if (!c) return;
+    stopAmbient();
+    const presets = {
+      desert: { type: "lowpass", freq: 380, vol: 0.05 },
+      desert2: { type: "lowpass", freq: 380, vol: 0.05 },
+      station: { type: "lowpass", freq: 380, vol: 0.05 },
+      ranch: { type: "lowpass", freq: 380, vol: 0.05 },
+      industrial: { type: "lowpass", freq: 200, vol: 0.08 },
+      junkyard: { type: "lowpass", freq: 260, vol: 0.06 },
+      city: { type: "bandpass", freq: 700, vol: 0.05 },
+      street: { type: "bandpass", freq: 800, vol: 0.05 },
+      plaza: { type: "bandpass", freq: 900, vol: 0.045 },
+      office: { type: "lowpass", freq: 500, vol: 0.04 },
+      tower: { type: "lowpass", freq: 500, vol: 0.04 },
+      restaurant: { type: "bandpass", freq: 620, vol: 0.045 },
+      suburb: { type: "lowpass", freq: 440, vol: 0.04 },
+      backyard: { type: "lowpass", freq: 440, vol: 0.04 },
+      apartment: { type: "bandpass", freq: 520, vol: 0.04 },
+    };
+    const p = presets[kind] || { type: "lowpass", freq: 500, vol: 0.045 };
+    const buffer = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
+    const data = buffer.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < data.length; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = last * 3.5;
+    }
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const filter = c.createBiquadFilter();
+    filter.type = p.type;
+    filter.frequency.value = p.freq;
+    const gain = c.createGain();
+    gain.gain.setValueAtTime(0.001, c.currentTime);
+    gain.gain.exponentialRampToValueAtTime(p.vol, c.currentTime + 1.2);
+    src.connect(filter).connect(gain).connect(c.destination);
+    src.start();
+    const lfo = c.createOscillator();
+    const lfoGain = c.createGain();
+    lfo.frequency.value = 0.13;
+    lfoGain.gain.value = p.freq * 0.3;
+    lfo.connect(lfoGain).connect(filter.frequency);
+    lfo.start();
+    ambNodes.push({ src, gain, lfo, ctx: c });
+    if (wet) {
+      const rbuf = c.createBuffer(1, c.sampleRate, c.sampleRate);
+      const rdata = rbuf.getChannelData(0);
+      for (let i = 0; i < rdata.length; i++) rdata[i] = Math.random() * 2 - 1;
+      const rsrc = c.createBufferSource();
+      rsrc.buffer = rbuf;
+      rsrc.loop = true;
+      const rf = c.createBiquadFilter();
+      rf.type = "highpass";
+      rf.frequency.value = 1800;
+      const rg = c.createGain();
+      rg.gain.setValueAtTime(0.001, c.currentTime);
+      rg.gain.exponentialRampToValueAtTime(0.045, c.currentTime + 1.5);
+      rsrc.connect(rf).connect(rg).connect(c.destination);
+      rsrc.start();
+      ambNodes.push({ src: rsrc, gain: rg, ctx: c });
+    }
+  }
+
    return {
     get muted() { return muted; },
+    ambient: { start: startAmbient, stop: stopAmbient },
     unlock() {
       try {
         if (!ctx) ensureCtx();
@@ -68,6 +148,7 @@ const sfx = (() => {
     toggle() {
       muted = !muted;
       try { localStorage.setItem("heisenberg-tycoon-muted", muted ? "1" : "0"); } catch (e) {}
+      if (muted) stopAmbient();
       return muted;
     },
     click()  { tone(600, 0.06, "square", 0.06); },
