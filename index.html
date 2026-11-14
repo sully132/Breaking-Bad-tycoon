@@ -46,7 +46,7 @@
         <button id="btn-menu-fs" class="btn menu-btn">⛶ Plein écran</button>
         <button id="btn-menu-reset" class="btn menu-btn danger">♻️ Nouvelle vie</button>
       </div>
-      <p class="menu-version">Heisenberg Tycoon v9 — fan game non officielle</p>
+      <p class="menu-version">Heisenberg Tycoon v10 — fan game non officielle</p>
     </div>
   </div>
 
@@ -92,6 +92,11 @@
           </div>
         </div>
 
+        <div class="tab-page" data-page="empire">
+          <div class="empire-summary" id="empire-summary"></div>
+          <div class="biz-list" id="businesses"></div>
+        </div>
+
         <div class="tab-page" data-page="map">
           <h2 class="section-title">🗺️ Carte d'Albuquerque — clique un lieu</h2>
           <div class="map-wrap"><canvas id="map-canvas"></canvas></div>
@@ -126,6 +131,7 @@
 
     <nav class="bottom-nav" id="bottom-nav">
       <button data-tab="base" class="active"><span class="nav-icon">⚗️</span><span class="nav-label">Labo</span><span class="nav-badge hidden" id="badge-base"></span></button>
+      <button data-tab="empire"><span class="nav-icon">💼</span><span class="nav-label">Empire</span><span class="nav-badge hidden" id="badge-empire"></span></button>
       <button data-tab="map"><span class="nav-icon">🗺️</span><span class="nav-label">Carte</span><span class="nav-badge hidden" id="badge-map"></span></button>
       <button data-tab="biz"><span class="nav-icon">📋</span><span class="nav-label">Business</span><span class="nav-badge hidden" id="badge-biz"></span></button>
       <button data-tab="crew"><span class="nav-icon">👥</span><span class="nav-label">Équipe</span><span class="nav-badge hidden" id="badge-crew"></span></button>

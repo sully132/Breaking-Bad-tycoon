@@ -41,6 +41,9 @@ function newGame() {
     legendCoins: 0,
     legendUpgrades: {},
     dailyMissions: { day: 0, list: [] },
+    businesses: { carwash: { level: 1, manager: false, pooled: 0 } },
+    buyAmount: "1",
+    lastSeen: Date.now(),
     gameOver: false,
     victory: false,
     log: [],
@@ -88,6 +91,99 @@ function hasStaffEffect(key) {
 
 function lab() {
   return LABS[state.labLevel];
+}
+
+// ---------- Empire (v10) ----------
+function bizDef(id) {
+  return BUSINESSES.find((b) => b.id === id);
+}
+
+function bizState(id) {
+  if (!state.businesses[id]) state.businesses[id] = { level: 0, manager: false, pooled: 0 };
+  return state.businesses[id];
+}
+
+function bizLevel(id) {
+  return (state.businesses[id] && state.businesses[id].level) || 0;
+}
+
+function hasManager(id) {
+  return !!(state.businesses[id] && state.businesses[id].manager);
+}
+
+function bizUnlocked(b) {
+  try { return b.unlock(state); } catch (e) { return false; }
+}
+
+function bizMilestoneMult(level) {
+  return Math.pow(2, BUSINESS_MILESTONES.filter((m) => level >= m).length);
+}
+
+function bizNextMilestone(level) {
+  return BUSINESS_MILESTONES.find((m) => level < m) || null;
+}
+
+function bizRevPerSec(id) {
+  const b = bizDef(id);
+  if (!b || bizLevel(id) <= 0) return 0;
+  let rev = b.baseRev * bizLevel(id) * bizMilestoneMult(bizLevel(id));
+  rev *= legendMult();
+  rev *= 1 + state.respect / 250;
+  if (frenzyActive()) rev *= 2;
+  return rev;
+}
+
+function totalEmpirePerSec() {
+  return BUSINESSES.reduce((t, b) => t + (bizUnlocked(b) ? bizRevPerSec(b.id) : 0), 0);
+}
+
+function totalBizLevels() {
+  return Object.values(state.businesses).reduce((t, b) => t + (b.level || 0), 0);
+}
+
+function bizSingleCost(b, level) {
+  return Math.ceil(b.baseCost * Math.pow(b.costMult, level));
+}
+
+function bizCostFor(id, n) {
+  const b = bizDef(id);
+  const lvl = bizLevel(id);
+  let total = 0;
+  for (let i = 0; i < n; i++) total += bizSingleCost(b, lvl + i);
+  return total;
+}
+
+function bizMaxAffordable(id) {
+  const b = bizDef(id);
+  let lvl = bizLevel(id);
+  let cash = state.cash;
+  let n = 0;
+  while (n < 1_000) {
+    const c = bizSingleCost(b, lvl + n);
+    if (cash < c) break;
+    cash -= c;
+    n += 1;
+  }
+  return n;
+}
+
+function bizBuyCount(id) {
+  if (state.buyAmount === "max") return Math.max(1, bizMaxAffordable(id));
+  return parseInt(state.buyAmount, 10) || 1;
+}
+
+function bizPoolCap(id) {
+  return bizRevPerSec(id) * (hasManager(id) ? POOL_CAP_MANAGED : POOL_CAP_RAW);
+}
+
+function fmtMoney(n) {
+  const abs = Math.abs(n);
+  if (abs >= 1e15) return (n / 1e15).toFixed(2) + " Qa$";
+  if (abs >= 1e12) return (n / 1e12).toFixed(2) + " T$";
+  if (abs >= 1e9) return (n / 1e9).toFixed(2) + " Md$";
+  if (abs >= 1e6) return (n / 1e6).toFixed(2) + " M$";
+  if (abs >= 10_000) return Math.round(n / 1_000) + " k$";
+  return fmt(n) + "$";
 }
 
 function stockCap() {
@@ -168,7 +264,10 @@ function launderRate() {
 }
 
 function launderVolume() {
-  return hasUpgrade("carwash") ? 200_000 : 50_000;
+  let v = hasUpgrade("carwash") ? 200_000 : 50_000;
+  v += 2_500 * bizLevel("carwash");
+  v += 25_000 * bizLevel("laundry");
+  return v;
 }
 
 function addHeat(n) {
@@ -356,6 +455,142 @@ function goldenCollect() {
   save();
 }
 
+// ---------- Empire : moteur idle (v10) ----------
+function bizTick() {
+  if (state.gameOver || state.victory) return;
+  const now = Date.now();
+  const dt = Math.min(5, (now - (state._lastTick || now)) / 1000);
+  state._lastTick = now;
+  let dirty = false;
+  for (const b of BUSINESSES) {
+    if (!bizUnlocked(b) || bizLevel(b.id) <= 0) continue;
+    const st = bizState(b.id);
+    const rate = bizRevPerSec(b.id);
+    if (rate <= 0) continue;
+    const capAmt = bizPoolCap(b.id);
+    if (st.pooled < capAmt) {
+      st.pooled = Math.min(capAmt, st.pooled + rate * dt);
+      dirty = true;
+    }
+  }
+  if (dirty && document.querySelector(".tab-page[data-page='empire']")?.classList.contains("active")) {
+    renderBusinesses();
+  }
+}
+
+function collectBusiness(id, silent = false) {
+  const st = bizState(id);
+  const b = bizDef(id);
+  if (!b || st.level <= 0 || st.pooled < 1) return 0;
+  const gain = Math.floor(st.pooled);
+  st.pooled -= gain;
+  state.dirty += gain;
+  state.stats.totalEarned += gain;
+  trackMission("collect", 1);
+  if (!silent) {
+    spawnPopup(`+${fmtMoney(gain)} (sale)`, "money");
+    playSfx("cash");
+    if (typeof haptic === "function") haptic(12);
+  }
+  return gain;
+}
+
+function collectAllBusinesses() {
+  let total = 0;
+  for (const b of BUSINESSES) total += collectBusiness(b.id, true);
+  if (total > 0) {
+    spawnPopup(`+${fmtMoney(total)} (sale)`, "money");
+    playSfx("cash");
+    if (typeof haptic === "function") haptic(18);
+    log(`💼 Collecte de l'empire : +${fmtMoney(total)} d'argent sale.`, "good");
+  }
+  return total;
+}
+
+function buyBusiness(id) {
+  const b = bizDef(id);
+  if (!b || !bizUnlocked(b)) return;
+  const n = state.buyAmount === "max" ? bizMaxAffordable(id) : parseInt(state.buyAmount, 10);
+  if (!n || n < 1) return;
+  const cost = bizCostFor(id, n);
+  if (state.cash < cost) return;
+  state.cash -= cost;
+  const st = bizState(id);
+  const before = st.level;
+  st.level += n;
+  playSfx("upgrade");
+  if (typeof haptic === "function") haptic(10);
+  const crossed = BUSINESS_MILESTONES.filter((m) => before < m && st.level >= m);
+  if (crossed.length > 0) {
+    spawnPopup(`🚀 ${b.name} ×2 !`, "golden");
+    toast(`${b.emoji} Palier atteint !`, `${b.name} niveau ${st.level} — revenus ×2 !`);
+    playSfx("golden");
+    log(`🚀 ${b.name} atteint le niveau ${st.level} : revenus ×2 !`, "good");
+  }
+  checkAchievements();
+  renderBusinesses();
+  renderStats();
+  save();
+}
+
+function hireManager(id) {
+  const b = bizDef(id);
+  if (!b || !b.manager || hasManager(id)) return;
+  if (state.cash < b.manager.cost) return;
+  state.cash -= b.manager.cost;
+  bizState(id).manager = true;
+  playSfx("upgrade");
+  if (typeof haptic === "function") haptic(25);
+  toast(`${b.manager.emoji} ${b.manager.name} embauché !`, `${b.name} produit automatiquement (même app fermée, 2 h).`);
+  log(`👔 ${b.manager.name} gère désormais ${b.name}. Production automatique.`, "good");
+  checkAchievements();
+  renderBusinesses();
+  renderStats();
+  save();
+}
+
+function setBuyAmount(v) {
+  state.buyAmount = v;
+  playSfx("click");
+  renderBusinesses();
+  save();
+}
+
+function checkOfflineEarnings() {
+  const elapsed = Math.max(0, (Date.now() - (state.lastSeen || Date.now())) / 1000);
+  if (elapsed < 30) return null;
+  const report = [];
+  let total = 0;
+  for (const b of BUSINESSES) {
+    if (!bizUnlocked(b) || bizLevel(b.id) <= 0) continue;
+    const rate = bizRevPerSec(b.id);
+    if (rate <= 0) continue;
+    const capSec = hasManager(b.id) ? POOL_CAP_MANAGED : POOL_CAP_RAW;
+    const gain = Math.floor(rate * Math.min(elapsed, capSec));
+    if (gain <= 0) continue;
+    bizState(b.id).pooled = Math.min(bizPoolCap(b.id), bizState(b.id).pooled + gain);
+    total += gain;
+    report.push({ b, gain, capped: elapsed > capSec });
+  }
+  return total > 0 ? { total, elapsed, report } : null;
+}
+
+function showOfflineModal(report) {
+  const mins = Math.floor(report.elapsed / 60);
+  const timeStr = mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`;
+  const lines = report.report
+    .map((r) => `${r.b.emoji} ${r.b.name} : +${fmtMoney(r.gain)}${r.capped ? " (plafonné)" : ""}`)
+    .join("\n");
+  showModal(
+    "🕊️ Pendant ton absence",
+    `Empire laissé seul ${timeStr}. Les affaires ont continué :\n\n${lines}\n\nTotal en attente : ${fmtMoney(report.total)} d'argent sale.\n\n💡 Embauche des managers pour stocker jusqu'à 2 h de production !`,
+    [
+      { label: `💼 Tout collecter (+${fmtMoney(report.total)})`, apply() { collectAllBusinesses(); } },
+      { label: "Plus tard", apply() {} },
+    ]
+  );
+}
+
 // ---------- Événements planifiés (chaînes) ----------
 function scheduleEvent(id, days) {
   state.pendingEvents.push({ id, days });
@@ -516,6 +751,7 @@ function endDay() {
   let heatDrift = 2;
   if (state.dirty > 100_000) heatDrift += 8;
   if (state.dirty > 30_000) heatDrift += 3;
+  heatDrift += Math.min(10, Math.floor(totalBizLevels() / 30));
   heatDrift += staffEffect("heatPerDay");
   if (hasUpgrade("cameras")) heatDrift -= 5;
   heatDrift -= invLevel("security");
@@ -781,9 +1017,136 @@ function buyLegendUpgrade(id) {
   save();
 }
 
+// ---------- Rendu Empire (v10) ----------
+function renderBusinesses() {
+  const container = document.getElementById("businesses");
+  if (!container) return;
+  const header = document.getElementById("empire-summary");
+  if (header) {
+    header.innerHTML = `
+      <div class="empire-rate">💼 ${fmtMoney(totalEmpirePerSec())}/s</div>
+      <div class="empire-controls">
+        ${["1", "10", "100", "max"].map((v) => `
+          <button class="buy-amt ${state.buyAmount === v ? "active" : ""}" data-amt="${v}">${v === "max" ? "MAX" : "×" + v}</button>`).join("")}
+        <button class="btn primary" id="btn-collect-all">💰 Tout collecter</button>
+      </div>`;
+    header.querySelectorAll("[data-amt]").forEach((btn) => {
+      btn.addEventListener("click", () => setBuyAmount(btn.dataset.amt));
+    });
+    const ca = header.querySelector("#btn-collect-all");
+    if (ca) ca.addEventListener("click", () => { collectAllBusinesses(); renderBusinesses(); renderStats(); save(); });
+  }
+
+  container.innerHTML = BUSINESSES.map((b) => {
+    if (!bizUnlocked(b)) {
+      return `
+      <div class="biz-row locked">
+        <div class="biz-icon">🔒</div>
+        <div class="biz-body">
+          <h3>???</h3>
+          <p>Continue ta progression pour débloquer cette affaire...</p>
+        </div>
+      </div>`;
+    }
+    const st = bizState(b.id);
+    const lvl = st.level;
+    const rate = bizRevPerSec(b.id);
+    const capAmt = bizPoolCap(b.id);
+    const poolPct = capAmt > 0 ? (st.pooled / capAmt) * 100 : 0;
+    const nextMs = bizNextMilestone(lvl);
+    const n = bizBuyCount(b.id);
+    const cost = bizCostFor(b.id, n);
+    const afford = state.cash >= cost;
+    const poolLabel = st.pooled >= 1 ? fmtMoney(Math.floor(st.pooled)) : "0$";
+    const collectable = st.pooled >= 1;
+    const nextMsTxt = nextMs
+      ? `Palier ×2 dans ${nextMs - lvl} niveaux`
+      : "Tous les paliers atteints !";
+    const msPct = nextMs ? (lvl / nextMs) * 100 : 100;
+    return `
+    <div class="biz-row ${st.manager ? "managed" : ""}">
+      <div class="biz-icon ${collectable ? "ready" : ""}" data-collect="${b.id}">
+        ${b.emoji}
+        ${collectable ? `<span class="biz-pool">${poolLabel}</span>` : ""}
+      </div>
+      <div class="biz-body">
+        <h3>${b.name} <span class="biz-level">Niv. ${lvl}</span></h3>
+        <p class="biz-rate">${fmtMoney(rate)}/s ${st.manager ? `· ${b.manager.emoji} auto` : "· ⚠️ collecte manuelle"}</p>
+        <div class="biz-ms"><div class="fill" style="width:${cap(msPct, 0, 100)}%"></div><span>${nextMsTxt}</span></div>
+      </div>
+      <div class="biz-actions">
+        <button class="btn buy" data-biz="${b.id}" ${afford ? "" : "disabled"}>
+          Améliorer ×${n}<br/><small>${fmtMoney(cost)}</small>
+        </button>
+        ${st.manager
+          ? `<div class="mgr-chip owned">${b.manager.emoji} ${b.manager.name.split(" ")[0]}</div>`
+          : `<button class="btn mgr" data-mgr="${b.id}" ${state.cash >= b.manager.cost ? "" : "disabled"} title="${b.manager.quote}">
+              ${b.manager.emoji}<br/><small>${fmtMoney(b.manager.cost)}</small>
+             </button>`}
+      </div>
+    </div>`;
+  }).join("");
+
+  container.querySelectorAll("[data-biz]").forEach((btn) => {
+    btn.addEventListener("click", () => buyBusiness(btn.dataset.biz));
+  });
+  container.querySelectorAll("[data-mgr]").forEach((btn) => {
+    btn.addEventListener("click", () => hireManager(btn.dataset.mgr));
+  });
+  container.querySelectorAll("[data-collect]").forEach((el) => {
+    el.addEventListener("click", () => { collectBusiness(el.dataset.collect); renderBusinesses(); renderStats(); save(); });
+  });
+}
+
+function showBusinessModal(id) {
+  const b = bizDef(id);
+  if (!b || !bizUnlocked(b)) return;
+  const st = bizState(id);
+  const rate = bizRevPerSec(id);
+  const pooled = Math.floor(st.pooled);
+  const n = bizBuyCount(id);
+  const cost = bizCostFor(id, n);
+  const choices = [];
+  if (pooled >= 1) {
+    choices.push({
+      label: `💰 Collecter (+${fmtMoney(pooled)} sale)`,
+      can: () => true,
+      apply() { collectBusiness(id); },
+    });
+  }
+  choices.push({
+    label: `📈 Améliorer ×${n} (${fmtMoney(cost)})`,
+    can: () => state.cash >= cost,
+    apply() { buyBusiness(id); },
+  });
+  if (!st.manager) {
+    choices.push({
+      label: `👔 Embaucher ${b.manager.emoji} ${b.manager.name} (${fmtMoney(b.manager.cost)})`,
+      can: () => state.cash >= b.manager.cost,
+      apply() { hireManager(id); },
+    });
+  }
+  choices.push({ label: "🚪 Quitter", can: () => true, apply() {} });
+  const status = st.manager
+    ? `${b.manager.emoji} ${b.manager.name} gère l'affaire : revenus automatiques, réserve de 2 h.`
+    : "⚠️ Pas de manager : la réserve plafonne à 15 min de production.";
+  setModalAvatar(b.emoji);
+  showModal(
+    `${b.emoji} ${b.name} — Niv. ${st.level}`,
+    `${b.desc}\n\nRevenus : ${fmtMoney(rate)}/s · Réserve : ${fmtMoney(pooled)}\n${nextMilestoneText(st.level)}\n${status}`,
+    choices
+  );
+}
+
+function nextMilestoneText(level) {
+  const next = bizNextMilestone(level);
+  return next ? `🚀 Palier ×2 au niveau ${next}.` : "👑 Tous les paliers ×2 atteints.";
+}
+
 // ---------- Rendu UI ----------
 function render() {
   renderStats();
+  renderBusinesses();
   renderActions();
   renderContracts();
   renderLab();
@@ -814,8 +1177,8 @@ function bar(pct, cls = "") {
 
 function renderStats() {
   const stats = [
-    { label: "💰 Propre", value: `${fmt(state.cash)}$`, cls: "good" },
-    { label: "🤍 Sale", value: `${fmt(state.dirty)}$`, cls: state.dirty > 100_000 ? "warn" : "" },
+    { label: "💰 Propre", value: fmtMoney(state.cash), cls: "good" },
+    { label: "🤍 Sale", value: fmtMoney(state.dirty), cls: state.dirty > 100_000 ? "warn" : "" },
     { label: "📦 Stock", value: `${state.stock.toFixed(1)} / ${stockCap()} kg`, cls: "blue", bar: (state.stock / stockCap()) * 100, barCls: "stock" },
     { label: "💎 Pureté", value: `${purityNow()}%`, cls: "blue", bar: purityNow() },
     { label: "🚨 Chaleur", value: `${state.heat}/100`, cls: state.heat >= 70 ? "warn" : "", bar: state.heat, barCls: "heat" },
@@ -1139,6 +1502,7 @@ function showOverlay(win) {
 // ---------- Sauvegarde ----------
 function save() {
   try {
+    state.lastSeen = Date.now();
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
   } catch (e) {
     /* stockage indisponible : le jeu continue sans sauvegarde */
@@ -1163,6 +1527,12 @@ function load() {
       ? { day: data.dailyMissions.day || 0, list: data.dailyMissions.list }
       : { day: 0, list: [] };
     if (typeof state.frenzyUntil !== "number") state.frenzyUntil = 0;
+    state.businesses = Object.assign({ carwash: { level: 1, manager: false, pooled: 0 } }, data.businesses || {});
+    for (const k of Object.keys(state.businesses)) {
+      state.businesses[k] = Object.assign({ level: 0, manager: false, pooled: 0 }, state.businesses[k]);
+    }
+    state.buyAmount = data.buyAmount || "1";
+    state.lastSeen = data.lastSeen || Date.now();
     return true;
   } catch (e) {
     return false;
@@ -1210,6 +1580,7 @@ setTimeout(() => {
 }, 12_000);
 
 if (typeof window !== "undefined") {
+  setInterval(bizTick, 1_000);
   setInterval(idleTick, 5_000);
   setInterval(() => {
     if (!state.gameOver && !state.victory && typeof scene !== "undefined" && scene && typeof scene.spawnGolden === "function") {
@@ -1218,9 +1589,14 @@ if (typeof window !== "undefined") {
   }, 45_000);
 }
 
+let offlineReport = null;
 if (!load()) {
   log("🎓 Albuquerque, Nouveau-Mexique. Un RV, un tablier, un rêve.");
   log("💡 Objectif : 10 000 000$ d'argent propre. Attention à la chaleur DEA (100 = arrestation).");
+  log("💼 Onglet EMPIRE : tes premières affaires de façade t'attendent.");
   generateContract();
+} else {
+  offlineReport = checkOfflineEarnings();
 }
 render();
+if (offlineReport) setTimeout(() => showOfflineModal(offlineReport), 700);

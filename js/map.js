@@ -287,6 +287,69 @@
     }
   }
 
+  function businessForLoc(locId) {
+    try {
+      if (typeof BUSINESSES === "undefined") return null;
+      return BUSINESSES.find((b) => b.locId === locId) || null;
+    } catch (e) { return null; }
+  }
+
+  function drawBusinessBadges(w, h, loc, p, s, open) {
+    const b = businessForLoc(loc.id);
+    if (!b || typeof bizLevel !== "function") return;
+    const lvl = bizLevel(b.id);
+    if (lvl <= 0 || !open) return;
+    ctx.font = "bold 10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const lw = ctx.measureText("N" + lvl).width + 10;
+    ctx.fillStyle = "#1e4d1e";
+    roundRect(p.x + s - 8, p.y - s - 2, lw, 15, 7);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(245, 236, 216, 0.8)";
+    ctx.lineWidth = 1;
+    roundRect(p.x + s - 8, p.y - s - 2, lw, 15, 7);
+    ctx.stroke();
+    ctx.fillStyle = "#eafbe0";
+    ctx.fillText("N" + lvl, p.x + s - 8 + lw / 2, p.y - s + 6);
+
+    let pooled = 0, capAmt = 0;
+    try {
+      pooled = state.businesses[b.id] ? state.businesses[b.id].pooled : 0;
+      capAmt = bizPoolCap(b.id);
+    } catch (e) { return; }
+    if (pooled >= 1) {
+      const near = capAmt > 0 && pooled >= capAmt * 0.5;
+      const bob = Math.sin(anim / 350) * 3;
+      const bx = p.x;
+      const by = p.y - s - 16 + bob;
+      ctx.fillStyle = "rgba(30, 18, 8, 0.35)";
+      ctx.beginPath();
+      ctx.arc(bx + 1, by + 2, 13, 0, Math.PI * 2);
+      ctx.fill();
+      const g = ctx.createRadialGradient(bx - 3, by - 4, 2, bx, by, 13);
+      g.addColorStop(0, "#ffe98a");
+      g.addColorStop(1, "#c99a1e");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(bx, by, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = near ? "#fff6cf" : "rgba(90, 60, 10, 0.8)";
+      ctx.lineWidth = near ? 2.5 : 1.5;
+      ctx.stroke();
+      ctx.fillStyle = "#4a3208";
+      ctx.font = "bold 12px serif";
+      ctx.fillText("$", bx, by + 1);
+      if (near) {
+        ctx.strokeStyle = "rgba(255, 220, 100, " + (0.5 + Math.sin(anim / 220) * 0.3) + ")";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(bx, by, 17 + Math.sin(anim / 220) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
   function drawLocations(w, h) {
     for (const loc of MAP_LOCATIONS) {
       const p = locPixel(loc);
@@ -332,6 +395,7 @@
       ctx.fillStyle = "#f5ecd8";
       ctx.fillText(loc.name, p.x, p.y + s + 12);
       ctx.globalAlpha = 1;
+      drawBusinessBadges(w, h, loc, p, s, open);
     }
   }
 
@@ -458,6 +522,18 @@ function visitLocation(id) {
   setModalAvatar(loc.emoji);
   const used = (it) => state.visitedToday && state.visitedToday[loc.id + ":" + it.id];
   const choices = [];
+  const biz = businessForLoc(loc.id);
+  if (biz && typeof bizLevel === "function" && bizLevel(biz.id) > 0) {
+    let pooled = 0;
+    try { pooled = Math.floor(state.businesses[biz.id].pooled); } catch (e) { pooled = 0; }
+    choices.push({
+      label: pooled >= 1
+        ? "💼 Gérer l'affaire — collecter (" + (typeof fmtMoney === "function" ? fmtMoney(pooled) : pooled + "$") + ")"
+        : "💼 Gérer l'affaire",
+      can: () => true,
+      apply: () => showBusinessModal(biz.id),
+    });
+  }
   for (const it of loc.interactions) {
     if (it.cond && !it.cond(state)) continue;
     const done = used(it);

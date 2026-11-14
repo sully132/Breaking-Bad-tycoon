@@ -1,4 +1,4 @@
-// App mobile — v9
+// App mobile — v10
 // Splash, menu principal, pages de jeu, badges de notification,
 // installation PWA, vibrations, plein écran.
 // Charge après map.js. Tout est défensif : le jeu fonctionne même sans ce fichier.
@@ -32,6 +32,9 @@
 
   function fmtShort(n) {
     try {
+      if (n >= 1e15) return (n / 1e15).toFixed(2) + " Qa$";
+      if (n >= 1e12) return (n / 1e12).toFixed(2) + " T$";
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + " Md$";
       if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + " M$";
       if (n >= 1_000) return Math.round(n / 1_000) + " k$";
       return Math.round(n) + "$";
@@ -175,6 +178,16 @@
 
       const bizReady = state.contract && state.stock > 0 ? 1 : 0;
       setBadge("badge-biz", bizReady);
+
+      let empireReady = 0;
+      if (typeof BUSINESSES !== "undefined" && typeof bizPoolCap === "function") {
+        for (const b of BUSINESSES) {
+          const st = state.businesses && state.businesses[b.id];
+          if (!st || st.level <= 0) continue;
+          if (st.pooled >= 1) empireReady += 1;
+        }
+      }
+      setBadge("badge-empire", empireReady);
 
       let crewReady = 0;
       if (typeof STAFF !== "undefined") {

@@ -1459,3 +1459,117 @@ const __house = MAP_LOCATIONS.find((l) => l.id === "house");
 if (__house) __house.interactions.push({ id: "talkJr", icon: "💬", label: "Parler à Walter Jr.", apCost: 0, dialogue: "walterjr" });
 const __hankLoc = MAP_LOCATIONS.find((l) => l.id === "hank");
 if (__hankLoc) __hankLoc.interactions.push({ id: "talkMarie", icon: "💬", label: "Parler à Marie", apCost: 0, dialogue: "marie" });
+
+// ============================================================
+// v10 — EMPIRE : affaires productrices (boucle idle tycoon)
+// Chaque affaire = un lieu qui rapporte de l'argent SALE en continu.
+// level : niveau d'investissement (revenu linéaire)
+// milestones : à 10/25/50/100/200/300/400 niveaux → revenu ×2
+// manager : embaucher le personnage = production automatique
+//          (sinon le stockage de revenus plafonne, collecte manuelle)
+// ============================================================
+
+const BUSINESS_MILESTONES = [10, 25, 50, 100, 200, 300, 400];
+
+// Plafonds de stockage des revenus (en secondes de production)
+const POOL_CAP_MANAGED = 7_200;   // 2 h avec manager
+const POOL_CAP_RAW = 900;         // 15 min sans manager
+
+const BUSINESSES = [
+  {
+    id: "carwash", name: "Lave-auto A1A", emoji: "🧽", locId: "carwash",
+    desc: "Le tout premier front. Chaque voiture est un alibi.",
+    baseCost: 250, costMult: 1.09, baseRev: 90, cycle: 2,
+    unlock: () => true,
+    manager: { id: "m_jr", name: "Walter White Jr.", emoji: "🧢", cost: 12_000,
+      quote: "« Je m'occupe de la caisse, papa. »" },
+  },
+  {
+    id: "nails", name: "Salon de manucure", emoji: "💅",
+    desc: "Vernis, faux ongles, et liasses dans le tiroir du fond.",
+    baseCost: 3_500, costMult: 1.12, baseRev: 1_100, cycle: 5,
+    unlock: (s) => s.day >= 3,
+    manager: { id: "m_francesca", name: "Francesca Liddy", emoji: "💁‍♀️", cost: 60_000,
+      quote: "« Je note tout dans le registre. Le VRAI registre. »" },
+  },
+  {
+    id: "street", name: "Réseau de rue", emoji: "🛴",
+    desc: "Combo, Badger et les autres. Le produit descend dans la ville.",
+    baseCost: 25_000, costMult: 1.13, baseRev: 9_600, cycle: 8,
+    unlock: (s) => s.day >= 4,
+    manager: { id: "m_badger", name: "Badger", emoji: "🦡", cost: 250_000,
+      quote: "« Star Trek, c'est de la métaphysique, mec. »" },
+  },
+  {
+    id: "pollos", name: "Los Pollos Hermanos", emoji: "🍗", locId: "pollos",
+    desc: "Friture, sourire professionnel, et camions frigorifiques très bien remplis.",
+    baseCost: 120_000, costMult: 1.14, baseRev: 55_200, cycle: 12,
+    unlock: (s) => s.day >= 6,
+    manager: { id: "m_lyle", name: "Lyle", emoji: "👱", cost: 800_000,
+      quote: "« Le client d'abord. Toujours. C'est la politique. »" },
+  },
+  {
+    id: "junkyard", name: "Casse de Old Joe", emoji: "🔧", locId: "junkyard",
+    desc: "Pièces détachées le jour, preuves disparues la nuit.",
+    baseCost: 500_000, costMult: 1.15, baseRev: 440_000, cycle: 20,
+    unlock: (s) => s.day >= 8,
+    manager: { id: "m_joe", name: "Old Joe", emoji: "👨‍🔧", cost: 2_500_000,
+      quote: "« On n'a jamais vu un RV ici. Jamais. »" },
+  },
+  {
+    id: "saulbiz", name: "Cabinet Saul Goodman", emoji: "⚖️", locId: "saul",
+    desc: "Des avocats, des caisses d'« associations caritatives », des factures imaginaires.",
+    baseCost: 1_500_000, costMult: 1.15, baseRev: 1_800_000, cycle: 30,
+    unlock: (s) => s.staff.includes("saul"),
+    manager: { id: "m_huell", name: "Huell Babineaux", emoji: "💼", cost: 8_000_000,
+      quote: "« Rien à déclarer. Rien du tout. »" },
+  },
+  {
+    id: "laundry", name: "Laverie industrielle", emoji: "🏭", locId: "superlab",
+    desc: "Le couvre-feu de Gus : de l'argent propre, à la chaîne.",
+    baseCost: 6_000_000, costMult: 1.16, baseRev: 27_000_000, cycle: 45,
+    unlock: (s) => s.labLevel >= 2,
+    manager: { id: "m_todd", name: "Todd Alquist", emoji: "😐", cost: 30_000_000,
+      quote: "« Aucun problème, M. White. Aucun problème du tout. »" },
+  },
+  {
+    id: "villa", name: "Hacienda d'Éladio", emoji: "🐄",
+    desc: "Piscine, poulet rôti, et un cartel qui investit dans la légalité.",
+    baseCost: 25_000_000, costMult: 1.17, baseRev: 168_000_000, cycle: 60,
+    unlock: (s) => s.day >= 20,
+    manager: { id: "m_bolsa", name: "Juan Bolsa", emoji: "🕴️", cost: 120_000_000,
+      quote: "« La diplomatie, c'est aussi du business. »" },
+  },
+  {
+    id: "rail", name: "Export Tchéquie", emoji: "🚂",
+    desc: "Le train de Lydia : wagons scellés, douanes complices, Europe entière.",
+    baseCost: 120_000_000, costMult: 1.18, baseRev: 1_350_000_000, cycle: 90,
+    unlock: (s) => s.staff.includes("lydia"),
+    manager: { id: "m_lydia", name: "Lydia Rodarte-Quayle", emoji: "📋", cost: 600_000_000,
+      quote: "« Ce n'est pas de la contrebande. C'est de la logistique. »" },
+  },
+  {
+    id: "cartelbiz", name: "Cartel international", emoji: "🌎",
+    desc: "Le sommet de la pyramide. Ton bleu sur trois continents.",
+    baseCost: 800_000_000, costMult: 1.19, baseRev: 14_400_000_000, cycle: 120,
+    unlock: (s) => s.day >= 40,
+    manager: { id: "m_gus", name: "Gus Fring", emoji: "🐔", cost: 4_000_000_000,
+      quote: "« Je suis dans l'empire du bien-être. »" },
+  },
+];
+
+// Mission supplémentaire liée à l'empire
+DAILY_MISSIONS.push({
+  id: "mCollect", icon: "💼", label: "Collecter 8 fois les revenus",
+  event: "collect", goal: 8,
+  desc: "Collecte l'argent de tes affaires (onglet Empire ou carte).",
+  reward(s) { s.respect = cap(s.respect + 3, 0, 100); }, rewardText: "Respect +3",
+});
+
+// Succès supplémentaires liés à l'empire
+ACHIEVEMENTS.push(
+  { id: "biz5", icon: "🏬", name: "Franchisé", desc: "Posséder 5 affaires", check: (s) => Object.values(s.businesses || {}).filter((b) => b.level > 0).length >= 5, reward: { cash: 100_000 } },
+  { id: "manager4", icon: "👔", name: "Ressources humaines", desc: "Embaucher 4 managers", check: (s) => Object.values(s.businesses || {}).filter((b) => b.manager).length >= 4, reward: { cash: 250_000 } },
+  { id: "bizLevels100", icon: "🏙️", name: "Empire de façade", desc: "100 niveaux d'affaires cumulés", check: (s) => Object.values(s.businesses || {}).reduce((t, b) => t + b.level, 0) >= 100, reward: { respect: 8 } },
+  { id: "bizLevels400", icon: "👑", name: "Magnat d'Albuquerque", desc: "400 niveaux d'affaires cumulés", check: (s) => Object.values(s.businesses || {}).reduce((t, b) => t + b.level, 0) >= 400, reward: { cash: 5_000_000 } },
+);
