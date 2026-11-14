@@ -1132,3 +1132,13 @@ body {
   background: #1a2412;
   font-style: italic;
 }
+
+/* v12 — polish scènes & boutons */
+#locsheet {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.loc-btn:not(.done):hover {
+  background: linear-gradient(160deg, #3a5520, #284012);
+  border-color: #6a9a3a;
+}

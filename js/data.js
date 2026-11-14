@@ -1722,3 +1722,280 @@ const CHAR_LOOKS = {
   hazmat:     { shirt: "#f0f0e8", pants: "#f0f0e8", hazmat: true },
   hazmat2:    { shirt: "#f0f0e8", pants: "#f0f0e8", hazmat: true, beard: "#5a4a2a" },
 };
+
+// ============================================================
+// v12 — ÉVÉNEMENTS SUPPLÉMENTAIRES, OPPORTUNITÉS DE CARTE,
+//       CITATIONS DES PERSONNAGES
+// ============================================================
+
+EVENTS.push(
+  {
+    id: "streetrace", emoji: "🏎️", weight: 5, type: "choice", cond: (s) => s.day >= 3,
+    title: "Course sauvage dans ta rue",
+    text: "Des caisses tunées déchirent le bitume devant le lave-auto. Les voisins filment.",
+    choices: [
+      {
+        label: "Parier sur le mulet noir (5 000$)",
+        can: (s) => s.cash >= 5_000,
+        apply(s) {
+          s.cash -= 5_000;
+          if (Math.random() < 0.5) {
+            s.dirty += 15_000;
+            log("🏎️ Le mulet noir gagne ! +15 000$ d'argent sale.", "good");
+          } else {
+            log("🏎️ Le mulet finit dernier. Pari perdu.", "bad");
+          }
+        },
+      },
+      {
+        label: "Appeler anonymement la police (Respect −2, Chaleur +3)",
+        apply(s) {
+          s.respect = cap(s.respect - 2, 0, 100);
+          addHeat(3);
+          log("🏎️ Les sirènes dispersent la course. La rue boude. Respect −2, Chaleur +3.", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "junkie", emoji: "🧟", weight: 6, type: "auto",
+    title: "Un junkie dans le labo",
+    text: "Tu surprends une silhouette qui fouille les étagères de la laverie.",
+    apply(s) {
+      if (s.stock > 0 && Math.random() < 0.5) {
+        const lost = Math.min(s.stock, 0.5);
+        s.stock = Math.round((s.stock - lost) * 10) / 10;
+        log(`🧟 Tu l'attrapes au col ! Il lâche ${lost.toFixed(1)} kg.`, "bad");
+      } else {
+        log("🧟 Il s'enfuit les mains vides. Rien de perdu... cette fois.", "info");
+      }
+    },
+  },
+  {
+    id: "cousin", emoji: "🤝", weight: 5, type: "choice", cond: (s) => s.day >= 6,
+    title: "Un cousin veut entrer dans le business",
+    text: "« J'suis pas bavard, promis ! » dit ton cousin en postant un selfie au labo.",
+    choices: [
+      {
+        label: "L'embaucher (Respect +3, Chaleur +3)",
+        apply(s) {
+          s.respect = cap(s.respect + 3, 0, 100);
+          addHeat(3);
+          scheduleEvent("cousinBetrayal", 2 + Math.floor(Math.random() * 3));
+          log("🤝 Le cousin est dans la team. On vous recontactera... Respect +3, Chaleur +3.", "info");
+        },
+      },
+      {
+        label: "Refuser sèchement (Respect −2)",
+        apply(s) {
+          s.respect = cap(s.respect - 2, 0, 100);
+          log("🤝 Le cousin boude. La famille fera des commérages. Respect −2.", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "cousinBetrayal", emoji: "🗣️", weight: 0, type: "auto",
+    title: "Le cousin a trop parlé",
+    text: "Un selfie au labo, une story, un hashtag... La rumeur enfle.",
+    apply(s) {
+      addHeat(10);
+      log("🗣️ Le cousin a raconté « l'histoire de sa vie » dans un bar. Chaleur +10.", "bad");
+    },
+  },
+  {
+    id: "chickenrun", emoji: "🍗", weight: 5, type: "auto", cond: (s) => s.day >= 8,
+    title: "Camion de poulet suspect",
+    text: "Los Pollos Hermanos « livre » un chargement à heure fixe. Couverture parfaite.",
+    apply(s) {
+      addHeat(-6);
+      s.dirty += 5_000;
+      log("🍗 Le camion de Gus passe à travers les contrôles. Chaleur −6, +5 000$ sale.", "good");
+    },
+  },
+  {
+    id: "blackout", emoji: "🔌", weight: 4, type: "auto",
+    title: "Coupure de courant",
+    text: "Albuquerque plonge dans le noir. Les cuves refroidissent...",
+    apply(s) {
+      s.flags.cookPenalty = 0.7;
+      log("🔌 Production ralentie aujourd'hui (−30%). Le générateur ronronne.", "bad");
+    },
+  },
+  {
+    id: "wire", emoji: "🎙️", weight: 6, type: "choice", cond: (s) => s.day >= 12,
+    title: "Une balance dans l'entourage",
+    text: "Mike a repéré un micro mal dissimulé. Quelqu'un parle aux feds.",
+    choices: [
+      {
+        label: "Mike « règle » le problème (10 000$)",
+        can: (s) => s.cash >= 10_000,
+        apply(s) {
+          s.cash -= 10_000;
+          addHeat(-10);
+          log("🎙️ Problème réglé. Personne ne posera de questions. Chaleur −10.", "good");
+        },
+      },
+      {
+        label: "Tout déplacer d'urgence (−20% de stock)",
+        apply(s) {
+          const lost = Math.round(s.stock * 0.2 * 10) / 10;
+          s.stock = Math.round((s.stock - lost) * 10) / 10;
+          log(`🎙️ Déménagement éclair ! ${lost.toFixed(1)} kg abandonnés dans la course.`, "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "windfall", emoji: "🎰", weight: 3, type: "auto",
+    title: "Une vieille planque retrouvée",
+    text: "Un sac sous une dalle, derrière une ancienne planque que tout le monde avait oubliée.",
+    apply(s) {
+      const gain = 5_000 + s.day * 2_000;
+      s.dirty += gain;
+      log(`🎰 Planque oubliée : +${fmt(gain)}$ d'argent sale !`, "good");
+    },
+  },
+  {
+    id: "rivalbuy", emoji: "💼", weight: 4, type: "choice", cond: (s) => s.day >= 10,
+    title: "Un concurrent rachète le secteur",
+    text: "Un réseau bien habillé propose de payer ton territoire... en billets neufs.",
+    choices: [
+      {
+        label: "Vendre le secteur (+60 000$ sale, Respect −4)",
+        apply(s) {
+          s.dirty += 60_000;
+          s.respect = cap(s.respect - 4, 0, 100);
+          log("💼 Tu signes. La rue murmure. +60 000$ sale, Respect −4.", "info");
+        },
+      },
+      {
+        label: "Rester le roi de la rue (Respect +3)",
+        apply(s) {
+          s.respect = cap(s.respect + 3, 0, 100);
+          log("💼 Tu restes. La rue respecte les têtus. Respect +3.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "health", emoji: "🩺", weight: 4, type: "choice", cond: (s) => s.day >= 15,
+    title: "Cette toux qui revient",
+    text: "Une toux sèche, profonde, qui ne part pas. Le miroir ne ment pas.",
+    choices: [
+      {
+        label: "Consulter en cachette (15 000$)",
+        can: (s) => s.cash >= 15_000,
+        apply(s) {
+          s.cash -= 15_000;
+          addHeat(-2);
+          log("🩺 Diagnostic sous faux nom. Prends soin de toi. Chaleur −2.", "info");
+        },
+      },
+      {
+        label: "Ignorer et travailler",
+        apply(s) {
+          s.respect = cap(s.respect + 1, 0, 100);
+          log("🩺 Tu tousse pendant la cuisson. « C'est rien. » Respect +1 (pour le cran).", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "jessesales", emoji: "🛴", weight: 6, type: "auto", cond: (s) => (s.businesses && (s.businesses.street?.level || 0) > 0),
+    title: "L'équipe de rue cartonne",
+    text: "Badger et Combo enchaînent les ventes au coin de la rue.",
+    apply(s) {
+      const gain = 2_000 + 500 * (s.businesses.street?.level || 1);
+      s.dirty += gain;
+      log(`🛴 Bonne journée pour l'équipe de rue : +${fmt(gain)}$ sale.`, "good");
+    },
+  },
+  {
+    id: "mikeprotection", emoji: "🛡️", weight: 5, type: "choice", cond: (s) => s.day >= 14,
+    title: "Mike propose ses services",
+    text: "« Deux mille. Pas de cadavres, pas de questions. »",
+    choices: [
+      {
+        label: "Payer la protection (10 000$, Chaleur −8)",
+        can: (s) => s.cash >= 10_000,
+        apply(s) {
+          s.cash -= 10_000;
+          addHeat(-8);
+          log("🛡️ Mike surveille tout. On dort mieux. Chaleur −8.", "good");
+        },
+      },
+      {
+        label: "Se débrouiller seul (Chaleur +4)",
+        apply(s) {
+          addHeat(4);
+          log("🛡️ Tu refuses l'aide de Mike. La nuit sera longue. Chaleur +4.", "info");
+        },
+      },
+    ],
+  },
+);
+
+// ------------------------------------------------------------
+// OPPORTUNITÉS éphémères sur la carte (v12)
+// Apparaissent chaque matin, disparaissent le soir.
+// Le joueur doit les toucher avant la fin de la journée.
+// ------------------------------------------------------------
+const OPPORTUNITIES = [
+  {
+    id: "stash", icon: "💰", label: "Planque oubliée",
+    apply(s) { const g = 2_000 + s.day * 1_500; s.dirty += g; spawnPopup(`+${fmt(g)}$ sale`, "money"); log(`💰 Planque oubliée : +${fmt(g)}$ d'argent sale.`, "good"); },
+  },
+  {
+    id: "tip", icon: "🕵️", label: "Bon tuyau",
+    apply(s) { addHeat(-5); spawnPopup("Chaleur −5", "info"); log("🕵️ Un tuyau de dernière minute fait retomber la pression. Chaleur −5.", "good"); },
+  },
+  {
+    id: "respect", icon: "🗣️", label: "Bouche à oreille",
+    apply(s) { s.respect = cap(s.respect + 2, 0, 100); spawnPopup("Respect +2", "info"); log("🗣️ La rue parle de toi en bien. Respect +2.", "good"); },
+  },
+  {
+    id: "supplier", icon: "📦", label: "Fournisseur de passage",
+    apply(s) {
+      const g = Math.min(2, Math.max(0, stockCap() - s.stock));
+      if (g > 0) { s.stock = Math.round((s.stock + g) * 10) / 10; spawnPopup(`+${g} kg`, "money"); log(`📦 Un fournisseur de passage écoule ${g} kg.`, "good"); }
+      else { s.dirty += 5_000; spawnPopup("+5 000$ sale", "money"); log("📦 Stock plein : le fournisseur paie pour rien. +5 000$ sale.", "good"); }
+    },
+  },
+  {
+    id: "trap", icon: "🚓", label: "Trop beau pour être vrai ?",
+    apply(s) {
+      if (Math.random() < 0.4) { addHeat(8); spawnPopup("Chaleur +8", "bad"); log("🚓 C'était une voiture de police ! Demi-tour rapide. Chaleur +8.", "bad"); }
+      else { const g = 3_000 + s.day * 1_000; s.dirty += g; spawnPopup(`+${fmt(g)}$ sale`, "money"); log(`🚓 Juste un acheteur pressé : +${fmt(g)}$ sale.`, "good"); }
+    },
+  },
+];
+
+// ------------------------------------------------------------
+// CITATIONS des personnages (bulles dans les scènes, v12)
+// ------------------------------------------------------------
+const QUOTES = {
+  walter:     ["La chimie est l'étude de la transformation.", "On doit être plus malins qu'eux.", "Il faut tout calculer."],
+  heisenberg: ["Dis mon nom.", "Tu es putain de mort.", "On ne négocie pas. On décide."],
+  jesse:      ["Ouais, science, mec !", "C'est de la balle, M. White !", "Ça sent l'chou-fleur ici."],
+  skyler:     ["Walter, on doit parler.", "Je le fais pour la famille.", "Les comptes doivent tenir la route."],
+  gus:        ["Je ne suis pas un danger.", "Le compte est bon.", "Tout doit être impeccable."],
+  saul:       ["Mieux vaut appeler Saul !", "Tout est légal avec le bon avocat.", "On plaide non coupable !"],
+  mike:       ["Pas de bruit. Jamais.", "Pas de demi-mesures.", "Je fais mon travail."],
+  tuco:       ["C'est du business, tonton !", "TIGHT, TIGHT, TIGHT !", "Ouais ! Magnifique !"],
+  hank:       ["Heisenberg, c'est un amateur.", "Les minerais, c'est mon affaire.", "Ce dossier me trotte dans la tête."],
+  marie:      ["C'est du vrai violet, ça.", "Hank, pose ce dossier !"],
+  jane:       ["Un dessin avant de dormir ?", "Ne me juge pas.", "Ce quartier m'étouffe."],
+  badger:     ["Le capitaine Tee-et-Baguette !", "C'est nous les rois du coin."],
+  combo:      ["On gère le secteur, tranquille.", "Zéro stress, mon pote."],
+  todd:       ["Désolé. C'était logique.", "Je peux nettoyer, si tu veux."],
+  lydia:      ["Les manifests sont parfaits.", "Je ne tolère pas les erreurs.", "Le train repart à l'aube."],
+  eladio:     ["Assieds-toi. Bois un verre.", "Ici, c'est moi qui décide.", "Le poulet est excellent."],
+  hazmat:     ["« (respiration filtrée) »", "99,1 % de pureté."],
+  hazmat2:    ["« (respiration filtrée) »", "La cuve est prête."],
+};
+
+// Succès v12
+ACHIEVEMENTS.push(
+  { id: "opps10", icon: "✨", name: "Œil de lynx", desc: "Attraper 10 opportunités sur la carte", check: (s) => (s.stats && s.stats.oppsTaken || 0) >= 10, reward: { cash: 50_000 } },
+);

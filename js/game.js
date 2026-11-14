@@ -38,6 +38,7 @@ function newGame() {
     pendingEvents: [],
     goldenCaught: 0,
     visitedToday: {},
+    opps: [],
     legendCoins: 0,
     legendUpgrades: {},
     dailyMissions: { day: 0, list: [] },
@@ -774,6 +775,7 @@ function endDay() {
   state.day += 1;
   state.ap = AP_PER_DAY + legendLevel("stamina");
   rollDailyMissions();
+  spawnOpportunities();
   state.flags.priceBonus = 1;
   state.respect = cap(state.respect, 0, 100);
 
@@ -807,6 +809,37 @@ function endDay() {
   checkRaid();
   render();
   save();
+}
+
+function spawnOpportunities() {
+  if (typeof OPPORTUNITIES === "undefined" || !OPPORTUNITIES.length) return;
+  const n = 1 + Math.floor(Math.random() * 2) + (state.day >= 5 ? 1 : 0);
+  state.opps = [];
+  for (let i = 0; i < n; i++) {
+    const kind = OPPORTUNITIES[Math.floor(Math.random() * OPPORTUNITIES.length)];
+    state.opps.push({
+      uid: "opp" + state.day + "_" + i,
+      kind: kind.id,
+      x: 0.08 + Math.random() * 0.84,
+      y: 0.08 + Math.random() * 0.84,
+    });
+  }
+}
+
+function grabOpportunity(uid) {
+  const opp = (state.opps || []).find((o) => o.uid === uid);
+  if (!opp) return false;
+  const kind = (typeof OPPORTUNITIES !== "undefined")
+    ? OPPORTUNITIES.find((k) => k.id === opp.kind) : null;
+  state.opps = state.opps.filter((o) => o.uid !== uid);
+  if (kind && typeof kind.apply === "function") kind.apply(state);
+  state.stats.oppsTaken = (state.stats.oppsTaken || 0) + 1;
+  playSfx("cash");
+  if (typeof haptic === "function") haptic(15);
+  checkAchievements();
+  render();
+  save();
+  return true;
 }
 
 function maybeEvent() {
@@ -1517,10 +1550,11 @@ function load() {
     if (!data || typeof data.day !== "number") return false;
     state = Object.assign(newGame(), data);
     state.flags = Object.assign({ cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 }, data.flags || {});
-    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0 }, data.stats || {});
+    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0 }, data.stats || {});
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     state.visitedToday = Object.assign({}, data.visitedToday || {});
+    state.opps = Array.isArray(data.opps) ? data.opps : [];
     state.legendCoins = data.legendCoins || 0;
     state.legendUpgrades = Object.assign({}, data.legendUpgrades || {});
     state.dailyMissions = data.dailyMissions && Array.isArray(data.dailyMissions.list)

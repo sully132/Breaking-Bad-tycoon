@@ -13,6 +13,10 @@
   let currentLocId = null;
   let bills = [];
   let sparks = [];
+  let floaters = [];
+  let bubble = null;
+  let nextBubbleAt = 3000;
+  let charScreens = [];
   const DPR_CAP = 2;
 
   function loc() {
@@ -322,10 +326,121 @@
     const looks = (typeof CHAR_LOOKS !== "undefined") ? CHAR_LOOKS : {};
     const ground = h * 0.78;
     const list = chars || [];
+    charScreens = [];
     for (let i = 0; i < list.length; i++) {
       const pos = (positions && positions[i]) || [0.42 + i * 0.14, 1];
-      drawPerson(w * pos[0], ground, 1.5 * (pos[1] || 1), looks[list[i]]);
+      const x = w * pos[0];
+      const sc = 1.5 * (pos[1] || 1);
+      drawPerson(x, ground, sc, looks[list[i]]);
+      charScreens.push({ id: list[i], x, y: ground, s: sc });
     }
+  }
+
+  function updateBubble(t, chars) {
+    if (typeof QUOTES === "undefined") return;
+    if (bubble && anim > bubble.until) {
+      bubble = null;
+      nextBubbleAt = anim + 4500 + Math.random() * 4500;
+      return;
+    }
+    if (!bubble && anim > nextBubbleAt && chars && chars.length) {
+      const id = chars[Math.floor(Math.random() * chars.length)];
+      const lines = QUOTES[id];
+      if (lines && lines.length) {
+        bubble = { id, text: lines[Math.floor(Math.random() * lines.length)], until: anim + 3000 };
+      } else {
+        nextBubbleAt = anim + 5000;
+      }
+    }
+  }
+
+  function drawBubble() {
+    if (!bubble) return;
+    const c = charScreens.find((cs) => cs.id === bubble.id);
+    if (!c) return;
+    const bx = c.x;
+    const by = c.y - 66 * c.s - 26;
+    ctx.font = "bold 12px sans-serif";
+    const tw = Math.min(230, ctx.measureText(bubble.text).width + 20);
+    const bh = 26;
+    const x0 = Math.max(6, Math.min(canvas.clientWidth - tw - 6, bx - tw / 2));
+    ctx.save();
+    ctx.globalAlpha = 0.94;
+    ctx.fillStyle = "#fffdf4";
+    rr(x0, by - bh, tw, bh, 9);
+    ctx.fill();
+    ctx.strokeStyle = "#4e7a2a";
+    ctx.lineWidth = 1.5;
+    rr(x0, by - bh, tw, bh, 9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bx - 5, by);
+    ctx.lineTo(bx + 5, by);
+    ctx.lineTo(bx, by + 7);
+    ctx.closePath();
+    ctx.fillStyle = "#fffdf4";
+    ctx.fill();
+    ctx.fillStyle = "#1c2b14";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(bubble.text, x0 + tw / 2, by - bh / 2);
+    ctx.restore();
+    ctx.textBaseline = "alphabetic";
+  }
+
+  function drawFloaters() {
+    for (const f of floaters) {
+      f.y -= 0.7;
+      f.life -= 0.016;
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 1.4));
+      ctx.fillStyle = "#ffd23a";
+      ctx.font = "bold 15px sans-serif";
+      ctx.textAlign = "center";
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = 3;
+      ctx.strokeText(f.txt, f.x, f.y);
+      ctx.fillText(f.txt, f.x, f.y);
+    }
+    ctx.globalAlpha = 1;
+    floaters = floaters.filter((f) => f.life > 0);
+  }
+
+  function drawBirds(w, h, t) {
+    ctx.strokeStyle = "rgba(40,40,50,0.7)";
+    ctx.lineWidth = 1.6;
+    for (let i = 0; i < 3; i++) {
+      const bx = ((t * (26 + i * 9) + i * 230) % (w + 80)) - 40;
+      const by = h * (0.08 + i * 0.05) + Math.sin(t * 2 + i * 2) * 8;
+      const flap = Math.sin(t * 9 + i * 3) * 3.5;
+      ctx.beginPath();
+      ctx.moveTo(bx - 6, by - flap);
+      ctx.quadraticCurveTo(bx, by + 2, bx + 6, by - flap);
+      ctx.stroke();
+    }
+  }
+
+  function drawTumbleweed(w, h, t) {
+    const x = ((t * 55) % (w + 80)) - 40;
+    const y = h * 0.7;
+    ctx.save();
+    ctx.translate(x, y - 8 + Math.abs(Math.sin(t * 3)) * -6);
+    ctx.rotate(t * 4);
+    ctx.strokeStyle = "rgba(120, 96, 50, 0.8)";
+    ctx.lineWidth = 1.4;
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(0, 0, 7 - i, i * 1.3, i * 1.3 + 4);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawVignette(w, h, night) {
+    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.75);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, night ? "rgba(0,0,0,0.4)" : "rgba(20,16,8,0.22)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
   }
 
   function drawBills(w, h, biz, t) {
@@ -1237,12 +1352,19 @@
     const night = def.night;
 
     drawSky(w, h, night, t);
-    if (!night) drawClouds(w, h, night);
+    if (!night) {
+      drawClouds(w, h, night);
+      drawBirds(w, h, t);
+    }
 
     const painter = PAINTERS[def.kind] || PAINTERS.desert;
     painter(w, h, t);
 
+    if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);
+
     drawCharRow(w, h, def.chars, CHAR_SPOTS[def.kind]);
+    updateBubble(t, def.chars);
+    drawBubble();
 
     const biz = bizForLoc(currentLocId);
     if (biz && levelOf(biz.id) > 0) {
@@ -1251,9 +1373,8 @@
     }
 
     drawSparks(t);
-
-    ctx.fillStyle = night ? "rgba(10,14,30,0.18)" : "rgba(255,220,120,0.08)";
-    ctx.fillRect(0, 0, w, h);
+    drawFloaters();
+    drawVignette(w, h, night);
 
     anim += 16;
     rafId = requestAnimationFrame(draw);
@@ -1347,6 +1468,9 @@
       currentLocId = locId;
       bills = [];
       sparks = [];
+      floaters = [];
+      bubble = null;
+      nextBubbleAt = 3000;
       anim = 0;
       const overlay = document.getElementById("locscene");
       canvas = document.getElementById("locscene-canvas");
@@ -1380,6 +1504,21 @@
 
   function onTap(e) {
     if (!currentLocId) return;
+    const r = canvas.getBoundingClientRect();
+    const mx = e.clientX - r.left;
+    const my = e.clientY - r.top;
+
+    const hitChar = charScreens.find((cs) => Math.hypot(cs.x - mx, cs.y - 44 * cs.s - my) < 34 * cs.s);
+    if (hitChar && typeof QUOTES !== "undefined" && QUOTES[hitChar.id]) {
+      const lines = QUOTES[hitChar.id];
+      bubble = { id: hitChar.id, text: lines[Math.floor(Math.random() * lines.length)], until: anim + 3000 };
+      if (typeof haptic === "function") haptic(10);
+      for (let i = 0; i < 5; i++) {
+        sparks.push({ x: mx, y: my, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 80, life: 0.4 });
+      }
+      return;
+    }
+
     const biz = bizForLoc(currentLocId);
     if (!biz || levelOf(biz.id) <= 0) {
       if (typeof haptic === "function") haptic(8);
@@ -1389,16 +1528,21 @@
     if (pooled >= 1 && typeof collectBusiness === "function") {
       collectBusiness(biz.id);
       buildSheet();
-      const r = canvas.getBoundingClientRect();
       for (let i = 0; i < 10; i++) {
         sparks.push({
-          x: e.clientX - r.left, y: e.clientY - r.top,
+          x: mx, y: my,
           vx: (Math.random() - 0.5) * 160, vy: -60 - Math.random() * 120,
           life: 0.5 + Math.random() * 0.3,
         });
       }
-    } else if (typeof haptic === "function") {
-      haptic(8);
+      return;
+    }
+    if (typeof bizRevPerSec === "function" && bizRevPerSec(biz.id) > 0) {
+      const gain = Math.max(5, Math.round(bizRevPerSec(biz.id) * 2));
+      state.dirty += gain;
+      floaters.push({ x: mx, y: my, txt: "+" + (typeof fmtMoney === "function" ? fmtMoney(gain) : gain + "$"), life: 0.9 });
+      if (typeof haptic === "function") haptic(6);
+      if (typeof playSfx === "function") playSfx("click");
     }
   }
 

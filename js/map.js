@@ -427,9 +427,60 @@
     drawRiver(w, h);
     drawCompass(w, h);
     drawLocations(w, h);
+    drawOpportunities(w, h);
 
     anim += 16;
     rafId = requestAnimationFrame(draw);
+  }
+
+  function drawOpportunities(w, h) {
+    if (typeof state === "undefined" || !Array.isArray(state.opps)) return;
+    const t = anim / 1000;
+    for (const o of state.opps) {
+      const kind = (typeof OPPORTUNITIES !== "undefined")
+        ? OPPORTUNITIES.find((k) => k.id === o.kind) : null;
+      if (!kind) continue;
+      const bob = Math.sin(t * 2.4 + o.x * 12) * 4;
+      const x = o.x * w;
+      const y = o.y * h + bob;
+      const pulse = 1 + Math.sin(t * 4 + o.y * 9) * 0.12;
+      const glow = ctx.createRadialGradient(x, y, 2, x, y, 26);
+      glow.addColorStop(0, "rgba(255, 214, 90, 0.55)");
+      glow.addColorStop(1, "rgba(255, 214, 90, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - 28, y - 28, 56, 56);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = "#e8c84a";
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff3c4";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = "#1c2b14";
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(kind.icon, 0, 1);
+      ctx.restore();
+      ctx.textBaseline = "alphabetic";
+    }
+  }
+
+  function pickOpportunity(mx, my) {
+    if (typeof state === "undefined" || !Array.isArray(state.opps)) return null;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    const t = anim / 1000;
+    for (const o of state.opps) {
+      const bob = Math.sin(t * 2.4 + o.x * 12) * 4;
+      const x = o.x * w;
+      const y = o.y * h + bob;
+      if (Math.hypot(x - mx, y - my) <= 26) return o;
+    }
+    return null;
   }
 
   function resize() {
@@ -474,6 +525,11 @@
 
     canvas.addEventListener("pointerdown", (e) => {
       const r = canvas.getBoundingClientRect();
+      const opp = pickOpportunity(e.clientX - r.left, e.clientY - r.top);
+      if (opp && typeof grabOpportunity === "function") {
+        grabOpportunity(opp.uid);
+        return;
+      }
       const loc = pickLocation(e.clientX - r.left, e.clientY - r.top);
       if (!loc) return;
       if (typeof haptic === "function") haptic(8);
