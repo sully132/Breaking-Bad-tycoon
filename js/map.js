@@ -162,6 +162,71 @@
     ctx.lineCap = "butt";
   }
 
+  function drawNature(w, h) {
+    let seed = 99;
+    const rnd = () => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+    for (let i = 0; i < 14; i++) {
+      const tx = w * (0.03 + rnd() * 0.94);
+      const ty = h * (0.3 + rnd() * 0.65);
+      const s = 0.6 + rnd() * 0.8;
+      ctx.fillStyle = "rgba(70, 52, 34, 0.85)";
+      ctx.fillRect(tx - 1.5 * s, ty - 6 * s, 3 * s, 6 * s);
+      ctx.fillStyle = "rgba(86, 130, 62, 0.8)";
+      ctx.beginPath();
+      ctx.arc(tx, ty - 9 * s, 5.5 * s, 0, Math.PI * 2);
+      ctx.arc(tx - 4 * s, ty - 6 * s, 4 * s, 0, Math.PI * 2);
+      ctx.arc(tx + 4 * s, ty - 6.5 * s, 4 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = "rgba(130, 120, 100, 0.7)";
+    for (let i = 0; i < 8; i++) {
+      const rx = w * (0.05 + rnd() * 0.9);
+      const ry = h * (0.35 + rnd() * 0.6);
+      ctx.beginPath();
+      ctx.ellipse(rx, ry, 3 + rnd() * 3, 2 + rnd() * 2, rnd() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawCompass(w, h) {
+    const cx = w * 0.07;
+    const cy = h * 0.12;
+    const r = Math.min(w, h) * 0.045;
+    ctx.save();
+    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = "rgba(40, 25, 12, 0.55)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(245, 236, 216, 0.8)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#d94f3d";
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.7);
+    ctx.lineTo(cx + r * 0.28, cy);
+    ctx.lineTo(cx - r * 0.28, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#f5ecd8";
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + r * 0.7);
+    ctx.lineTo(cx + r * 0.28, cy);
+    ctx.lineTo(cx - r * 0.28, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#f5ecd8";
+    ctx.font = "bold 9px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("N", cx, cy - r - 3);
+    ctx.restore();
+  }
+  
   function drawRoads(w, h) {
     ctx.strokeStyle = "rgba(255, 245, 220, 0.85)";
     ctx.lineWidth = Math.max(10, h * 0.05);
@@ -292,9 +357,11 @@
     drawClouds(w, h);
     drawMountains(w, h);
     drawCityBlocks(w, h);
+    drawNature(w, h);
     drawRoads(w, h);
     drawCars(w, h);
     drawRiver(w, h);
+    drawCompass(w, h);
     drawLocations(w, h);
 
     anim += 16;
