@@ -565,3 +565,21 @@ body {
   .tab-page { display: block; }
   .modal-avatar { margin-top: -58px; }
 }
+
+
+/* ---------- v7 : Missions + Boutique de Légende ---------- */
+.card.mission .meta { margin-bottom: 6px; }
+.card.mission .btn { width: 100%; margin-top: 8px; }
+.card.mission .fill { background: linear-gradient(90deg, var(--green-dark), var(--green)); }
+
+.card.legend-info {
+  grid-column: 1 / -1;
+  border-color: var(--yellow);
+  background: linear-gradient(135deg, rgba(217, 195, 60, 0.12), var(--panel));
+}
+.card.legend-info h3 { color: var(--yellow); }
+
+.card .meta { display: inline-block; }
+
+.card.mission.owned .btn,
+.card button[disabled] { opacity: 0.55; }
