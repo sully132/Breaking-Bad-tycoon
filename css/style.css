@@ -583,3 +583,109 @@ body {
 
 .card.mission.owned .btn,
 .card button[disabled] { opacity: 0.55; }
+
+
+/* ---------- v8 : Splash screen + look console de jeu ---------- */
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(217, 195, 60, 0.14), transparent 55%),
+    linear-gradient(180deg, #1c2b14 0%, #0d130a 100%);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+#splash.out { opacity: 0; transform: scale(1.06); pointer-events: none; }
+
+.splash-inner { text-align: center; padding: 24px; animation: splashIn 0.6s ease-out; }
+@keyframes splashIn {
+  from { transform: translateY(24px) scale(0.94); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.splash-logo {
+  display: inline-flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.splash-logo .br,
+.splash-logo .ba {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 3px solid #9fd45a;
+}
+.splash-logo .br { color: #9fd45a; }
+.splash-logo .ba { color: #e8f5d0; }
+.splash-title {
+  font-size: 34px;
+  letter-spacing: 4px;
+  color: #e8f5d0;
+  margin: 0 0 8px;
+  text-shadow: 0 0 24px rgba(159, 212, 90, 0.45);
+}
+.splash-sub { color: #a8b89a; margin: 0 0 28px; }
+.splash-note { color: #6a7a5e; font-size: 12px; margin-top: 22px; }
+#btn-start {
+  font-size: 20px;
+  padding: 16px 52px;
+  border-radius: 16px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.4), 0 0 30px rgba(159, 212, 90, 0.25);
+  animation: startPulse 1.6s ease-in-out infinite;
+}
+@keyframes startPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.btn:active { transform: translateY(2px) scale(0.97); transition: transform 0.05s; }
+.btn { transition: transform 0.08s ease, box-shadow 0.15s ease, filter 0.15s ease; }
+
+.statbar .stat {
+  border-radius: 12px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.25));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.statbar .value { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+
+.card {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+@media (hover: hover) {
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45); }
+}
+
+.bottom-nav button.active .nav-icon {
+  filter: drop-shadow(0 0 8px rgba(217, 195, 60, 0.8));
+  transform: scale(1.18);
+}
+.bottom-nav button .nav-icon { transition: transform 0.15s ease, filter 0.15s ease; }
+
+.modal-box {
+  border: 1px solid rgba(217, 195, 60, 0.35);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(217, 195, 60, 0.08);
+  animation: modalPop 0.22s ease-out;
+}
+@keyframes modalPop {
+  from { transform: scale(0.9) translateY(14px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.scene-wrap {
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 0, 0, 0.25);
+}
+#game-canvas { touch-action: manipulation; }
+
+.section-title {
+  border-left: 4px solid var(--yellow);
+  padding-left: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 15px;
+}
