@@ -1544,3 +1544,14 @@ button {
 #mg-status { font-size: 12.5px; color: var(--muted, #9aa88a); margin: 10px 2px; min-height: 17px; }
 #mg-btn { width: 100%; min-height: 48px; font-size: 15px; }
 #mg-btn:disabled { opacity: 0.55; }
+
+/* ============================================================
+   v30 — PASSE GRAPHISME UI
+   ============================================================ */
+#locscene { animation: scene-fade 0.28s ease-out; }
+@keyframes scene-fade { from { opacity: 0; } to { opacity: 1; } }
+#locsheet::before { content: ""; display: block; width: 44px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.25); margin: 8px auto 2px; }
+.loc-btn { background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12)), var(--panel, #1a220e); }
+.loc-btn:not(.done):active { transform: scale(0.97); filter: brightness(1.15); }
+.mg-box { border-color: rgba(217, 195, 60, 0.4); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(122, 182, 72, 0.12) inset; }
+#locscene-close { backdrop-filter: blur(4px); }

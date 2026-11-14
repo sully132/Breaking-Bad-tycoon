@@ -238,6 +238,18 @@
   }
   
   function drawRoads(w, h) {
+    // v30 : accotements sombres
+    const lw = Math.max(10, h * 0.05);
+    ctx.strokeStyle = "rgba(90, 60, 30, 0.55)";
+    ctx.lineWidth = lw + 4;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.55);
+    ctx.lineTo(w, h * 0.55);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(w * 0.55, 0);
+    ctx.lineTo(w * 0.55, h);
+    ctx.stroke();
     ctx.strokeStyle = "rgba(255, 245, 220, 0.85)";
     ctx.lineWidth = Math.max(10, h * 0.05);
     ctx.beginPath();
@@ -585,12 +597,38 @@
 
     ctx.clearRect(0, 0, w, h);
 
+    // v30 : ciel de la carte selon l'heure réelle
+    const ph = (typeof window.heisTimePhase === "function") ? window.heisTimePhase() : "day";
     const sky = ctx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#f5c98a");
-    sky.addColorStop(0.45, "#e8b877");
-    sky.addColorStop(1, "#d8a566");
+    if (ph === "night") {
+      sky.addColorStop(0, "#0a1024");
+      sky.addColorStop(0.5, "#182238");
+      sky.addColorStop(1, "#2c3450");
+    } else if (ph === "dawn") {
+      sky.addColorStop(0, "#c88a5a");
+      sky.addColorStop(0.5, "#e8b077");
+      sky.addColorStop(1, "#f2d9a8");
+    } else if (ph === "dusk") {
+      sky.addColorStop(0, "#8a5a7a");
+      sky.addColorStop(0.5, "#c8846a");
+      sky.addColorStop(1, "#e8c088");
+    } else {
+      sky.addColorStop(0, "#f5c98a");
+      sky.addColorStop(0.45, "#e8b877");
+      sky.addColorStop(1, "#d8a566");
+    }
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
+    if (ph === "night") {
+      let mseed = 21;
+      const mrnd = () => { mseed = (mseed * 16807) % 2147483647; return mseed / 2147483647; };
+      ctx.fillStyle = "#dfe8ff";
+      for (let i = 0; i < 50; i++) {
+        ctx.globalAlpha = 0.3 + 0.5 * Math.abs(Math.sin(anim / 700 + i));
+        ctx.fillRect(mrnd() * w, mrnd() * h * 0.4, 1.6, 1.6);
+      }
+      ctx.globalAlpha = 1;
+    }
 
     // v24 : parallaxe — chaque plan de décor bouge différemment sous le doigt
     ctx.save(); ctx.translate(panX * 0.20, panY * 0.20);
@@ -618,6 +656,12 @@
     ctx.restore();
     drawEventBanner(w, h);
     drawOpportunities(w, h);
+    // v30 : vignette carte
+    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.5, w / 2, h / 2, Math.max(w, h) * 0.78);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(30,18,8,0.28)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
 
     // v27 : DPR adaptatif — si le fps chute, on réduit la résolution
     fpsFrames += 1;

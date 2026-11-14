@@ -125,7 +125,7 @@ const gjs3 = fs.readFileSync("js/game.js", "utf8");
 console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes("comboUntil = now + 2500") ? "OK" : "FAIL");
 console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
 const sw3 = fs.readFileSync("sw.js", "utf8");
-console.log("SW cache v29:", sw3.includes("heisenberg-v29") ? "OK" : "FAIL");
+console.log("SW cache v30:", sw3.includes("heisenberg-v30") ? "OK" : "FAIL");
 
 // v23 : étages du Superlab + reliques + prestige
 console.log("labFloors migration:", typeof G.state.labFloors === "number" ? "OK" : "FAIL");
@@ -146,7 +146,7 @@ console.log("succes v23:", djs4.includes("floors3") && djs4.includes("relic4") ?
 console.log("bouton reliques:", fs.readFileSync("index.html", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("wiring reliques:", fs.readFileSync("js/app.js", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("scene superlab v23:", fs.readFileSync("js/locscene.js", "utf8").includes("drawFloorsPanel") ? "OK" : "FAIL");
-console.log("SW cache v29 (finale):", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v29") ? "OK" : "FAIL");
+console.log("SW cache v30 (finale):", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v30") ? "OK" : "FAIL");
 
 // v24 : monde vivant
 const mjs5 = fs.readFileSync("js/map.js", "utf8");
@@ -215,7 +215,7 @@ console.log("banniere evenement:", ljs8.includes("drawEventBanner") ? "OK" : "FA
 console.log("braises evenement:", ljs8.includes("evParts") ? "OK" : "FAIL");
 console.log("boutons minijeu:", ljs8.includes("openMinigame(\"cook\")") && ljs8.includes("openMinigame(\"tuco\")") ? "OK" : "FAIL");
 console.log("migrations minijeu:", fs.readFileSync("js/game.js", "utf8").includes("mgCookDay") ? "OK" : "FAIL");
-console.log("SW cache v29:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v29") ? "OK" : "FAIL");
+console.log("SW cache v30:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v30") ? "OK" : "FAIL");
 
 // v29 : maîtrise & récompenses
 const djs9 = fs.readFileSync("js/data.js", "utf8");
@@ -226,7 +226,22 @@ console.log("minijeu vente:", mgjs9.includes("newSell") && mgjs9.includes("Vente
 console.log("stats minijeu:", mgjs9.includes("mgPlayed") && mgjs9.includes("mgBest") && mgjs9.includes("mgTucoBest") && mgjs9.includes("mgSellBest") ? "OK" : "FAIL");
 console.log("bouton vente:", fs.readFileSync("js/locscene.js", "utf8").includes('openMinigame("sell")') ? "OK" : "FAIL");
 console.log("migration stats v29:", fs.readFileSync("js/game.js", "utf8").includes("mgSellBest") ? "OK" : "FAIL");
-console.log("SW cache v29:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v29") ? "OK" : "FAIL");
+console.log("SW cache v30:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v30") ? "OK" : "FAIL");
+
+// v30 : passe graphisme
+const ljs10 = fs.readFileSync("js/locscene.js", "utf8");
+console.log("ciel riche:", ljs10.includes("#4e9fd4") && ljs10.includes("#070b18") ? "OK" : "FAIL");
+console.log("nuages volumetriques:", ljs10.includes("blobs") ? "OK" : "FAIL");
+console.log("sols detailles:", ljs10.includes("quadraticCurveTo") && ljs10.includes("fissures") === false && ljs10.includes("rgba(90, 110, 50, 0.5)") ? "OK" : "FAIL");
+console.log("grain de film:", ljs10.includes("grainTile") ? "OK" : "FAIL");
+console.log("poussieres jour:", ljs10.includes("drawDust") ? "OK" : "FAIL");
+console.log("brume d'aube:", ljs10.includes("drawMist") ? "OK" : "FAIL");
+const mjs10 = fs.readFileSync("js/map.js", "utf8");
+console.log("ciel carte dynamique:", mjs10.includes("#0a1024") && mjs10.includes("dusk") ? "OK" : "FAIL");
+console.log("routes accotements:", mjs10.includes("accotements") ? "OK" : "FAIL");
+console.log("vignette carte:", mjs10.includes("vignette carte") ? "OK" : "FAIL");
+console.log("css v30:", fs.readFileSync("css/style.css", "utf8").includes("scene-fade") ? "OK" : "FAIL");
+console.log("SW cache v30:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v30") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);

@@ -83,3 +83,11 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] 4 nouveaux événements : embouteillage au lave-auto, la liste de Lydia, Combo a un plan, jerrican premium *(livré en v29)*
 - [x] 1 nouveau week-end : 🎤 Karaoké de Badger *(livré en v29)*
 - [x] Suivi des performances mini-jeux (meilleurs scores, nombre de parties jouées) *(livré en v29)*
+
+## Phase 10 — Passe graphisme majeure (v30) ✅ LIVRÉE (v30)
+- [x] Ciels riches : dégradés 3 arrêts, 70 étoiles scintillantes avec croix brillantes, lune à cratères et halo, soleil à triple halo rayonnant *(livré en v30)*
+- [x] Nuages volumétriques : base sombre, sommet clair, ombre portée au sol *(livré en v30)*
+- [x] Sols détaillés : cailloux avec reflet, fissures, touffes d'herbe *(livré en v30)*
+- [x] Ambiance : poussières dans la lumière le jour, brume d'aube, grain de film dans les scènes *(livré en v30)*
+- [x] Carte : ciel selon l'heure réelle (nuit étoilée, aube, crépuscule), routes avec accotements, vignette *(livré en v30)*
+- [x] UI : fondu d'ouverture des scènes, poignée du bottom-sheet, boutons de scène affinés, mini-jeux dorés *(livré en v30)*
