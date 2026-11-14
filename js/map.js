@@ -350,6 +350,23 @@
     }
   }
 
+  function drawTimeTint(w, h) {
+    let phase = "day";
+    try {
+      if (typeof window.heisTimePhase === "function") phase = window.heisTimePhase();
+    } catch (e) { /* locscene pas chargé */ }
+    if (phase === "night") {
+      ctx.fillStyle = "rgba(12, 16, 40, 0.32)";
+      ctx.fillRect(0, 0, w, h);
+    } else if (phase === "dawn") {
+      ctx.fillStyle = "rgba(255, 150, 80, 0.12)";
+      ctx.fillRect(0, 0, w, h);
+    } else if (phase === "dusk") {
+      ctx.fillStyle = "rgba(140, 70, 160, 0.14)";
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
   function shadeCss(hex, amt) {
     try {
       const n = parseInt(hex.slice(1), 16);
@@ -449,6 +466,7 @@
     drawCars(w, h);
     drawRiver(w, h);
     drawCompass(w, h);
+    drawTimeTint(w, h);
     drawLocations(w, h);
     drawOpportunities(w, h);
 

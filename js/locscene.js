@@ -14,6 +14,7 @@
   let bills = [];
   let sparks = [];
   let floaters = [];
+  let shoot = null;
   let bubble = null;
   let nextBubbleAt = 3000;
   let charScreens = [];
@@ -69,6 +70,72 @@
     g = Math.max(0, Math.min(255, g));
     b = Math.max(0, Math.min(255, b));
     return "rgb(" + r + "," + g + "," + b + ")";
+  }
+
+  function timePhase() {
+    const d = new Date();
+    const hr = d.getHours() + d.getMinutes() / 60;
+    if (hr >= 20 || hr < 5) return "night";
+    if (hr < 7.5) return "dawn";
+    if (hr >= 18) return "dusk";
+    return "day";
+  }
+
+  function applyPhaseTint(w, h, phase) {
+    if (phase === "dawn") {
+      ctx.fillStyle = "rgba(255, 150, 80, 0.14)";
+      ctx.fillRect(0, 0, w, h);
+    } else if (phase === "dusk") {
+      ctx.fillStyle = "rgba(140, 70, 160, 0.16)";
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
+  function drawFireflies(w, h, t) {
+    for (let i = 0; i < 7; i++) {
+      const fx = w * (0.15 + 0.7 * ((Math.sin(t * 0.3 + i * 2.7) + 1) / 2));
+      const fy = h * (0.6 + 0.16 * ((Math.cos(t * 0.45 + i * 1.9) + 1) / 2));
+      const glow = 0.3 + 0.7 * ((Math.sin(t * 3 + i * 2.2) + 1) / 2);
+      ctx.globalAlpha = glow;
+      ctx.fillStyle = "#d8ff8a";
+      ctx.beginPath();
+      ctx.arc(fx, fy, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = glow * 0.35;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function updateShootingStar(w, h, night) {
+    if (!night) { shoot = null; return; }
+    if (!shoot && Math.random() < 0.0025) {
+      shoot = { x: w * (0.3 + Math.random() * 0.6), y: h * (0.04 + Math.random() * 0.12), vx: -5 - Math.random() * 3, vy: 1.6 + Math.random() * 1.4, life: 1 };
+    }
+    if (shoot) {
+      shoot.x += shoot.vx;
+      shoot.y += shoot.vy;
+      shoot.life -= 0.012;
+      if (shoot.life <= 0) shoot = null;
+    }
+  }
+
+  function drawShootingStar() {
+    if (!shoot) return;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, shoot.life);
+    const g = ctx.createLinearGradient(shoot.x, shoot.y, shoot.x - shoot.vx * 14, shoot.y - shoot.vy * 14);
+    g.addColorStop(0, "rgba(255,255,255,0.95)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(shoot.x, shoot.y);
+    ctx.lineTo(shoot.x - shoot.vx * 14, shoot.y - shoot.vy * 14);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawSky(w, h, night, t) {
@@ -1417,7 +1484,8 @@
     }
     const def = sceneDef();
     const t = anim / 1000;
-    const night = def.night;
+    const phase = timePhase();
+    const night = def.night || phase === "night";
 
     drawSky(w, h, night, t);
     if (!night) {
@@ -1444,6 +1512,10 @@
 
     drawSparks(t);
     drawFloaters();
+    if (night && OUTDOOR_KINDS.has(def.kind)) drawFireflies(w, h, t);
+    updateShootingStar(w, h, night);
+    drawShootingStar();
+    if (!def.night) applyPhaseTint(w, h, phase);
     drawVignette(w, h, night);
 
     anim += 16;
@@ -1653,6 +1725,7 @@
     init();
   }
 
+  window.heisTimePhase = timePhase;
   window.openLocScene = openLocScene;
   window.closeLocScene = closeLocScene;
   window.refreshLocScene = refreshLocScene;
