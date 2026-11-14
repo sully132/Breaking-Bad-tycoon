@@ -2399,7 +2399,7 @@ EVENTS.push(
     },
   },
   {
-    id: "precursor", loc: "station", emoji: "🛢️", weight: 5, type: "choice",
+    id: "precursor", loc: "rail", emoji: "🛢️", weight: 5, type: "choice",
     title: "Bidons douteux à la station",
     text: "Un routier propose des bidons de méthylamine « tombés du camion ». Prix d'ami.",
     choices: [
@@ -2525,7 +2525,7 @@ EVENTS.push(
     ],
   },
   {
-    id: "comboMessage", loc: "street", emoji: "🛴", weight: 5, type: "choice", cond: (s) => s.day >= 4,
+    id: "comboMessage", loc: "corner", emoji: "🛴", weight: 5, type: "choice", cond: (s) => s.day >= 4,
     title: "Combo a un plan",
     text: "« Un pote revend un lot en bloc, prix cassé. On achète, on découpe, on revend. T'assures le cash ? »",
     choices: [

@@ -2187,7 +2187,7 @@
           apply: () => { window.openMinigame("tuco"); },
         });
       }
-      if (loc.id === "street") {
+      if (loc.id === "corner") {
         const mgDone = state.mgSellDay === state.day;
         buttons.push({
           label: mgDone ? "🥫 Vente express — terminée aujourd'hui ✔" : "🥫 Mini-jeu : Vente express (argent sale)",

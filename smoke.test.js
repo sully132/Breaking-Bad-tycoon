@@ -104,7 +104,7 @@ console.log("garanti jour 2:", gjs.includes("sceneEventsSeen") ? "OK" : "FAIL");
 
 // v21 : persos, dialogues, scènes d'événements
 console.log("CHAR_NAMES:", Object.keys(D.CHAR_NAMES).length === 18 ? "OK (18)" : "FAIL (" + Object.keys(D.CHAR_NAMES).length + ")");
-console.log("EVENT_QUOTES:", Object.keys(D.EVENT_QUOTES).length === 21 ? "OK (21)" : "FAIL (" + Object.keys(D.EVENT_QUOTES).length + ")");
+console.log("EVENT_QUOTES:", Object.keys(D.EVENT_QUOTES).length === 33 ? "OK (33)" : "FAIL (" + Object.keys(D.EVENT_QUOTES).length + ")");
 const extraQ = Object.keys(D.QUOTES).filter((k) => D.QUOTES[k].length >= 3).length;
 console.log("QUOTES enrichies:", extraQ === 18 ? "OK (18/18)" : "FAIL (" + extraQ + "/18)");
 console.log("visiteurs = vrais persos:", D.EVENT_VISITORS.hank === undefined || typeof D.EVENT_VISITORS.hank === "object" ? "OK" : "FAIL");
@@ -125,7 +125,7 @@ const gjs3 = fs.readFileSync("js/game.js", "utf8");
 console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes("comboUntil = now + 2500") ? "OK" : "FAIL");
 console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
 const sw3 = fs.readFileSync("sw.js", "utf8");
-console.log("SW cache v27:", sw3.includes("heisenberg-v27") ? "OK" : "FAIL");
+console.log("SW cache v29:", sw3.includes("heisenberg-v29") ? "OK" : "FAIL");
 
 // v23 : étages du Superlab + reliques + prestige
 console.log("labFloors migration:", typeof G.state.labFloors === "number" ? "OK" : "FAIL");
@@ -146,7 +146,7 @@ console.log("succes v23:", djs4.includes("floors3") && djs4.includes("relic4") ?
 console.log("bouton reliques:", fs.readFileSync("index.html", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("wiring reliques:", fs.readFileSync("js/app.js", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("scene superlab v23:", fs.readFileSync("js/locscene.js", "utf8").includes("drawFloorsPanel") ? "OK" : "FAIL");
-console.log("SW cache v27 (finale):", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v27") ? "OK" : "FAIL");
+console.log("SW cache v29 (finale):", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v29") ? "OK" : "FAIL");
 
 // v24 : monde vivant
 const mjs5 = fs.readFileSync("js/map.js", "utf8");
@@ -172,8 +172,8 @@ console.log("wiring histoire:", fs.readFileSync("js/app.js", "utf8").includes("b
 console.log("css recit:", fs.readFileSync("css/style.css", "utf8").includes(".story-overlay") ? "OK" : "FAIL");
 
 // v26 : rétention
-console.log("WEEKEND_EVENTS:", D.WEEKEND_EVENTS && D.WEEKEND_EVENTS.length === 6 ? "OK" : "FAIL");
-console.log("week-end choices:", D.WEEKEND_EVENTS.filter((e) => e.type === "choice" && e.choices && e.choices.length === 2).length === 2 ? "OK" : "FAIL");
+console.log("WEEKEND_EVENTS:", D.WEEKEND_EVENTS && D.WEEKEND_EVENTS.length === 11 ? "OK" : "FAIL");
+console.log("week-end choices:", D.WEEKEND_EVENTS.filter((e) => e.type === "choice" && e.choices && e.choices.length === 2).length === 4 ? "OK" : "FAIL");
 console.log("streak migration:", typeof G.state.loginStreak === "number" && typeof G.state.tutoDone === "boolean" ? "OK" : "FAIL");
 console.log("isWeekend:", typeof G.isWeekend() === "boolean" ? "OK" : "FAIL");
 G.state.lastLogin = "";
