@@ -29,6 +29,9 @@ function newGame() {
     goal: VICTORY_CASH,
     endless: false,
     taps: 0,
+    combo: 0,
+    comboUntil: 0,
+    maxCombo: 0,
     investments: {},
     legendPoints: 0,
     prestiges: 0,
@@ -455,9 +458,19 @@ function tapBoost(x = 0.5, y = 0.5) {
   state.taps += 1;
   trackMission("tap", 1);
   const mult = frenzyActive() ? 2 : 1;
-  const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE)) * mult;
+  // v22 : combo de tap — enchaîner les taps (< 2,5 s) monte le multiplicateur
+  const now = Date.now();
+  if (now < (state.comboUntil || 0)) state.combo += 1;
+  else state.combo = 1;
+  state.comboUntil = now + 2500;
+  if (state.combo > (state.maxCombo || 0)) state.maxCombo = state.combo;
+  if (state.combo === 10) spawnPopup("🔥 COMBO x" + state.combo + " !", "combo");
+  else if (state.combo === 25) { spawnPopup("🔥🔥 MÉGA COMBO x25 !", "combo"); toast("🔥🔥 MÉGA COMBO", "La rue retient ton nom. Respect +2."); state.respect = cap(state.respect + 2, 0, 100); }
+  else if (state.combo === 50) { spawnPopup("💥 combo x50 !!", "combo"); toast("💥 IMBATTABLE", "Combo x50 ! Récompense : 5 000$."); state.cash += 5_000; }
+  const comboMult = 1 + Math.min(state.combo, 25) * 0.04;
+  const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE * comboMult)) * mult;
   state.cash += gain;
-  spawnPopup(`+${fmt(gain)}$`, "money");
+  spawnPopup(`+${fmt(gain)}$${state.combo >= 3 ? " 🔥x" + state.combo : ""}`, "money");
   playSfx("tap");
   if (state.taps % 25 === 0) {
     state.respect = cap(state.respect + 1, 0, 100);
@@ -1673,6 +1686,9 @@ function load() {
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
+    if (typeof state.combo !== "number") state.combo = 0;
+    if (typeof state.comboUntil !== "number") state.comboUntil = 0;
+    if (typeof state.maxCombo !== "number") state.maxCombo = 0;
     state.visitedToday = Object.assign({}, data.visitedToday || {});
     state.opps = Array.isArray(data.opps) ? data.opps : [];
     state.legendCoins = data.legendCoins || 0;

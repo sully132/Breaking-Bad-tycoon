@@ -1,0 +1,72 @@
+# 🗺️ ROADMAP — Heisenberg Tycoon
+
+> Plan de développement pour faire de Heisenberg Tycoon un jeu d'exception.
+> Chaque phase = 1 à 2 versions livrées sur `main`. Critères de réussite définis à l'avance.
+
+## État actuel (v21)
+Boucle idle/tycoon complète : labo au tap, 10 affaires à niveler avec managers et synergies
+(équipe/équipement/pureté/marché), carte interactive à 17 lieux, scènes plein écran animées
+(cycle jour/nuit, météo, personnages vivants), 62 événements dont 21 joués DANS les scènes
+avec visiteurs célèbres et répliques, opportunités dorées, coup de pub ×4, prestige, boutique
+légende, missions quotidiennes, succès, PWA installable.
+
+---
+
+## Phase 1 — Boucle addictive (v22)
+**Objectif : donner envie de garder le doigt sur l'écran.**
+- [x] **Combo de tap** : taps enchaînés < 2,5 s → multiplicateur progressif jusqu'à ×2,
+      paliers annoncés (🔥 x10, 🔥🔥 x25, 💥 x50), record `maxCombo` + succès dédié.
+- [x] **Chaînes d'événements à conséquences différées** : Contrat de Gus (accepter →
+      récompense J+3 / refuser → colère de Gus J+2) et Convoyage cartel (paie J+2,
+      chaleur J+4). Les choix d'aujourd'hui créent les événements de demain.
+- **Critère de réussite** : un joueur actif voit un événement de scène par jour, et le tap
+  rapporte sensiblement plus en combo qu'en tapotement dispersé.
+
+## Phase 2 — Progression longue (v23)
+**Objectif : un horizon à plusieurs semaines.**
+- [ ] **Étages d'empire** (à la Idle Miner) : le Superlab gagne des sous-sols (-1, -2, -3)
+      chacun avec un multiplicateur global et son propre visuel dans la scène.
+- [ ] **Collection d'objets légendaires** (plaque d'immatriculation, tortue, chapeau…) à
+      trouver via opportunités rares, chacun avec un bonus passif et une vitrine dans le menu.
+- [ ] **Prestige enrichi** : arbres de légende à 3 branches avec paliers intermédiaires.
+- **Critère** : un objectif clair toutes les 2-3 sessions.
+
+## Phase 3 — Un monde vivant (v24)
+**Objectif : la carte doit respirer.**
+- [ ] **Parallaxe au doigt** sur la carte (2-3 plans de profondeur).
+- [ ] **Trafic animé** : voitures qui circulent entre les lieux, avion cargo occasionnel.
+- [ ] **Météo sur la carte** (cohérente avec les scènes) + transitions douces.
+- [ ] **Ambiance sonore par scène** : nappes générées en WebAudio (vent désert, ville, usine).
+- **Critère** : on ouvre la carte juste pour la regarder vivre.
+
+## Phase 4 — Récit (v25)
+**Objectif : une vraie saison jouable.**
+- [ ] **3 arcs narratifs** (Enquête Hank, Guerre de cartel, Chute de Gus) en 4-5 étapes
+      chacun, déclenchés par la progression (jours, respect, chaleur), avec choix persistants
+      et 2 fins par arc.
+- [ ] **Cinématiques simples** : dialogues séquencés en plein écran avec personnages animés.
+- [ ] **Journal narratif** récapitulant les chapitres débloqués.
+- **Critère** : le joueur raconte sa partie (« j'ai trahi Gus au chapitre 3 »).
+
+## Phase 5 — Rétention (v26)
+**Objectif : revenir chaque jour.**
+- [ ] **Tutoriel contextuel** (3 écrans max, skippable) pour les nouvelles parties.
+- [ ] **Événements de fin de semaine** (week-end = pool d'événements exclusifs + bonus).
+- [ ] **Objectif quotidien renouvelé** + récompense de connexion (streak de jours réels).
+- [ ] **Écran de fin de partie détaillé** (stats, records, plus beau moment).
+- **Critère** : D1/D7 visibles dans les stats de sauvegarde.
+
+## Phase 6 — Finition (v27+)
+**Objectif : qualité perçue de jeu du Play Store.**
+- [ ] **Passe d'équilibrage globale** validée par simulation (100 jours joués par script).
+- [ ] **Performance** : profiler les scènes, cap DPR adaptatif, 60 fps sur mid-range.
+- [ ] **Accessibilité** : tailles de cible ≥ 44 px, contrastes, option réduction d'animations.
+- [ ] **Nouvelle passe graphique** sur les 17 scènes (détails, éclairage dynamique).
+- **Critère** : aucune baisse de fps notable, équilibrage sans trou de 2 jours.
+
+---
+
+## Règles de livraison (inchangées)
+- Push direct sur `main`, version bumpée (`sw.js` CACHE + index.html + RESUME.md).
+- `node --check` + smoke test Node avant chaque push.
+- Sauvegarde toujours compatible : migration dans `load()` pour tout nouveau champ.
