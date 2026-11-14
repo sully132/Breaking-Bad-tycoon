@@ -1,0 +1,26 @@
+{
+  "name": "Heisenberg Tycoon",
+  "short_name": "Heisenberg",
+  "description": "Tycoon idle inspiré de Breaking Bad : cuisine, blanchis, étends ton empire à Albuquerque.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101408",
+  "theme_color": "#4e7a2a",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
