@@ -737,6 +737,99 @@ const EVENTS = [
     ],
   },
   {
+    id: "gusContract", emoji: "🐔", weight: 5,
+    type: "choice",
+    cond(s) { return s.staff.includes("gus") && s.day >= 20; },
+    title: "Livraison express pour Gus",
+    text: "« Une livraison prioritaire. Discrétion absolue. La récompense sera à la hauteur. »",
+    choices: [
+      {
+        label: "Accepter la livraison (récompense dans 3 jours)",
+        apply(s) {
+          scheduleEvent("gusReward", 3);
+          log("🐔 Livraison acceptée. Gus attendra 3 jours...", "event");
+        },
+      },
+      {
+        label: "Refuser (Respect −8, Gus s'en souviendra)",
+        apply(s) {
+          s.respect = cap(s.respect - 8, 0, 100);
+          scheduleEvent("gusAnger", 2);
+          log("🐔 Refus noté. Gus n'oublie rien. Respect −8.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "gusReward", emoji: "💰", weight: 0,
+    type: "auto",
+    title: "Gus tient parole",
+    text: "La livraison s'est parfaitement déroulée. L'enveloppe est épaisse.",
+    apply(s) {
+      const g = 40_000 + s.day * 5_000;
+      s.dirty += g;
+      s.respect = cap(s.respect + 5, 0, 100);
+      log(`💰 Gus récompense votre loyauté : +${fmt(g)}$ sale, Respect +5.`, "good");
+    },
+  },
+  {
+    id: "gusAnger", emoji: "🐔", weight: 0,
+    type: "auto",
+    title: "Gus se venge",
+    text: "« Vous m'avez déçu. Les conséquences seront... éducatives. »",
+    apply(s) {
+      addHeat(8);
+      s.respect = cap(s.respect - 5, 0, 100);
+      s.purity = cap(s.purity - 3, 0, 100);
+      log("🐔 La colère de Gus coûte cher : Chaleur +8, Respect −5, Pureté −3.", "bad");
+    },
+  },
+  {
+    id: "muleRun", emoji: "🚐", weight: 4,
+    type: "choice",
+    cond(s) { return s.day >= 30; },
+    title: "Convoyage pour le cartel",
+    text: "Un intermédiaire propose un convoyage bien payé... mais qui ne passe pas inaperçu.",
+    choices: [
+      {
+        label: "Prendre le volant (gros paie J+2, chaleur J+4)",
+        apply(s) {
+          scheduleEvent("mulePay", 2);
+          scheduleEvent("muleBust", 4);
+          log("🚐 Convoyage accepté. L'argent dans 2 jours... la chaleur aussi.", "event");
+        },
+      },
+      {
+        label: "Rester prudent (Respect −5)",
+        apply(s) {
+          s.respect = cap(s.respect - 5, 0, 100);
+          log("🚐 Vous déclinez. Le cartel note votre prudence. Respect −5.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "mulePay", emoji: "💵", weight: 0,
+    type: "auto",
+    title: "Convoyage réussi",
+    text: "La marchandise est arrivée. Le paiement aussi.",
+    apply(s) {
+      const g = 60_000 + s.day * 6_000;
+      s.dirty += g;
+      log(`💵 Convoyage payé : +${fmt(g)}$ sale.`, "good");
+    },
+  },
+  {
+    id: "muleBust", emoji: "🚔", weight: 0,
+    type: "auto",
+    title: "Retombées du convoyage",
+    text: "Un contrôle routier a intercepté un véhicule similaire. La DEA creuse.",
+    apply(s) {
+      addHeat(12);
+      log("🚔 Le convoyage laisse des traces : Chaleur +12.", "bad");
+    },
+  },
+  {
     id: "lydiaDemand", loc: "hq", emoji: "📋", weight: 5,
     type: "choice",
     cond(s) { return s.staff.includes("lydia"); },
@@ -924,7 +1017,9 @@ EVENTS.push(
 ACHIEVEMENTS.push(
   { id: "invest10", icon: "🏢", name: "Investisseur", desc: "Niveau 10 sur un investissement", check: (s) => Object.values(s.investments || {}).some((v) => v >= 10), reward: { cash: 50_000 } },
   { id: "prestige1", icon: "🎭", name: "Nouvelle identité", desc: "Changer d'identité une fois", check: (s) => s.prestiges >= 1, reward: {} },
-  { id: "streak7", icon: "🔥", name: "Série chaude", desc: "Vendre 7 jours de suite", check: (s) => s.streak >= 7, reward: { cash: 25_000 } }
+  { id: "streak7", icon: "🔥", name: "Série chaude", desc: "Vendre 7 jours de suite", check: (s) => s.streak >= 7, reward: { cash: 25_000 } },
+  { id: "combo25", icon: "🔥", name: "Sous pression", desc: "Atteindre un combo de 25 taps", check: (s) => (s.maxCombo || 0) >= 25, reward: { cash: 15_000 } },
+  { id: "combo50", icon: "💥", name: "Doigts d'or", desc: "Atteindre un combo de 50 taps", check: (s) => (s.maxCombo || 0) >= 50, reward: { respect: 8 } }
 );
 
 // ------------------------------------------------------------
