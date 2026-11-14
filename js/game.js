@@ -38,6 +38,9 @@ function newGame() {
     pendingEvents: [],
     goldenCaught: 0,
     visitedToday: {},
+    legendCoins: 0,
+    legendUpgrades: {},
+    dailyMissions: { day: 0, list: [] },
     gameOver: false,
     victory: false,
     log: [],
@@ -88,7 +91,7 @@ function lab() {
 }
 
 function stockCap() {
-  return lab().cap + (state.capBonus || 0);
+  return lab().cap + (state.capBonus || 0) + 5 * legendLevel("vault");
 }
 
 function invLevel(id) {
@@ -97,6 +100,10 @@ function invLevel(id) {
 
 function legendMult() {
   return 1 + PRESTIGE_POINT_BONUS * (state.legendPoints || 0);
+}
+
+function legendLevel(id) {
+  return (state.legendUpgrades && state.legendUpgrades[id]) || 0;
 }
 
 function frenzyActive() {
@@ -131,6 +138,7 @@ function cookMult() {
   m *= 1 + invLevel("chemists") * 0.10;
   m *= state.flags.cookPenalty;
   m *= legendMult();
+  m *= 1 + 0.15 * legendLevel("cook");
   if (frenzyActive()) m *= 2;
   return m;
 }
@@ -145,6 +153,7 @@ function pricePerKg() {
   if (hasUpgrade("railnetwork")) p *= 1.3;
   p *= 1 + invLevel("marketing") * 0.03;
   p *= legendMult();
+  p *= 1 + 0.15 * legendLevel("price");
   p *= streakBonus();
   return p;
 }
@@ -154,6 +163,7 @@ function launderRate() {
   if (hasStaffEffect("launderRate")) r = 0.9;
   if (hasUpgrade("carwash")) r += 0.1;
   r += invLevel("accountants") * 0.02;
+  r += 0.03 * legendLevel("launder");
   return cap(r, 0, 0.98);
 }
 
@@ -162,6 +172,7 @@ function launderVolume() {
 }
 
 function addHeat(n) {
+  if (n > 0) n = Math.round(n * (1 - 0.06 * legendLevel("cool")));
   state.heat = cap(state.heat + n, 0, 100);
 }
 
@@ -272,6 +283,7 @@ function completeContract(success) {
   }
   state.contract = null;
   state.contractCooldown = CONTRACT_COOLDOWN_DAYS;
+  if (success) trackMission("contract", 1);
 }
 
 // ---------- Production idle (temps réel) ----------
@@ -294,6 +306,7 @@ function idleTick() {
 function tapBoost(x = 0.5, y = 0.5) {
   if (state.gameOver || state.victory) return;
   state.taps += 1;
+  trackMission("tap", 1);
   const mult = frenzyActive() ? 2 : 1;
   const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE)) * mult;
   state.cash += gain;
@@ -337,6 +350,7 @@ function goldenCollect() {
     toast("💎 Cristal doré", `Un petit cadeau du ciel : +${gain.toFixed(1)} kg.`);
   }
   playSfx("golden");
+  trackMission("golden", 1);
   checkAchievements();
   render();
   save();
@@ -401,6 +415,7 @@ const ACTIONS = [
       s.stats.cooked = Math.round((s.stats.cooked + kg) * 10) / 10;
       s.flags.cookPenalty = 1;
       s.flags.precursorDiscount = 1;
+      trackMission("cook", kg);
       spawnPopup(`+${kg.toFixed(1)} kg`, "crystal");
       playSfx("cook");
       if (typeof scene !== "undefined" && scene) scene.FX.cook = performance.now();
@@ -431,6 +446,7 @@ const ACTIONS = [
       s.stats.sold = Math.round((s.stats.sold + qty) * 10) / 10;
       s.stats.totalEarned += revenue;
       s.soldToday = true;
+      trackMission("sell", qty);
       let heatGain = qty * 1.5;
       if (hasUpgrade("van")) heatGain *= 0.5;
       if (hasStaffEffect("sellHeatMult")) heatGain *= 0.6;
@@ -455,6 +471,7 @@ const ACTIONS = [
       s.dirty -= amount;
       s.cash += clean;
       s.stats.laundered += amount;
+      trackMission("launder", amount);
       spawnPopup(`+${fmt(clean)}$ propres`, "money");
       playSfx("cash");
       if (typeof scene !== "undefined" && scene) scene.FX.launder = performance.now();
@@ -516,9 +533,11 @@ function endDay() {
   }
   state.soldToday = false;
   state.visitedToday = {};
+  if (state.heat < 30) trackMission("cooldown", 1);
 
   state.day += 1;
-  state.ap = AP_PER_DAY;
+  state.ap = AP_PER_DAY + legendLevel("stamina");
+  rollDailyMissions();
   state.flags.priceBonus = 1;
   state.respect = cap(state.respect, 0, 100);
 
@@ -680,6 +699,8 @@ function doPrestige() {
             prestiges: (s.prestiges || 0) + 1,
             taps: s.taps,
             goldenCaught: s.goldenCaught || 0,
+            legendCoins: (s.legendCoins || 0) + pts,
+            legendUpgrades: s.legendUpgrades || {},
           };
           state = Object.assign(newGame(), keep);
           playSfx("prestige");
@@ -695,6 +716,71 @@ function doPrestige() {
   );
 }
 
+// ---------- Missions quotidiennes (v7) ----------
+function rollDailyMissions() {
+  if (!state.dailyMissions || state.dailyMissions.day !== state.day) {
+    const pool = DAILY_MISSIONS.slice();
+    const picked = [];
+    while (picked.length < 3 && pool.length > 0) {
+      picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    }
+    state.dailyMissions = {
+      day: state.day,
+      list: picked.map((m) => ({ id: m.id, progress: 0, claimed: false })),
+    };
+  }
+}
+
+function trackMission(event, amount = 1) {
+  if (!state.dailyMissions || !Array.isArray(state.dailyMissions.list)) return false;
+  let changed = false;
+  for (const m of state.dailyMissions.list) {
+    const def = DAILY_MISSIONS.find((d) => d.id === m.id);
+    if (!def || m.claimed || def.event !== event) continue;
+    if (m.progress >= def.goal) continue;
+    m.progress = Math.min(def.goal, m.progress + amount);
+    changed = true;
+    if (m.progress >= def.goal) {
+      toast(`${def.icon} Mission prête !`, `${def.label} — viens la réclamer.`);
+      playSfx("golden");
+    }
+  }
+  return changed;
+}
+
+function claimMission(id) {
+  const m = (state.dailyMissions.list || []).find((x) => x.id === id);
+  const def = DAILY_MISSIONS.find((d) => d.id === id);
+  if (!m || !def || m.claimed || m.progress < def.goal) return;
+  m.claimed = true;
+  def.reward(state);
+  playSfx("cash");
+  toast(`${def.icon} Mission accomplie`, def.rewardText || "");
+  checkAchievements();
+  render();
+  save();
+}
+
+// ---------- Boutique de Légende (v7) ----------
+function buyLegendUpgrade(id) {
+  const u = LEGEND_UPGRADES.find((x) => x.id === id);
+  if (!u) return;
+  const lvl = legendLevel(id);
+  if (lvl >= u.max) return;
+  const cost = u.cost(lvl);
+  if ((state.legendCoins || 0) < cost) {
+    toast("🪙 Pas assez de pièces", "Fais un prestige 🎭 pour en gagner.");
+    return;
+  }
+  state.legendCoins -= cost;
+  state.legendUpgrades[id] = lvl + 1;
+  playSfx("cash");
+  toast(`${u.icon} ${u.name}`, `Niveau ${lvl + 1} ! Bonus permanent actif.`);
+  checkAchievements();
+  render();
+  save();
+}
+
 // ---------- Rendu UI ----------
 function render() {
   renderStats();
@@ -704,6 +790,8 @@ function render() {
   renderInvestments();
   renderUpgrades();
   renderStaff();
+  renderMissions();
+  renderLegend();
   renderLog();
   document.getElementById("day-num").textContent = state.day;
   document.getElementById("ap-num").textContent = state.ap;
@@ -889,6 +977,60 @@ function renderStaff() {
   });
 }
 
+function renderMissions() {
+  const container = document.getElementById("missions");
+  if (!container) return;
+  rollDailyMissions();
+  container.innerHTML = (state.dailyMissions.list || [])
+    .map((m) => {
+      const def = DAILY_MISSIONS.find((d) => d.id === m.id);
+      if (!def) return "";
+      const pct = Math.min(100, (m.progress / def.goal) * 100);
+      const done = m.progress >= def.goal;
+      return `
+      <div class="card mission ${m.claimed ? "owned" : ""}">
+        <div class="icon">${def.icon}</div>
+        <h3>${def.label}</h3>
+        <p>${def.desc}</p>
+        <div class="meta">${Math.floor(m.progress)} / ${def.goal}</div>
+        ${bar(pct)}
+        <button class="btn primary" data-mission="${def.id}" ${done && !m.claimed ? "" : "disabled"}>
+          ${m.claimed ? "✔ Réclamé" : done ? "🎁 Réclamer" : "En cours..."}
+        </button>
+      </div>`;
+    })
+    .join("");
+  container.querySelectorAll("[data-mission]").forEach((btn) => {
+    btn.addEventListener("click", () => claimMission(btn.dataset.mission));
+  });
+}
+
+function renderLegend() {
+  const container = document.getElementById("legend");
+  if (!container) return;
+  container.innerHTML =
+    `<div class="card legend-info"><div class="icon">🪙</div><h3>${state.legendCoins || 0} pièce(s) de légende</h3><p>Gagnées à chaque prestige 🎭. Bonus permanents, conservés pour toujours.</p></div>` +
+    LEGEND_UPGRADES.map((u) => {
+      const lvl = legendLevel(u.id);
+      const maxed = lvl >= u.max;
+      const cost = u.cost(lvl);
+      const afford = (state.legendCoins || 0) >= cost;
+      return `
+      <div class="card ${maxed ? "owned" : ""}">
+        <div class="icon">${u.icon}</div>
+        <h3>${u.name} <span class="meta">Niv. ${lvl}/${u.max}</span></h3>
+        <p>${u.desc}</p>
+        <button class="btn primary" data-legend="${u.id}" ${maxed || !afford ? "disabled" : ""}>
+          ${maxed ? "✔ Maximum" : `🪙 ${cost}`}
+        </button>
+      </div>`;
+    })
+    .join("");
+  container.querySelectorAll("[data-legend]").forEach((btn) => {
+    btn.addEventListener("click", () => buyLegendUpgrade(btn.dataset.legend));
+  });
+}
+
 function renderLog() {
   document.getElementById("log").innerHTML = state.log
     .map((e) => `<div class="log-entry ${e.kind}"><span class="d">J${e.day}</span>${e.msg}</div>`)
@@ -1015,6 +1157,11 @@ function load() {
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     state.visitedToday = Object.assign({}, data.visitedToday || {});
+    state.legendCoins = data.legendCoins || 0;
+    state.legendUpgrades = Object.assign({}, data.legendUpgrades || {});
+    state.dailyMissions = data.dailyMissions && Array.isArray(data.dailyMissions.list)
+      ? { day: data.dailyMissions.day || 0, list: data.dailyMissions.list }
+      : { day: 0, list: [] };
     if (typeof state.frenzyUntil !== "number") state.frenzyUntil = 0;
     return true;
   } catch (e) {
