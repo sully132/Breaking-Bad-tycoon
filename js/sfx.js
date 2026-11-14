@@ -83,5 +83,5 @@ const sfx = (() => {
     win()    { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.18, "triangle", 0.12, i * 0.12)); },
     golden() { [1319, 1568, 2093, 2637].forEach((f, i) => tone(f, 0.1, "sine", 0.1, i * 0.06)); },
     prestige() { tone(220, 0.7, "sawtooth", 0.12, 0, 55); tone(440, 0.5, "triangle", 0.08, 0.3, 110); tone(880, 0.4, "sine", 0.08, 0.5, 1760); },
-  };  };
+  };
 })();
