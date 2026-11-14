@@ -350,6 +350,16 @@
     }
   }
 
+  function shadeCss(hex, amt) {
+    try {
+      const n = parseInt(hex.slice(1), 16);
+      const r = Math.max(0, Math.min(255, (n >> 16) + amt));
+      const g = Math.max(0, Math.min(255, ((n >> 8) & 255) + amt));
+      const b = Math.max(0, Math.min(255, (n & 255) + amt));
+      return "rgb(" + r + "," + g + "," + b + ")";
+    } catch (e) { return hex; }
+  }
+
   function drawLocations(w, h) {
     for (const loc of MAP_LOCATIONS) {
       const p = locPixel(loc);
@@ -372,15 +382,28 @@
       }
 
       ctx.globalAlpha = open ? 1 : 0.35;
+
+      ctx.fillStyle = "rgba(255, 250, 235, 0.85)";
+      roundRect(p.x - s - 4, p.y - s - 4, s * 2 + 8, s * 2 + 8, 17);
+      ctx.fill();
+
       const badge = ctx.createLinearGradient(p.x, p.y - s, p.x, p.y + s);
       badge.addColorStop(0, loc.color);
-      badge.addColorStop(1, "rgba(60, 40, 20, 0.55)");
+      badge.addColorStop(1, shadeCss(loc.color, -60));
       ctx.fillStyle = badge;
-      ctx.strokeStyle = isHover ? "#ffffff" : "rgba(60, 35, 20, 0.75)";
+      ctx.strokeStyle = isHover ? "#ffffff" : "rgba(45, 28, 14, 0.85)";
       ctx.lineWidth = isHover ? 3 : 2;
       roundRect(p.x - s, p.y - s, s * 2, s * 2, 14);
       ctx.fill();
       ctx.stroke();
+
+      ctx.fillStyle = "rgba(255, 250, 235, 0.9)";
+      ctx.beginPath();
+      ctx.moveTo(p.x - 7, p.y + s + 2);
+      ctx.lineTo(p.x + 7, p.y + s + 2);
+      ctx.lineTo(p.x, p.y + s + 11);
+      ctx.closePath();
+      ctx.fill();
 
       ctx.font = "22px serif";
       ctx.textAlign = "center";
@@ -389,11 +412,11 @@
 
       ctx.font = "bold 11px sans-serif";
       const tw = ctx.measureText(loc.name).width + 12;
-      ctx.fillStyle = "rgba(30, 18, 8, 0.75)";
-      roundRect(p.x - tw / 2, p.y + s + 3, tw, 16, 8);
+      ctx.fillStyle = "rgba(30, 18, 8, 0.8)";
+      roundRect(p.x - tw / 2, p.y + s + 12, tw, 16, 8);
       ctx.fill();
       ctx.fillStyle = "#f5ecd8";
-      ctx.fillText(loc.name, p.x, p.y + s + 12);
+      ctx.fillText(loc.name, p.x, p.y + s + 21);
       ctx.globalAlpha = 1;
       drawBusinessBadges(w, h, loc, p, s, open);
     }

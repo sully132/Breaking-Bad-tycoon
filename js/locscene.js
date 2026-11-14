@@ -184,6 +184,11 @@
     ctx.translate(x, y + bob);
     ctx.scale(s, s);
 
+    ctx.fillStyle = "rgba(20, 14, 8, 0.3)";
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 13, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     if (look.hazmat) {
       ctx.fillStyle = "#e8e8dc";
       rr(-11, -46, 22, 34, 9);
@@ -222,7 +227,20 @@
     ctx.fillRect(1, -2, 7, 3);
 
     ctx.fillStyle = look.shirt || "#4a6a8a";
-    rr(-9, -36 + 0, 18, 21, 4);
+    rr(-9, -36, 18, 21, 4);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(15, 12, 8, 0.55)";
+    ctx.lineWidth = 1.2;
+    rr(-9, -36, 18, 21, 4);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(15, 12, 8, 0.25)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, -35);
+    ctx.lineTo(0, -17);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+    rr(-7, -35, 4, 18, 2);
     ctx.fill();
     ctx.fillStyle = shade(look.shirt || "#4a6a8a", -25);
     ctx.fillRect(-9, -19, 18, 4);
@@ -254,6 +272,13 @@
     ctx.fillStyle = "#e8b58a";
     ctx.beginPath();
     ctx.arc(0, -44, 8.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(15, 12, 8, 0.45)";
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+    ctx.beginPath();
+    ctx.arc(-3, -47, 2.6, 0, Math.PI * 2);
     ctx.fill();
 
     if (look.beard) {
@@ -539,6 +564,47 @@
   }
 
   // ---------- peintres de décor (kind) ----------
+
+  function drawDistantHills(w, h, night) {
+    ctx.fillStyle = night ? "rgba(24, 30, 44, 0.85)" : "rgba(140, 100, 70, 0.4)";
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.56);
+    ctx.lineTo(w * 0.14, h * 0.44);
+    ctx.lineTo(w * 0.3, h * 0.53);
+    ctx.lineTo(w * 0.5, h * 0.4);
+    ctx.lineTo(w * 0.72, h * 0.52);
+    ctx.lineTo(w * 0.88, h * 0.43);
+    ctx.lineTo(w, h * 0.52);
+    ctx.lineTo(w, h * 0.62);
+    ctx.lineTo(0, h * 0.62);
+    ctx.closePath();
+    ctx.fill();
+    if (!night) {
+      ctx.fillStyle = "rgba(255, 240, 210, 0.35)";
+      for (const [px, py, sz] of [[0.14, 0.44, 0.05], [0.5, 0.4, 0.06], [0.88, 0.43, 0.045]]) {
+        ctx.beginPath();
+        ctx.moveTo(w * px, h * py);
+        ctx.lineTo(w * (px + sz), h * (py + 0.05));
+        ctx.lineTo(w * (px - sz), h * (py + 0.05));
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawGroundTexture(w, h, topY, tint) {
+    ctx.fillStyle = tint || "rgba(0, 0, 0, 0.08)";
+    let seed = 13;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let i = 0; i < 26; i++) {
+      const gx = rnd() * w;
+      const gy = topY + rnd() * (h - topY);
+      const gw = 8 + rnd() * 22;
+      ctx.fillRect(gx, gy, gw, 1.6);
+    }
+  }
+
+  const OUTDOOR_KINDS = new Set(["desert", "desert2", "suburb", "ranch", "station", "plaza", "police", "backyard"]);
 
   const PAINTERS = {
     desert(w, h, t) {
@@ -1360,7 +1426,9 @@
     }
 
     const painter = PAINTERS[def.kind] || PAINTERS.desert;
+    if (OUTDOOR_KINDS.has(def.kind)) drawDistantHills(w, h, night);
     painter(w, h, t);
+    drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
 
     if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);
 

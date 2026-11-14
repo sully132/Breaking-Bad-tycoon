@@ -1151,3 +1151,63 @@ body {
   font-weight: 700;
 }
 .btn.pub:active { transform: scale(0.97); }
+
+/* ============================================================
+   v14 — Passe graphismes UI
+   ============================================================ */
+.topbar {
+  background: linear-gradient(180deg, rgba(26, 32, 16, 0.92), rgba(16, 20, 8, 0.96));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(122, 182, 72, 0.35);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+.statbar {
+  background: linear-gradient(180deg, rgba(34, 43, 20, 0.85), rgba(22, 28, 12, 0.9));
+  border: 1px solid rgba(122, 182, 72, 0.25);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 3px 12px rgba(0, 0, 0, 0.35);
+}
+.bottom-nav {
+  background: linear-gradient(180deg, rgba(20, 26, 10, 0.97), rgba(12, 16, 6, 0.99));
+  border-top: 1px solid rgba(122, 182, 72, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.bottom-nav button {
+  border-radius: 12px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.bottom-nav button.active {
+  background: linear-gradient(160deg, rgba(122, 182, 72, 0.22), rgba(78, 122, 42, 0.14));
+  box-shadow: inset 0 0 0 1px rgba(122, 182, 72, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+.bottom-nav button:active { transform: scale(0.94); }
+.btn {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.08s ease, filter 0.15s ease;
+}
+.btn:active { transform: scale(0.96); filter: brightness(1.15); }
+.btn.primary {
+  background: linear-gradient(160deg, var(--green), var(--green-dark));
+}
+.card, .cards .card {
+  border: 1px solid rgba(122, 182, 72, 0.22);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.modal-box {
+  border: 1px solid rgba(122, 182, 72, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.toast {
+  border: 1px solid rgba(122, 182, 72, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.tab-page {
+  animation: page-fade 0.22s ease-out;
+}
+@keyframes page-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
