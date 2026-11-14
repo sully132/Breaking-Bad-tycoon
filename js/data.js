@@ -1261,3 +1261,201 @@ Object.assign(DIALOGUES, {
     ],
   },
 });
+
+
+// ------------------------------------------------------------
+// v7 — MISSIONS QUOTIDIENNES (3 tirées au hasard chaque jour)
+// event : cook | sell | launder | contract | map | tap | golden | cooldown
+// ------------------------------------------------------------
+const DAILY_MISSIONS = [
+  { id: "mCook", icon: "🍳", label: "Cuisiner 5 kg", event: "cook", goal: 5,
+    desc: "Cuisine (action, carte ou production idle).",
+    reward(s) { s.dirty += 15_000; }, rewardText: "+15 000$ sale" },
+  { id: "mSell", icon: "💰", label: "Vendre 4 kg", event: "sell", goal: 4,
+    desc: "Écoule ta marchandise dans la rue.",
+    reward(s) { s.respect = cap(s.respect + 3, 0, 100); }, rewardText: "Respect +3" },
+  { id: "mLaunder", icon: "🧽", label: "Blanchir 100 000$", event: "launder", goal: 100_000,
+    desc: "Transforme l'argent sale en argent propre.",
+    reward(s) { addHeat(-8); }, rewardText: "Chaleur −8" },
+  { id: "mContract", icon: "📋", label: "Honorer un contrat", event: "contract", goal: 1,
+    desc: "Livre une commande à temps.",
+    reward(s) { s.cash += 20_000; }, rewardText: "+20 000$ propres" },
+  { id: "mMap", icon: "🗺️", label: "3 interactions en ville", event: "map", goal: 3,
+    desc: "Utilise la carte d'Albuquerque.",
+    reward(s) { s.ap += 1; }, rewardText: "+1 PA" },
+  { id: "mTap", icon: "👆", label: "20 taps sur le labo", event: "tap", goal: 20,
+    desc: "Tape la scène pour booster la production.",
+    reward(s) { s.cash += Math.max(1_000, Math.round(pricePerKg() * 0.5)); }, rewardText: "Cash bonus" },
+  { id: "mGold", icon: "💎", label: "Attraper le cristal doré", event: "golden", goal: 1,
+    desc: "Clique sur le cristal doré quand il apparaît.",
+    reward(s) { s.purity = cap(s.purity + 3, 0, 100); }, rewardText: "Pureté +3" },
+  { id: "mCool", icon: "🕵️", label: "Terminer sous 30 de chaleur", event: "cooldown", goal: 1,
+    desc: "Passe une journée tranquille.",
+    reward(s) { s.dirty += 10_000; }, rewardText: "+10 000$ sale" },
+];
+
+// ------------------------------------------------------------
+// v7 — BOUTIQUE DE LÉGENDE (achetée avec les pièces du prestige)
+// ------------------------------------------------------------
+const LEGEND_UPGRADES = [
+  { id: "cook", icon: "⚗️", name: "Cristalliseur amélioré", desc: "+15% de cuisson par niveau, permanent.", max: 3, cost: (lvl) => 1 + lvl },
+  { id: "price", icon: "🎩", name: "Réputation Heisenberg", desc: "+15% sur le prix au kilo par niveau, permanent.", max: 3, cost: (lvl) => 1 + lvl },
+  { id: "launder", icon: "🏝️", name: "Réseau offshore", desc: "+3% de taux de blanchiment par niveau.", max: 3, cost: (lvl) => 2 + lvl },
+  { id: "vault", icon: "📦", name: "Planques supplémentaires", desc: "+5 kg de stock maximum par niveau.", max: 3, cost: (lvl) => 2 + lvl },
+  { id: "stamina", icon: "⚡", name: "Endurance légendaire", desc: "+1 point d'action par jour.", max: 2, cost: (lvl) => 4 + lvl },
+  { id: "cool", icon: "🕵️", name: "Antécédents effacés", desc: "−6% de chaleur gagnée par niveau.", max: 3, cost: (lvl) => 3 + lvl },
+];
+
+// ------------------------------------------------------------
+// v7 — ÉVÉNEMENTS SUPPLÉMENTAIRES
+// ------------------------------------------------------------
+EVENTS.push(
+  {
+    id: "copycat", emoji: "🎭", weight: 6, type: "choice",
+    title: "Un rival copie ton bleu",
+    text: "Un petit malin vend un produit bleuâtre de mauvaise qualité sous TON nom.",
+    choices: [
+      {
+        label: "Le dénigrer publiquement (Respect +2, Marché −5%)",
+        apply(s) {
+          s.respect = cap(s.respect + 2, 0, 100);
+          s.market = cap(s.market - 0.05, 0.7, 1.4);
+          log("🎭 Le vrai bleu écrase l'imitation. Respect +2, Marché −5%.", "info");
+        },
+      },
+      {
+        label: "Lui rendre visite (Respect +5, Chaleur +6)",
+        apply(s) {
+          s.respect = cap(s.respect + 5, 0, 100);
+          addHeat(6);
+          log("🎭 Le rival a fermé boutique. Respect +5, Chaleur +6.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "inspection", emoji: "🧾", weight: 6, type: "choice",
+    title: "Contrôle de la laverie",
+    text: "Un inspecteur du fisc passe à la laverie. Il trouve les comptes « intéressants ».",
+    choices: [
+      {
+        label: "Payer un « arrangement » (−8 000$)",
+        can(s) { return s.cash >= 8_000; },
+        apply(s) {
+          s.cash -= 8_000;
+          addHeat(-4);
+          log("🧾 Arrangement à l'amiable : −8 000$, Chaleur −4.", "info");
+        },
+      },
+      {
+        label: "Jouer la montre (risqué)",
+        apply(s) {
+          if (Math.random() < 0.5) {
+            log("🧾 L'inspecteur repart, convaincu. Rien ne se passe.", "good");
+          } else {
+            addHeat(10);
+            log("🧾 L'inspecteur a des doutes sérieux. Chaleur +10.", "bad");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "viral", emoji: "📱", weight: 5, type: "auto",
+    title: "Vidéo virale",
+    text: "Une vidéo de toi en train de « négocier » tourne sur les réseaux.",
+    apply(s) {
+      s.respect = cap(s.respect + 5, 0, 100);
+      s.market = cap(s.market + 0.05, 0.7, 1.4);
+      spawnPopup("Respect +5", "info");
+      log("📱 Tu deviens une légende urbaine. Respect +5, Marché +5%.", "good");
+    },
+  },
+  {
+    id: "junkieTheft", emoji: "🕵️", weight: 7, type: "auto",
+    title: "Vol dans une planque",
+    text: "Un junkie a repéré une de tes planques...",
+    apply(s) {
+      const lost = Math.min(s.stock, 0.5 + Math.random());
+      s.stock = Math.round((s.stock - lost) * 10) / 10;
+      if (lost > 0) {
+        spawnPopup(`−${lost.toFixed(1)} kg`, "spend");
+        log(`🕵️ Vol : −${lost.toFixed(1)} kg de stock.`, "bad");
+      } else {
+        log("🕵️ Planque vide, le voleur repart bredouille.", "info");
+      }
+    },
+  },
+  {
+    id: "streetRace", emoji: "🏎️", weight: 4, type: "choice",
+    title: "Course sauvage",
+    text: "Jesse veut prouver que la Toyota est plus rapide qu'elle n'en a l'air.",
+    choices: [
+      {
+        label: "Laisser courir Jesse (Respect +3, Chaleur +5)",
+        apply(s) {
+          s.respect = cap(s.respect + 3, 0, 100);
+          addHeat(5);
+          log("🏎️ Victoire retentissante. Respect +3, Chaleur +5.", "good");
+        },
+      },
+      {
+        label: "Confisquer les clés (Chaleur −3, Respect −2)",
+        apply(s) {
+          addHeat(-3);
+          s.respect = cap(s.respect - 2, 0, 100);
+          log("🏎️ Jesse boude. Chaleur −3, Respect −2.", "info");
+        },
+      },
+    ],
+  },
+);
+
+// ------------------------------------------------------------
+// v7 — NOUVEAUX DIALOGUES + interactions associées
+// ------------------------------------------------------------
+Object.assign(DIALOGUES, {
+  walterjr: {
+    name: "Walter White Jr.", emoji: "🧑",
+    lines: [
+      {
+        text: "« Papa, t'es pas obligé de tout me raconter, mais t'as l'air différent ces temps-ci. »",
+        choices: [
+          { label: "« Je suis juste très occupé au travail. » (Chaleur −3)", effect(s) { addHeat(-3); } },
+          { label: "« C'est le traitement. Ça me donne de l'énergie. » (Respect +2)", effect(s) { s.respect = cap(s.respect + 2, 0, 100); } },
+        ],
+      },
+      {
+        text: "« Flynn veut un coup main pour un projet... tu crois qu'on peut lever des fonds pour Hank ? »",
+        choices: [
+          { label: "« Bien sûr, fils. » (+5 000$ de « dons »)", effect(s) { s.dirty += 5_000; } },
+          { label: "« Pas maintenant. » (Rien)", effect() {} },
+        ],
+      },
+    ],
+  },
+  marie: {
+    name: "Marie Schrader", emoji: "💜",
+    lines: [
+      {
+        text: "« Walter ! Tu as vu le violet de mes nouvelles nappes ? Ça va avec le salon, non ? »",
+        choices: [
+          { label: "« Magnifique, Marie. » (Respect +2)", effect(s) { s.respect = cap(s.respect + 2, 0, 100); } },
+          { label: "« Très... violet. » (Respect −1, Chaleur −2)", effect(s) { s.respect = cap(s.respect - 1, 0, 100); addHeat(-2); } },
+        ],
+      },
+      {
+        text: "« Hank parle tout seul de son Heisenberg. Ça m'inquiète, il ne dort plus. »",
+        choices: [
+          { label: "« Je vais lui parler. » (Chaleur −5)", effect(s) { addHeat(-5); } },
+          { label: "« C'est un grand flic, il gère. » (Respect +3)", effect(s) { s.respect = cap(s.respect + 3, 0, 100); } },
+        ],
+      },
+    ],
+  },
+});
+
+const __house = MAP_LOCATIONS.find((l) => l.id === "house");
+if (__house) __house.interactions.push({ id: "talkJr", icon: "💬", label: "Parler à Walter Jr.", apCost: 0, dialogue: "walterjr" });
+const __hankLoc = MAP_LOCATIONS.find((l) => l.id === "hank");
+if (__hankLoc) __hankLoc.interactions.push({ id: "talkMarie", icon: "💬", label: "Parler à Marie", apCost: 0, dialogue: "marie" });
