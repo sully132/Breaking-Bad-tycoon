@@ -119,5 +119,16 @@ console.log("aura evenement:", locjs.includes("drawEventAura") ? "OK" : "FAIL");
 const sw2 = fs.readFileSync("sw.js", "utf8");
 console.log("SW cache v21:", sw2.includes("heisenberg-v21") ? "OK" : "FAIL");
 
-console.log("SMOKE TEST PASSE");
+// v22 : combo + chaînes
+console.log("combo champs:", typeof G.state.combo === "number" && typeof G.state.comboUntil === "number" && typeof G.state.maxCombo === "number" ? "OK" : "FAIL");
+const evIds2 = D.EVENTS.map((e) => e.id);
+console.log("chaines gus:", ["gusContract","gusReward","gusAnger"].every((id) => evIds2.includes(id)) ? "OK" : "FAIL");
+console.log("chaines mule:", ["muleRun","mulePay","muleBust"].every((id) => evIds2.includes(id)) ? "OK" : "FAIL");
+console.log("succes combo:", fs.readFileSync("js/data.js", "utf8").includes("combo50") ? "OK" : "FAIL");
+const gjs3 = fs.readFileSync("js/game.js", "utf8");
+console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes("comboUntil = now + 2500") ? "OK" : "FAIL");
+console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
+const sw3 = fs.readFileSync("sw.js", "utf8");
+console.log("SW cache v22:", sw3.includes("heisenberg-v22") ? "OK" : "FAIL");
+s = s.replace('console.log("SMOKE TEST PASSE");', "");
 process.exit(0);
