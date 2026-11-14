@@ -392,12 +392,23 @@
     ctx.fill();
     ctx.fillStyle = shade(look.shirt || "#4a6a8a", -25);
     ctx.fillRect(-9, -19, 18, 4);
+    const armSw = Math.sin(t * 5 + x * 0.13 + Math.PI) * 0.13;
+    ctx.save();
+    ctx.translate(-11, -33);
+    ctx.rotate(armSw);
     ctx.fillStyle = look.shirt || "#4a6a8a";
-    ctx.fillRect(-13, -34, 4, 15);
-    ctx.fillRect(9, -34, 4, 15);
+    ctx.fillRect(-2, 0, 4, 13);
     ctx.fillStyle = "#e8b58a";
-    ctx.fillRect(-13, -20, 4, 3);
-    ctx.fillRect(9, -20, 4, 3);
+    ctx.fillRect(-2, 13, 4, 3.2);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(11, -33);
+    ctx.rotate(-armSw);
+    ctx.fillStyle = look.shirt || "#4a6a8a";
+    ctx.fillRect(-2, 0, 4, 13);
+    ctx.fillStyle = "#e8b58a";
+    ctx.fillRect(-2, 13, 4, 3.2);
+    ctx.restore();
 
     if (look.tie) {
       ctx.fillStyle = "#a02a2a";
@@ -428,6 +439,20 @@
     ctx.beginPath();
     ctx.arc(-3, -47, 2.6, 0, Math.PI * 2);
     ctx.fill();
+
+    const blink = Math.sin(t * 1.1 + x * 0.31) > 0.96 ? 0.12 : 1;
+    ctx.fillStyle = "#2a221a";
+    ctx.beginPath();
+    ctx.ellipse(-3.2, -44.5, 1.1, 1.1 * blink, 0, 0, Math.PI * 2);
+    ctx.ellipse(3.2, -44.5, 1.1, 1.1 * blink, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (blink > 0.5) {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.beginPath();
+      ctx.arc(-2.8, -45.2, 0.45, 0, Math.PI * 2);
+      ctx.arc(3.6, -45.2, 0.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     if (look.beard) {
       ctx.fillStyle = look.beard;
@@ -524,11 +549,16 @@
     return null;
   }
 
+  let evQuote = null;
   function drawEventVisitor(w, h, t, def) {
     const ev = sceneEventFor(currentLocId);
-    if (!ev) { eventVisitor = null; return; }
+    if (!ev) { eventVisitor = null; evQuote = null; return; }
     const looks = (typeof EVENT_VISITORS !== "undefined") ? EVENT_VISITORS : {};
     const look = looks[ev.id] || { shirt: "#5a5a6a", pants: "#2e2e34" };
+    const quotes = (typeof EVENT_QUOTES !== "undefined" && EVENT_QUOTES[ev.id]) || ["..."];
+    if (!evQuote || evQuote.eid !== ev.id || anim > evQuote.until) {
+      evQuote = { eid: ev.id, text: quotes[Math.floor(Math.random() * quotes.length)], until: anim + 5200 };
+    }
     const ground = h * 0.78;
     const spots = CHAR_SPOTS[def.kind] || [];
     let px = 0.5;
@@ -555,6 +585,58 @@
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("!", x, by + 1);
+
+    // bulle de dialogue du visiteur
+    const maxW = Math.min(230, w - 24);
+    const lines = wrapText(evQuote.text, maxW - 18);
+    const tw = Math.max(...lines.map((l) => {
+      ctx.font = "bold 12px sans-serif";
+      return ctx.measureText(l).width;
+    })) + 18;
+    const lh = 15;
+    const bh = lines.length * lh + 10;
+    const qy = by - 22;
+    const x0 = Math.max(6, Math.min(w - tw - 6, x - tw / 2));
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = "#fff6e0";
+    rr(x0, qy - bh, tw, bh, 9);
+    ctx.fill();
+    ctx.strokeStyle = "#b04a3a";
+    ctx.lineWidth = 1.8;
+    rr(x0, qy - bh, tw, bh, 9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - 5, qy);
+    ctx.lineTo(x + 5, qy);
+    ctx.lineTo(x, qy + 7);
+    ctx.closePath();
+    ctx.fillStyle = "#fff6e0";
+    ctx.fill();
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = "#3a2418";
+    lines.forEach((l, i) => {
+      ctx.fillText(l, x0 + tw / 2, qy - bh + 10 + i * lh);
+    });
+    ctx.restore();
+    ctx.textBaseline = "alphabetic";
+  }
+
+  function drawEventAura(w, h, t) {
+    const ev = sceneEventFor(currentLocId);
+    if (!ev) return;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 2.4);
+    const a = 0.10 + pulse * 0.10;
+    const g1 = ctx.createLinearGradient(0, 0, 0, h * 0.25);
+    g1.addColorStop(0, "rgba(190, 50, 40, " + a.toFixed(3) + ")");
+    g1.addColorStop(1, "rgba(190, 50, 40, 0)");
+    ctx.fillStyle = g1;
+    ctx.fillRect(0, 0, w, h * 0.25);
+    const g2 = ctx.createLinearGradient(0, h, 0, h * 0.75);
+    g2.addColorStop(0, "rgba(190, 50, 40, " + a.toFixed(3) + ")");
+    g2.addColorStop(1, "rgba(190, 50, 40, 0)");
+    ctx.fillStyle = g2;
+    ctx.fillRect(0, h * 0.75, w, h * 0.25);
   }
 
   function triggerSceneEvent() {
@@ -592,23 +674,54 @@
     }
   }
 
+  const BUBBLE_COLORS = ["#4e7a2a", "#3a6ea5", "#8a5fc9", "#c2743a", "#a53a5f", "#2a8a7a"];
+  function bubbleColor(id) {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    return BUBBLE_COLORS[h % BUBBLE_COLORS.length];
+  }
+
+  function wrapText(text, maxW) {
+    const words = text.split(" ");
+    const lines = [];
+    let line = "";
+    ctx.font = "bold 12px sans-serif";
+    for (const word of words) {
+      const test = line ? line + " " + word : word;
+      if (ctx.measureText(test).width > maxW && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
   function drawBubble() {
     if (!bubble) return;
     const c = charScreens.find((cs) => cs.id === bubble.id);
     if (!c) return;
     const bx = c.x;
     const by = c.y - 66 * c.s - 26;
-    ctx.font = "bold 12px sans-serif";
-    const tw = Math.min(230, ctx.measureText(bubble.text).width + 20);
-    const bh = 26;
+    const maxW = Math.min(220, canvas.clientWidth - 24);
+    const lines = wrapText(bubble.text, maxW - 18);
+    const tw = Math.max(...lines.map((l) => {
+      ctx.font = "bold 12px sans-serif";
+      return ctx.measureText(l).width;
+    })) + 18;
+    const lh = 15;
+    const bh = lines.length * lh + 10;
     const x0 = Math.max(6, Math.min(canvas.clientWidth - tw - 6, bx - tw / 2));
+    const col = bubbleColor(bubble.id);
     ctx.save();
-    ctx.globalAlpha = 0.94;
+    ctx.globalAlpha = 0.95;
     ctx.fillStyle = "#fffdf4";
     rr(x0, by - bh, tw, bh, 9);
     ctx.fill();
-    ctx.strokeStyle = "#4e7a2a";
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.8;
     rr(x0, by - bh, tw, bh, 9);
     ctx.stroke();
     ctx.beginPath();
@@ -618,10 +731,24 @@
     ctx.closePath();
     ctx.fillStyle = "#fffdf4";
     ctx.fill();
-    ctx.fillStyle = "#1c2b14";
+
+    // étiquette du nom
+    const name = (typeof CHAR_NAMES !== "undefined" && CHAR_NAMES[bubble.id]) || bubble.id;
+    ctx.font = "bold 10px sans-serif";
+    const nw = ctx.measureText(name).width + 12;
+    ctx.fillStyle = col;
+    rr(x0, by - bh - 13, nw, 14, 7);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(bubble.text, x0 + tw / 2, by - bh / 2);
+    ctx.fillText(name, x0 + nw / 2, by - bh - 6);
+
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = "#1c2b14";
+    lines.forEach((l, i) => {
+      ctx.fillText(l, x0 + tw / 2, by - bh + 10 + i * lh);
+    });
     ctx.restore();
     ctx.textBaseline = "alphabetic";
   }
@@ -1798,6 +1925,7 @@
     drawShootingStar();
     if (!def.night) applyPhaseTint(w, h, phase);
     drawFlash(w, h);
+    drawEventAura(w, h, t);
     drawVignette(w, h, night);
 
     anim += 16;

@@ -50,7 +50,7 @@ globalThis.webkitAudioContext = FakeAC;
 const src =
   fs.readFileSync("js/data.js", "utf8") + "\n" +
   fs.readFileSync("js/game.js", "utf8") + "\n" +
-  ";globalThis.X_DATA = { BUSINESSES, MAP_LOCATIONS, SCENES, EVENTS, OPPORTUNITIES, EVENT_VISITORS };" +
+  ";globalThis.X_DATA = { BUSINESSES, MAP_LOCATIONS, SCENES, EVENTS, OPPORTUNITIES, EVENT_VISITORS, EVENT_QUOTES, QUOTES, CHAR_NAMES };" +
   ";globalThis.X_GAME = { get state() { return state; }, newGame, save, load, endDay, bizRevPerSec, bizSynergyMult, flushSceneEvents, rollSceneEvents };";
 (0, eval)(src);
 const D = globalThis.X_DATA;
@@ -103,6 +103,21 @@ console.log("rollSceneEvents appele dans endDay:", gjs.includes("rollSceneEvents
 console.log("garanti jour 2:", gjs.includes("sceneEventsSeen") ? "OK" : "FAIL");
 const sw = fs.readFileSync("sw.js", "utf8");
 console.log("SW cache v20:", sw.includes("heisenberg-v20") ? "OK" : "FAIL");
+
+// v21 : persos, dialogues, scènes d'événements
+console.log("CHAR_NAMES:", Object.keys(D.CHAR_NAMES).length === 18 ? "OK (18)" : "FAIL (" + Object.keys(D.CHAR_NAMES).length + ")");
+console.log("EVENT_QUOTES:", Object.keys(D.EVENT_QUOTES).length === 21 ? "OK (21)" : "FAIL (" + Object.keys(D.EVENT_QUOTES).length + ")");
+const extraQ = Object.keys(D.QUOTES).filter((k) => D.QUOTES[k].length >= 4).length;
+console.log("QUOTES enrichies:", extraQ === 18 ? "OK (18/18)" : "FAIL (" + extraQ + "/18)");
+console.log("visiteurs = vrais persos:", D.EVENT_VISITORS.hank === undefined || typeof D.EVENT_VISITORS.hank === "object" ? "OK" : "FAIL");
+const locjs = fs.readFileSync("js/locscene.js", "utf8");
+console.log("yeux+blink:", locjs.includes("const blink = Math.sin") ? "OK" : "FAIL");
+console.log("bras animes:", locjs.includes("const armSw") ? "OK" : "FAIL");
+console.log("bulles v2 (nom+wrap):", locjs.includes("wrapText") && locjs.includes("CHAR_NAMES") && locjs.includes("bubbleColor") ? "OK" : "FAIL");
+console.log("bulle visiteur:", locjs.includes("evQuote") ? "OK" : "FAIL");
+console.log("aura evenement:", locjs.includes("drawEventAura") ? "OK" : "FAIL");
+const sw2 = fs.readFileSync("sw.js", "utf8");
+console.log("SW cache v21:", sw2.includes("heisenberg-v21") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);

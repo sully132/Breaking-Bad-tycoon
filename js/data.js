@@ -1911,6 +1911,14 @@ const CHAR_LOOKS = {
   hazmat2:    { shirt: "#f0f0e8", pants: "#f0f0e8", hazmat: true, beard: "#5a4a2a" },
 };
 
+// v21 : noms affichés dans les bulles de dialogue
+const CHAR_NAMES = {
+  walter: "Walter White", heisenberg: "Heisenberg", jesse: "Jesse", skyler: "Skyler",
+  gus: "Gus Fring", saul: "Saul", mike: "Mike", tuco: "Tuco", hank: "Hank",
+  marie: "Marie", jane: "Jane", badger: "Badger", combo: "Combo", todd: "Todd",
+  lydia: "Lydia", eladio: "Don Eladio", hazmat: "Cuisinier", hazmat2: "Apprenti",
+};
+
 // ============================================================
 // v12 — ÉVÉNEMENTS SUPPLÉMENTAIRES, OPPORTUNITÉS DE CARTE,
 //       CITATIONS DES PERSONNAGES
@@ -2171,27 +2179,52 @@ const OPPORTUNITIES = [
 // APPARENCES des visiteurs d'événements dans les scènes (v17)
 // ------------------------------------------------------------
 const EVENT_VISITORS = {
-  hank: { shirt: "#8a5a2a", pants: "#4a4438", hat: true },
-  tuco: { shirt: "#8a2a3a", pants: "#26262c", gold: true },
+  hank: CHAR_LOOKS.hank,
+  tuco: CHAR_LOOKS.tuco,
   cartel: { shirt: "#2a2a34", pants: "#1e1e26", hat: true },
   cousins: { shirt: "#24242e", pants: "#16161c", hat: true, tie: true },
   deasurveillance: { shirt: "#3a5a8a", pants: "#2a2a30", glasses: true },
   raidWarning: { shirt: "#3a5a8a", pants: "#2a2a30", hat: true },
   informant: { shirt: "#5a6a4a", pants: "#3a3428", flatCap: true, glasses: true },
   robbery: { shirt: "#3a3a3a", pants: "#26262c", beanie: true },
-  jesseRage: { shirt: "#e8c83a", pants: "#3a4a6a", beanie: true },
+  jesseRage: CHAR_LOOKS.jesse,
   blackMarket: { shirt: "#6a5a3a", pants: "#3a3428", flatCap: true, beard: true },
   cartelTribute: { shirt: "#2a2a34", pants: "#1e1e26", hat: true },
-  gusMeeting: { shirt: "#e8d878", pants: "#3a3a3a", glasses: true, tie: true },
+  gusMeeting: CHAR_LOOKS.gus,
   purityDuel: { shirt: "#d8d8d0", pants: "#c8c8c0", glasses: true },
   wholesale: { shirt: "#4a5a6a", pants: "#2e2e34", flatCap: true },
   comboDeal: { shirt: "#7a4a8a", pants: "#2e2e34", gold: true },
   galeHelp: { shirt: "#c8b87a", pants: "#5a5240", glasses: true, beard: true },
   tortuga: { shirt: "#4a6a3a", pants: "#3a3a30", hat: true },
   methHeads: { shirt: "#7a7a5a", pants: "#4a4438", beard: true },
-  lydiaDemand: { shirt: "#d8d8e0", pants: "#3a3a4a", tie: true },
+  lydiaDemand: CHAR_LOOKS.lydia,
   streetrace: { shirt: "#c84a3a", pants: "#2a2a34", cap: true },
   junkie: { shirt: "#6a6a5a", pants: "#4a4438", beanie: true },
+};
+
+// v21 : répliques d'événements (bulles des visiteurs dans les scènes)
+const EVENT_QUOTES = {
+  hank: ["On sait que vous êtes malin. On sait aussi que vous n'êtes pas intouchable.", "Un jour ou l'autre, je vous aurai."],
+  tuco: ["Hé ! Tonton ! Tu me cachs quelque chose ?", "TIGHT, TIGHT, TIGHT ! Raconte-moi ça !"],
+  cartel: ["Le cartel t'observe. Fais tes preuves.", "Nos amis du sud attendent des résultats."],
+  cousins: ["...", "Nous parlons peu. Mais nous comptons bien."],
+  deasurveillance: ["Rien à signaler... si ce n'est cette odeur de chimie.", "Je te vois. Tu me vois."],
+  raidWarning: ["Ils préparent un coup. Dégage le matériel. VITE.", "J'ai entendu un truc au commissariat... dépêche-toi."],
+  informant: ["J'ai des infos. Mais rien n'est gratuit.", "Tu veux savoir qui parle aux flics ? Ça s'achète."],
+  robbery: ["Le sac. Maintenant. Personne ne bouge.", "Pas un geste, ou ça se termine mal."],
+  jesseRage: ["Tu m'as pas écouté, M. White ! PERSONNE m'écoute !", "J'en ai marre de ta condescendance !"],
+  blackMarket: ["Marchandise rare, prix amical. T'intéresses ?", "J'ai ce qu'il te faut. Tu as ce qu'il me faut."],
+  cartelTribute: ["La maison demande sa part. Toujours.", "Le compte doit être bon. Sinon..."],
+  gusMeeting: ["La qualité est constante. C'est tout ce que je demande.", "Les détails font la réputation. Les nôtres sont impeccables."],
+  purityDuel: ["99,1 % ? Je parie que je fais mieux.", "Ton produit est correct. Le mien est de l'art."],
+  wholesale: ["Gros lot, gros chèque, pas de questions.", "Je paie comptant si la marchandise suit."],
+  comboDeal: ["Deux kilos, moitié prix, et on en parle plus.", "Mes clients sont pressés. Toi aussi, je crois."],
+  galeHelp: ["La chimie est une symphonie, non ?", "J'ai noté chaque variable. Vous ne le regretterez pas."],
+  tortuga: ["Un petit message du sud... prenez-en de la graine.", "Regardez bien. C'est un avertissement."],
+  methHeads: ["On dérange pas, hein ? On regarde juste.", "Ça sent bon ici, tu sais..."],
+  lydiaDemand: ["Mes clients veulent de la régularité, pas des surprises.", "Je déteste les imprévus. Éliminons-les."],
+  streetrace: ["Paris clandestin ce soir. Tu oses ?", "Le vainqueur repart avec la caisse. Littéralement."],
+  junkie: ["Tu aurais... un petit quelque chose ?", "Je paie demain. Promis. Comme la dernière fois."],
 };
 
 // ------------------------------------------------------------
@@ -2217,6 +2250,28 @@ const QUOTES = {
   hazmat:     ["« (respiration filtrée) »", "99,1 % de pureté."],
   hazmat2:    ["« (respiration filtrée) »", "La cuve est prête."],
 };
+
+// v21 : répliques additionnelles
+Object.assign(QUOTES, {
+  walter: QUOTES.walter.concat(["Je suis dans l'empire business."]),
+  heisenberg: QUOTES.heisenberg.concat(["Tu n'as pas l'air à la hauteur."]),
+  jesse: QUOTES.jesse.concat(["On gère, mec !"]),
+  skyler: QUOTES.skyler.concat(["J'ai fait les chiffres. Deux fois."]),
+  gus: QUOTES.gus.concat(["Un homme fournit un service."]),
+  saul: QUOTES.saul.concat(["C'est pas illégal, c'est créatif !"]),
+  mike: QUOTES.mike.concat(["Quelqu'un doit rester lucide."]),
+  tuco: QUOTES.tuco.concat(["Tu sais qui je suis ?!"]),
+  hank: QUOTES.hank.concat(["J'aurai ta peau, Heisenberg."]),
+  marie: QUOTES.marie.concat(["Le violet, ça apaise."]),
+  jane: QUOTES.jane.concat(["Chacun son mur, non ?"]),
+  badger: QUOTES.badger.concat(["C'est comme Star Trek, mais pire."]),
+  combo: QUOTES.combo.concat(["Le coin est à nous, frère."]),
+  todd: QUOTES.todd.concat(["Désolé. C'était logique."]),
+  lydia: QUOTES.lydia.concat(["Ce n'est pas conforme au protocole."]),
+  eladio: QUOTES.eladio.concat(["Bois, et profite de la vie."]),
+  hazmat: QUOTES.hazmat.concat(["La température monte, patron."]),
+  hazmat2: QUOTES.hazmat2.concat(["Je note tout, comme vous m'avez dit."]),
+});
 
 // Succès v12
 ACHIEVEMENTS.push(
