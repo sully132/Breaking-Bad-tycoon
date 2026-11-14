@@ -124,6 +124,11 @@
       if (typeof showRelics === "function") showRelics();
     });
 
+    const story = document.getElementById("btn-menu-story");
+    if (story) story.addEventListener("click", () => {
+      if (typeof showStory === "function") showStory();
+    });
+
     const sound = document.getElementById("btn-menu-sound");
     if (sound) {
       try {

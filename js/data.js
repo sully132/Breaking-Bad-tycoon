@@ -2418,3 +2418,77 @@ ACHIEVEMENTS.push(
   { id: "floors3", icon: "🏗️", name: "Sous-sols infinis", desc: "Creuser les 3 sous-sols du Superlab", check: (s) => (s.labFloors || 0) >= 3, reward: { cash: 2_000_000 } },
   { id: "relic4", icon: "🗄️", name: "Collectionneur", desc: "Trouver 4 reliques", check: (s) => (s.relics || []).length >= 4, reward: { respect: 10 } },
 );
+
+// ============================================================
+// v25 — RÉCIT : 3 ARCS NARRATIFS + CINÉMATIQUES
+// Chaque arc progresse chapitre par chapitre selon la partie.
+// Les chapitres marqués cinematic: true déclenchent une
+// cinématique plein écran à leur déblocage.
+// ============================================================
+
+const STORY_ARCS = [
+  {
+    id: "rise", icon: "⚗️", name: "L'Ascension",
+    desc: "De prof en survêt à baron de la méthode.",
+    unlock: (s) => true,
+    chapters: [
+      { title: "Le diagnostic", cond: (s) => s.day >= 2, reward: { cash: 5_000 },
+        text: "« Cancer inopérable. » Le papier tremble dans la main de Walter. Ce soir, il décide que la sentence ne l'attendra pas." },
+      { title: "Première cuisson", cond: (s) => (s.stats.cooked || 0) >= 1, reward: { respect: 5 },
+        text: "Dans le RV, la mixture bout. Jesse tousse, Walter sourit. Le bleu qui sort du four est pur à 99,1 %." },
+      { title: "Chapeau sur la tête", cond: (s) => s.labLevel >= 3, reward: { cash: 25_000 },
+        text: "Les vêtements mous sont partis. Reste un homme debout, chapeau noir, lunettes sombres. Heisenberg est né." },
+      { title: "Say my name", cond: (s) => (s.maxCombo || 0) >= 15, reward: { respect: 10 },
+        text: "« Tu sais qui je suis. Dis mon nom. » — « …Heisenberg. » — « Tu es putain de droit. »" },
+      { title: "Je suis le danger", cond: (s) => s.respect >= 40, reward: { cash: 100_000 }, cinematic: true,
+        text: "La rue ne prononce plus son nom qu'à voix basse. Walter White est resté sur la route 25. Il reste le danger." },
+    ],
+    finale: [
+      { icon: "⚗️", line: "La chimie est l'étude de la transformation." },
+      { icon: "🎩", line: "Walter White est mort. Heisenberg est né." },
+      { icon: "💬", line: "« Je ne suis pas en danger, Skyler. JE SUIS le danger. »" },
+    ],
+  },
+  {
+    id: "heat", icon: "🚔", name: "La Traque",
+    desc: "Hank serre la toile. Restez invisible.",
+    unlock: (s) => s.heat >= 25 || s.day >= 10,
+    chapters: [
+      { title: "Un cuisinier de génie", cond: (s) => s.heat >= 30, reward: { cash: 10_000 },
+        text: "Le DEA retrouve un labo roulant vidangé, propre, professionnel. Hank grommelle : « Ce gars est bon. Trop bon. »" },
+      { title: "La toile se resserre", cond: (s) => s.heat >= 50, reward: { respect: 5 },
+        text: "Des caméras au carwash, des perquisitions chez les junkies. Chaque rue a des yeux." },
+      { title: "Le filet", cond: (s) => s.heat >= 70, reward: { cash: 50_000 },
+        text: "Alerte rouge au bureau de la DEA. Le profileur pose une photo sur la table : un homme chauve en chapeau." },
+      { title: "Fantôme", cond: (s) => s.heat <= 15 && s.day >= 12, reward: { respect: 10 }, cinematic: true,
+        text: "Chaleur 15. Le capitaine rend le dossier. Quelque part, un homme au chapeau traverse la rue sans se retourner." },
+    ],
+    finale: [
+      { icon: "🚔", line: "Trois labos démantelés. Zéro preuve." },
+      { icon: "🕵️", line: "Hank regarde le dossier se refermer. Il sait. Il ne peut rien prouver." },
+      { icon: "🌫️", line: "Le fantôme d'Albuquerque reprend du service." },
+    ],
+  },
+  {
+    id: "empire", icon: "🍗", name: "L'Empire",
+    desc: "Des affaires légitimes, de l'argent très légitime.",
+    unlock: (s) => Object.values(s.businesses || {}).filter((b) => b.level > 0).length >= 3,
+    chapters: [
+      { title: "La façade", cond: (s) => Object.values(s.businesses || {}).filter((b) => b.level > 0).length >= 3, reward: { cash: 15_000 },
+        text: "Un lavage, un restaurant, une station. Tout est propre, tout est légal. C'est exactement pour ça que ça marche." },
+      { title: "Blanchiment industriel", cond: (s) => (s.stats.laundered || 0) >= 500_000, reward: { cash: 50_000 },
+        text: "L'argent sale entre le soir, ressort propre le matin. Saul appelle ça « la magie de la comptabilité créative »." },
+      { title: "Ressources humaines", cond: (s) => Object.values(s.businesses || {}).filter((b) => b.manager).length >= 3, reward: { respect: 8 },
+        text: "Des managers partout. L'empire tourne pendant que vous dormez. C'est ça, être patron." },
+      { title: "Sous-sols", cond: (s) => (s.labFloors || 0) >= 2, reward: { cash: 150_000 },
+        text: "Sous le Superlab, les étages s'enfoncent dans le désert. Personne n'imagine ce qu'il y a sous le parking." },
+      { title: "L'empire de verre", cond: (s) => Object.values(s.businesses || {}).reduce((t, b) => t + b.level, 0) >= 150, reward: { cash: 250_000 }, cinematic: true,
+        text: "Lydia projette la carte des ventes : trois pays, des dizaines de relais. L'empire ne coule plus — il flotte." },
+    ],
+    finale: [
+      { icon: "🍗", line: "Los Pollos Hermanos. « Le meilleur poulet frit de la région. »" },
+      { icon: "💼", line: "Gustavo Fring sert le café. Personne ne refuse la deuxième tasse." },
+      { icon: "🏙️", line: "L'empire de verre brille. Il ne lui manque qu'un cuisinier à sa hauteur." },
+    ],
+  },
+];

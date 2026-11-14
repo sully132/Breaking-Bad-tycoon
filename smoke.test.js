@@ -50,8 +50,8 @@ globalThis.webkitAudioContext = FakeAC;
 const src =
   fs.readFileSync("js/data.js", "utf8") + "\n" +
   fs.readFileSync("js/game.js", "utf8") + "\n" +
-  ";globalThis.X_DATA = { BUSINESSES, MAP_LOCATIONS, SCENES, EVENTS, OPPORTUNITIES, EVENT_VISITORS, EVENT_QUOTES, QUOTES, CHAR_NAMES, RELICS, ACHIEVEMENTS, LEGEND_UPGRADES };" +
-  ";globalThis.X_GAME = { get state() { return state; }, newGame, save, load, endDay, bizRevPerSec, bizSynergyMult, flushSceneEvents, rollSceneEvents, cookMult, tapBoost, labFloorCost, buyLabFloor, relicHas, relicTapMult, relicCookMult, relicBizMult, relicPriceMult, relicPurityBonus, rollRelic, showRelics };";
+  ";globalThis.X_DATA = { BUSINESSES, MAP_LOCATIONS, SCENES, EVENTS, OPPORTUNITIES, EVENT_VISITORS, EVENT_QUOTES, QUOTES, CHAR_NAMES, RELICS, ACHIEVEMENTS, LEGEND_UPGRADES, STORY_ARCS };" +
+  ";globalThis.X_GAME = { get state() { return state; }, newGame, save, load, endDay, bizRevPerSec, bizSynergyMult, flushSceneEvents, rollSceneEvents, cookMult, tapBoost, labFloorCost, buyLabFloor, relicHas, relicTapMult, relicCookMult, relicBizMult, relicPriceMult, relicPurityBonus, rollRelic, showRelics, storyLevel, checkStoryProgress, playCinematic, showStory };";
 (0, eval)(src);
 const D = globalThis.X_DATA;
 const G = globalThis.X_GAME;
@@ -125,7 +125,7 @@ const gjs3 = fs.readFileSync("js/game.js", "utf8");
 console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes("comboUntil = now + 2500") ? "OK" : "FAIL");
 console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
 const sw3 = fs.readFileSync("sw.js", "utf8");
-console.log("SW cache v24:", sw3.includes("heisenberg-v24") ? "OK" : "FAIL");
+console.log("SW cache v25:", sw3.includes("heisenberg-v25") ? "OK" : "FAIL");
 
 // v23 : étages du Superlab + reliques + prestige
 console.log("labFloors migration:", typeof G.state.labFloors === "number" ? "OK" : "FAIL");
@@ -158,6 +158,18 @@ console.log("tap au relachement:", mjs5.includes("handleTap") && mjs5.includes("
 const sfxjs = fs.readFileSync("js/sfx.js", "utf8");
 console.log("ambiance sonore:", sfxjs.includes("startAmbient") && sfxjs.includes("ambient:") ? "OK" : "FAIL");
 console.log("ambiance dans scenes:", fs.readFileSync("js/locscene.js", "utf8").includes("sfx.ambient") ? "OK" : "FAIL");
+
+// v25 : récit
+console.log("STORY_ARCS:", D.STORY_ARCS && D.STORY_ARCS.length === 3 ? "OK" : "FAIL");
+console.log("chapitres par arc:", D.STORY_ARCS.every((a) => a.chapters.length >= 4) ? "OK" : "FAIL");
+console.log("finales cinematiques:", D.STORY_ARCS.every((a) => Array.isArray(a.finale) && a.finale.length >= 3) ? "OK" : "FAIL");
+console.log("story migration:", typeof G.state.story === "object" ? "OK" : "FAIL");
+console.log("story progression:", (G.state.story.rise || 0) >= 1 ? "OK (" + G.state.story.rise + " chap. Ascension)" : "FAIL");
+console.log("moteur recit:", typeof G.checkStoryProgress === "function" && typeof G.playCinematic === "function" && typeof G.showStory === "function" ? "OK" : "FAIL");
+const ihtml5 = fs.readFileSync("index.html", "utf8");
+console.log("overlay cinematique:", ihtml5.includes("story-overlay") && ihtml5.includes("btn-menu-story") ? "OK" : "FAIL");
+console.log("wiring histoire:", fs.readFileSync("js/app.js", "utf8").includes("btn-menu-story") ? "OK" : "FAIL");
+console.log("css recit:", fs.readFileSync("css/style.css", "utf8").includes(".story-overlay") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);

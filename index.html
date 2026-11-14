@@ -42,6 +42,7 @@
       <div class="menu-buttons">
         <button id="btn-play" class="btn primary big menu-play">▶ JOUER</button>
         <button id="btn-menu-ach" class="btn menu-btn">🏆 Succès</button>
+        <button id="btn-menu-story" class="btn menu-btn">📖 Histoire</button>
         <button id="btn-menu-relics" class="btn menu-btn">🗄️ Reliques</button>
         <button id="btn-menu-sound" class="btn menu-btn">🔊 Son : ON</button>
         <button id="btn-menu-export" class="btn menu-btn">📤 Exporter la sauvegarde</button>
@@ -49,7 +50,7 @@
         <button id="btn-menu-fs" class="btn menu-btn">⛶ Plein écran</button>
         <button id="btn-menu-reset" class="btn menu-btn danger">♻️ Nouvelle vie</button>
       </div>
-      <p class="menu-version">Heisenberg Tycoon v24 — fan game non officielle</p>
+      <p class="menu-version">Heisenberg Tycoon v25 — fan game non officielle</p>
     </div>
   </div>
 
@@ -160,6 +161,10 @@
 
   <div class="toasts" id="toasts"></div>
 
+  <div class="story-overlay hidden" id="story-overlay">
+    <div id="story-cine"></div>
+    <div class="story-skip">Toucher pour continuer ▸</div>
+  </div>
   <div class="modal hidden" id="modal">
     <div class="modal-box">
       <div class="modal-avatar" id="modal-avatar" style="display:none"></div>

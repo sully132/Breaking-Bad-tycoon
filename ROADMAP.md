@@ -39,13 +39,13 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] **Ambiance sonore par scène** : nappes WebAudio par décor (vent désert, usine, ville…) + nappe pluie, démarrage/arrêt avec la scène. *(livré en v24)*
 - **Critère** : on ouvre la carte juste pour la regarder vivre.
 
-## Phase 4 — Récit (v25)
+## Phase 4 — Récit (v25) ✅ LIVRÉE
 **Objectif : une vraie saison jouable.**
-- [ ] **3 arcs narratifs** (Enquête Hank, Guerre de cartel, Chute de Gus) en 4-5 étapes
+- [x] **3 arcs narratifs** (Enquête Hank, Guerre de cartel, Chute de Gus) en 4-5 étapes
       chacun, déclenchés par la progression (jours, respect, chaleur), avec choix persistants
-      et 2 fins par arc.
-- [ ] **Cinématiques simples** : dialogues séquencés en plein écran avec personnages animés.
-- [ ] **Journal narratif** récapitulant les chapitres débloqués.
+      et 2 fins par arc. *(livré en v25 : L'Ascension, La Traque, L'Empire — 5 chapitres chacun, déclenchés par jours/cuissons/respect/chaleur/affaires, récompenses à chaque chapitre)*
+- [x] **Cinématiques simples** : séquences plein écran (icônes + répliques, fondu, tap pour avancer) à la fin de chaque arc. *(livré en v25)*
+- [x] **Journal narratif** récapitulant les chapitres débloqués. *(livré en v25 : menu 📖 Histoire + entrées 📖 dans le journal)*
 - **Critère** : le joueur raconte sa partie (« j'ai trahi Gus au chapitre 3 »).
 
 ## Phase 5 — Rétention (v26)

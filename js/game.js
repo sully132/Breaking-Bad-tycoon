@@ -34,6 +34,8 @@ function newGame() {
     maxCombo: 0,
     labFloors: 0,
     relics: [],
+    story: {},
+    storyCine: [],
     investments: {},
     legendPoints: 0,
     prestiges: 0,
@@ -374,6 +376,7 @@ function buyLabFloor() {
   toast("🏗️ Sous-sol −" + state.labFloors, "Le Superlab s'étend sous le désert. +25% cuisson, +10% affaires.");
   log("🏗️ Sous-sol −" + state.labFloors + " creusé au Superlab.", "good");
   checkAchievements();
+  checkStoryProgress();
   if (typeof refreshLocScene === "function") refreshLocScene();
   render();
   save();
@@ -407,6 +410,107 @@ function showRelics() {
     [{ label: "Fermer", apply() {} }]);
   const mt = document.getElementById("modal-text");
   if (mt) mt.innerHTML = '<div class="ach-list">' + items + '</div>';
+}
+
+// ---------- v25 : récit — arcs, chapitres, cinématiques ----------
+function storyLevel(id) {
+  return (state.story && state.story[id]) || 0;
+}
+function storyQueue() {
+  if (!Array.isArray(state.storyCine)) state.storyCine = [];
+  return state.storyCine;
+}
+function checkStoryProgress() {
+  if (!state.story || typeof state.story !== "object") state.story = {};
+  for (const arc of STORY_ARCS) {
+    let unlockedArc = true;
+    try { unlockedArc = arc.unlock(state); } catch (e) { unlockedArc = false; }
+    if (!unlockedArc) continue;
+    const done = storyLevel(arc.id);
+    const ch = arc.chapters[done];
+    if (!ch) continue;
+    let ok = false;
+    try { ok = ch.cond(state); } catch (e) { ok = false; }
+    if (!ok) continue;
+    state.story[arc.id] = done + 1;
+    if (ch.reward && ch.reward.cash) state.cash += ch.reward.cash;
+    if (ch.reward && ch.reward.respect) state.respect = cap(state.respect + ch.reward.respect, 0, 100);
+    playSfx("upgrade");
+    const rew = ch.reward && ch.reward.cash ? "+" + fmt(ch.reward.cash) + "$" : (ch.reward && ch.reward.respect ? "+" + ch.reward.respect + " respect" : "");
+    toast(arc.icon + " " + arc.name + " — " + ch.title, rew || "Nouveau chapitre !");
+    log("📖 " + arc.name + " · " + ch.title, "event");
+    if (ch.cinematic) storyQueue().push(arc.id);
+  }
+  if (storyQueue().length) {
+    const arcId = storyQueue().shift();
+    const arc = STORY_ARCS.find((a) => a.id === arcId);
+    if (arc) setTimeout(() => { try { playCinematic(arc); } catch (e) {} }, 600);
+  }
+}
+function playCinematic(arc) {
+  const overlay = document.getElementById("story-overlay");
+  const cine = document.getElementById("story-cine");
+  if (!overlay || !cine) return;
+  const beats = (arc.finale && arc.finale.length ? arc.finale : [{ icon: arc.icon, line: arc.name }])
+    .concat([{ icon: "📖", line: "Arc terminé : " + arc.name + " ✔" }]);
+  let i = 0;
+  let timer = null;
+  let busy = false;
+  function showBeat() {
+    if (i >= beats.length) { end(); return; }
+    if (busy) return;
+    busy = true;
+    const b = beats[i];
+    cine.classList.remove("visible");
+    setTimeout(() => {
+      cine.innerHTML = '<div class="story-icon">' + b.icon + '</div><div class="story-line">' + b.line + '</div>';
+      cine.classList.add("visible");
+      i += 1;
+      busy = false;
+      timer = setTimeout(showBeat, 3000);
+    }, 350);
+  }
+  function end() {
+    overlay.classList.add("hidden");
+    cine.classList.remove("visible");
+    if (typeof document !== "undefined") document.removeEventListener("click", onTap);
+    if (timer) clearTimeout(timer);
+    checkAchievements();
+    render();
+    save();
+  }
+  function onTap() {
+    if (timer) clearTimeout(timer);
+    showBeat();
+  }
+  overlay.classList.remove("hidden");
+  document.addEventListener("click", onTap);
+  showBeat();
+}
+function showStory() {
+  const items = STORY_ARCS.map((arc) => {
+    let unlockedArc = true;
+    try { unlockedArc = arc.unlock(state); } catch (e) { unlockedArc = false; }
+    const done = storyLevel(arc.id);
+    const rows = arc.chapters.map((ch, i) => {
+      let st = "locked";
+      if (i < done) st = "done";
+      else if (i === done && unlockedArc) st = "current";
+      const label = st === "locked" ? "??? — à débloquer" : (st === "current" ? ch.text : ch.title + " ✔");
+      return '<div class="story-chapter ' + st + '"><span class="sc-dot"></span><span>' + label + '</span></div>';
+    }).join("");
+    const head = arc.icon + " " + arc.name + (done >= arc.chapters.length ? " — terminé ✔" : "");
+    const desc = unlockedArc ? arc.desc : "Arc verrouillé — continue ta progression";
+    return '<div class="story-arc"><div class="story-arc-head">' + head + '</div>' +
+      '<div class="story-arc-desc">' + desc + '</div>' + rows + '</div>';
+  }).join("");
+  const totalDone = STORY_ARCS.reduce((t, a) => t + Math.min(storyLevel(a.id), a.chapters.length), 0);
+  const total = STORY_ARCS.reduce((t, a) => t + a.chapters.length, 0);
+  showModal("📖 Histoire (" + totalDone + "/" + total + ")",
+    '<div class="story-list">' + items + '</div>',
+    [{ label: "Fermer", apply() {} }]);
+  const mt = document.getElementById("modal-text");
+  if (mt) mt.innerHTML = '<div class="story-list">' + items + '</div>';
 }
 
 function log(msg, kind = "") {
@@ -560,6 +664,7 @@ function tapBoost(x = 0.5, y = 0.5) {
     spawnPopup("La rue vous remarque ! Respect +1", "info");
   }
   checkAchievements();
+  checkStoryProgress();
   render();
   save();
 }
@@ -989,6 +1094,7 @@ function endDay() {
   flushSceneEvents();
   rollSceneEvents();
   rollRelic();
+  checkStoryProgress();
   if (Array.isArray(state.sceneEvents) && state.sceneEvents.length) {
     spawnPopup("\u2757 " + state.sceneEvents.length + " \u00e9v\u00e9nement(s) en attente sur la carte", "info");
   }
@@ -1776,6 +1882,8 @@ function load() {
     if (typeof state.maxCombo !== "number") state.maxCombo = 0;
     if (typeof state.labFloors !== "number") state.labFloors = 0;
     if (!Array.isArray(state.relics)) state.relics = [];
+    if (!state.story || typeof state.story !== "object") state.story = {};
+    if (!Array.isArray(state.storyCine)) state.storyCine = [];
     state.visitedToday = Object.assign({}, data.visitedToday || {});
     state.opps = Array.isArray(data.opps) ? data.opps : [];
     state.legendCoins = data.legendCoins || 0;
