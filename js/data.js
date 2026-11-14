@@ -2492,3 +2492,35 @@ const STORY_ARCS = [
     ],
   },
 ];
+
+// ============================================================
+// v26 — RÉTENTION : ÉVÉNEMENTS DE WEEK-END
+// Tirés uniquement le samedi/dimanche (date réelle).
+// ============================================================
+
+const WEEKEND_EVENTS = [
+  { id: "wkRush", emoji: "🎉", weight: 10, type: "auto", title: "Rush du samedi soir",
+    text: "Les fêtes battent leur plein. La demande explose.",
+    apply(s) { s.market = cap(s.market + 0.15, 0.7, 1.6); s.cash += 5_000; log("🎉 Rush du week-end : marché +15%, +5 000$.", "good"); } },
+  { id: "wkParty", emoji: "🪩", weight: 8, type: "auto", title: "Soirée arrosée",
+    text: "Un barbecue légendaire dans le quartier. Tout le monde parle de vous — en bien.",
+    apply(s) { s.respect = cap(s.respect + 5, 0, 100); addHeat(-5); log("🪩 Soirée arrosée : respect +5, chaleur −5.", "good"); } },
+  { id: "wkFestival", emoji: "🎪", weight: 7, type: "auto", title: "Festival de plein air",
+    text: "Foule énorme cette nuit. Les affaires tournent à plein régime.",
+    apply(s) { const gain = 2_000 * totalBizLevels(); s.cash += gain; log("🎪 Festival : les affaires rapportent un bonus de " + fmt(gain) + "$.", "good"); } },
+  { id: "wkSunday", emoji: "😴", weight: 8, type: "auto", title: "Dimanche tranquille",
+    text: "Personne ne travaille. Même la DEA. Journée parfaite pour peaufiner la mixture.",
+    apply(s) { s.purity = cap(s.purity + 5, 0, 100); log("😴 Dimanche tranquille : pureté +5.", "good"); } },
+  { id: "wkAudit", emoji: "😰", weight: 6, type: "choice", title: "Contrôle fiscal surprise",
+    text: "Un inspecteur très zélé fouille les comptes du carwash. Il faut réagir.",
+    choices: [
+      { label: "Payer l'avocat de Saul (−20 000$)", apply(s) { s.cash = Math.max(0, s.cash - 20_000); log("😰 Avocat payé. Le contrôle se referme.", "good"); } },
+      { label: "Jouer la montre", apply(s) { if (Math.random() < 0.5) { log("😰 Le contrôle n'a rien trouvé. Ouf.", "good"); } else { addHeat(10); log("😰 L'inspecteur a des doutes. Chaleur +10.", "bad"); } } },
+    ] },
+  { id: "wkCousins", emoji: "🧢", weight: 5, type: "choice", title: "Des cousins curieux",
+    text: "Deux inconnus photographient l'arrière du Superlab. Des amateurs ou pire ?",
+    choices: [
+      { label: "Payer le silence (−30 000$)", apply(s) { s.cash = Math.max(0, s.cash - 30_000); log("🧢 Silence acheté. Les photos disparaissent.", "good"); } },
+      { label: "Les ignorer", apply(s) { addHeat(12); log("🧢 Les photos circulent déjà. Chaleur +12.", "bad"); } },
+    ] },
+];

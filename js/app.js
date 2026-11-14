@@ -112,7 +112,10 @@
       } catch (e) { alert("Sauvegarde invalide."); }
     });
     const play = document.getElementById("btn-play");
-    if (play) play.addEventListener("click", showApp);
+    if (play) play.addEventListener("click", () => {
+      showApp();
+      if (typeof maybeShowTutorial === "function") maybeShowTutorial();
+    });
 
     const ach = document.getElementById("btn-menu-ach");
     if (ach) ach.addEventListener("click", () => {

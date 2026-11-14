@@ -130,7 +130,8 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v22 : Phase 1 de la ROADMAP — combo de tap (taps enchaînés < 2,5 s = multiplicateur jusqu'à ×2, paliers 🔥x10 / 🔥🔥x25 Respect +2 / 💥x50 +5000$, succès combo25 et combo50) et chaînes d'événements à conséquences différées (Livraison express de Gus → récompense J+3 ou colère J+2 ; Convoyage cartel → paie J+2 puis chaleur J+4).
 - v23 : Phase 2 de la ROADMAP — étages du Superlab (-1/-2/-3 : +25% cuisson, +10% affaires chacun, panneau « ascenseur » dans la scène), collection de 8 reliques à bonus passifs (garantie jour 5), vitrine 🗄️ dans le menu, prestige enrichi (🏬 Franchises secrètes, 🍀 Étoile filante), succès floors3 et relic4.
 - v24 : Phase 3 de la ROADMAP — un monde vivant : parallaxe au doigt sur la carte (4 plans, retour élastique), trafic enrichi (7 véhicules + avion cargo), météo sur la carte (pluie/orage avec éclairs), ambiance sonore par scène en WebAudio (vent, usine, ville, pluie).
-- **v25 (courante) : Phase 4 de la ROADMAP — le récit : 3 arcs narratifs (⚗️ L'Ascension, 🚔 La Traque, 🍗 L'Empire) de 5 chapitres déclenchés par la progression (jours, cuissons, labo, respect, chaleur, affaires), récompenses à chaque chapitre, cinématiques plein écran à la fin de chaque arc (tap pour avancer), journal d'histoire 📖 dans le menu + entrées narratives dans le journal.**
+- v25 : Phase 4 de la ROADMAP — le récit : 3 arcs narratifs (⚗️ L'Ascension, 🚔 La Traque, 🍗 L'Empire) de 5 chapitres, récompenses par chapitre, cinématiques plein écran en fin d'arc, journal d'histoire 📖 dans le menu.
+- **v26 (courante) : Phase 5 de la ROADMAP — la rétention : tutoriel contextuel 3 écrans skippable (nouvelles parties), 6 événements exclusifs de week-end + revenus ×1,15 le samedi/dimanche, streak de connexion réelle (+2 000$ par jour consécutif, max 20 000$), écran de fin de partie détaillé (10 stats + moment fort).**
 
 ## 8. Idées pour la suite (non implémentées)
 

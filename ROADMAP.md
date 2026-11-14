@@ -48,12 +48,12 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] **Journal narratif** récapitulant les chapitres débloqués. *(livré en v25 : menu 📖 Histoire + entrées 📖 dans le journal)*
 - **Critère** : le joueur raconte sa partie (« j'ai trahi Gus au chapitre 3 »).
 
-## Phase 5 — Rétention (v26)
+## Phase 5 — Rétention (v26) ✅ LIVRÉE
 **Objectif : revenir chaque jour.**
-- [ ] **Tutoriel contextuel** (3 écrans max, skippable) pour les nouvelles parties.
-- [ ] **Événements de fin de semaine** (week-end = pool d'événements exclusifs + bonus).
-- [ ] **Objectif quotidien renouvelé** + récompense de connexion (streak de jours réels).
-- [ ] **Écran de fin de partie détaillé** (stats, records, plus beau moment).
+- [x] **Tutoriel contextuel** (3 écrans max, skippable) pour les nouvelles parties. *(livré en v26 : 3 modales après le splash, bouton Passer)*
+- [x] **Événements de fin de semaine** (week-end = pool d'événements exclusifs + bonus). *(livré en v26 : 6 événements samedi/dimanche + revenus ×1,15 le week-end)*
+- [x] **Objectif quotidien renouvelé** + récompense de connexion (streak de jours réels). *(livré en v26 : streak de connexions réelles, +2 000$ par jour consécutif, plafonné à 20 000$)*
+- [x] **Écran de fin de partie détaillé** (stats, records, plus beau moment). *(livré en v26 : 10 stats + « moment fort » calculé)*
 - **Critère** : D1/D7 visibles dans les stats de sauvegarde.
 
 ## Phase 6 — Finition (v27+)

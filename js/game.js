@@ -36,6 +36,9 @@ function newGame() {
     relics: [],
     story: {},
     storyCine: [],
+    loginStreak: 0,
+    lastLogin: "",
+    tutoDone: false,
     investments: {},
     legendPoints: 0,
     prestiges: 0,
@@ -165,6 +168,7 @@ function bizRevPerSec(id) {
   rev *= 1 + 0.08 * legendLevel("biz");
   if (frenzyActive()) rev *= 2;
   if (pubBoostActive()) rev *= 4;
+  if (isWeekend()) rev *= 1.15;
   return rev;
 }
 
@@ -511,6 +515,60 @@ function showStory() {
     [{ label: "Fermer", apply() {} }]);
   const mt = document.getElementById("modal-text");
   if (mt) mt.innerHTML = '<div class="story-list">' + items + '</div>';
+}
+
+// ---------- v26 : rétention — week-end, streak, tutoriel ----------
+function isWeekend() {
+  const d = new Date().getDay();
+  return d === 0 || d === 6;
+}
+function todayKey(offsetDays = 0) {
+  const d = new Date(Date.now() + offsetDays * 86_400_000);
+  return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+}
+function checkLoginStreak() {
+  const today = todayKey();
+  if (state.lastLogin === today) return;
+  state.loginStreak = (state.lastLogin === todayKey(-1)) ? (state.loginStreak || 0) + 1 : 1;
+  state.lastLogin = today;
+  const reward = Math.min(2_000 * state.loginStreak, 20_000);
+  state.cash += reward;
+  toast("🔥 Connexion jour " + state.loginStreak, "Récompense de fidélité : +" + fmt(reward) + "$.");
+  log("🔥 Série de connexion : " + state.loginStreak + " jour(s). +" + fmt(reward) + "$.", "good");
+  save();
+}
+function rollWeekendEvent() {
+  if (typeof WEEKEND_EVENTS === "undefined" || !WEEKEND_EVENTS.length) return;
+  const pool = WEEKEND_EVENTS.filter((e) => !e.cond || e.cond(state));
+  const total = pool.reduce((t, e) => t + (e.weight || 1), 0);
+  let roll = Math.random() * total;
+  for (const e of pool) {
+    roll -= (e.weight || 1);
+    if (roll <= 0) {
+      log(e.emoji + " Week-end : " + e.title, "event");
+      if (e.type === "choice") showEventModal(e);
+      else { e.apply(state); spawnPopup(e.emoji + " " + e.title, "info"); }
+      return;
+    }
+  }
+}
+function maybeShowTutorial() {
+  if (state.tutoDone || state.day > 1) return;
+  const slides = [
+    { icon: "🧪", title: "Bienvenue à Albuquerque", text: "Cuis dans le LABO, vends, et blanchis ton argent sale via tes affaires. Objectif : 10 000 000$ d'argent propre." },
+    { icon: "🗺️", title: "La carte est ta ville", text: "Chaque lieu est une scène vivante : tape les personnages, règle les événements ❗, attrape les opportunités dorées et collecte tes affaires sur place." },
+    { icon: "🚔", title: "Garde la tête froide", text: "La chaleur DEA monte avec ton activité. À 100, c'est l'arrestation. Blanchis, efface tes traces… et deviens une légende." },
+  ];
+  let i = 0;
+  const show = () => {
+    if (i >= slides.length) { state.tutoDone = true; save(); render(); return; }
+    const sl = slides[i];
+    showModal(sl.icon + " " + sl.title + " (" + (i + 1) + "/3)", sl.text, [
+      { label: i === slides.length - 1 ? "C'est parti !" : "Suivant ▸", apply() { i += 1; show(); } },
+      { label: "Passer", apply() { state.tutoDone = true; save(); } },
+    ]);
+  };
+  setTimeout(show, 900);
 }
 
 function log(msg, kind = "") {
@@ -1095,6 +1153,7 @@ function endDay() {
   rollSceneEvents();
   rollRelic();
   checkStoryProgress();
+  if (isWeekend()) rollWeekendEvent();
   if (Array.isArray(state.sceneEvents) && state.sceneEvents.length) {
     spawnPopup("\u2757 " + state.sceneEvents.length + " \u00e9v\u00e9nement(s) en attente sur la carte", "info");
   }
@@ -1811,9 +1870,31 @@ function showOverlay(win) {
     ? "👑 SAY MY NAME."
     : "🚨 FIN DE PARTIE";
   const prestigeLine = state.prestiges > 0 ? ` Légende ×${legendMult().toFixed(2)} (${state.prestiges} identité(s)).` : "";
-  document.getElementById("overlay-text").textContent = win
+  const introText = win
     ? `Vous avez bâti un empire de ${fmt(state.cash)}$ en ${state.day} jours.${prestigeLine} L'argent propre a triomphé... pour l'instant.`
     : "Menottes, flashs, une cellule à Albuquerque. Votre empire s'arrête ici.";
+  // v26 : écran de fin détaillé
+  let best = "🗓️ " + state.day + " jours de survie";
+  if ((state.maxCombo || 0) >= 25) best = "🔥 MÉGA COMBO x" + state.maxCombo;
+  else if ((state.stats.contractsDone || 0) >= 5) best = "📋 " + state.stats.contractsDone + " contrats honorés";
+  else if ((state.stats.laundered || 0) >= 100_000) best = "🧺 100 000$ blanchis";
+  else if ((state.relics || []).length >= 3) best = "🗄️ " + state.relics.length + " reliques collectionnées";
+  const endRows = [
+    ["🗓️ Jours joués", state.day],
+    ["💰 Total gagné", fmt(state.stats.totalEarned || 0) + "$"],
+    ["🧪 Cristal cuit", fmt(state.stats.cooked || 0) + " kg"],
+    ["📦 Ventes", fmt(state.stats.sold || 0)],
+    ["🏆 Succès", state.achievements.length + "/" + ACHIEVEMENTS.length],
+    ["🔥 Meilleur combo", "x" + (state.maxCombo || 0)],
+    ["🗄️ Reliques", (state.relics || []).length + "/" + RELICS.length],
+    ["📖 Chapitres d'histoire", STORY_ARCS.reduce((t, a) => t + Math.min(storyLevel(a.id), a.chapters.length), 0)],
+    ["⭐ Respect", state.respect + "/100"],
+    ["🏭 Niveaux d'affaires", totalBizLevels()],
+  ];
+  const statsHtml = '<div class="end-stats">' +
+    endRows.map((r) => '<div class="end-row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join("") +
+    '<div class="end-best">✨ Moment fort : ' + best + '</div></div>';
+  document.getElementById("overlay-text").innerHTML = introText + statsHtml;
 
   const buttons = document.getElementById("overlay-buttons");
   buttons.innerHTML = "";
@@ -1884,6 +1965,9 @@ function load() {
     if (!Array.isArray(state.relics)) state.relics = [];
     if (!state.story || typeof state.story !== "object") state.story = {};
     if (!Array.isArray(state.storyCine)) state.storyCine = [];
+    if (typeof state.loginStreak !== "number") state.loginStreak = 0;
+    if (typeof state.lastLogin !== "string") state.lastLogin = "";
+    if (typeof state.tutoDone !== "boolean") state.tutoDone = false;
     state.visitedToday = Object.assign({}, data.visitedToday || {});
     state.opps = Array.isArray(data.opps) ? data.opps : [];
     state.legendCoins = data.legendCoins || 0;
@@ -1967,3 +2051,4 @@ if (!load()) {
 }
 render();
 if (offlineReport) setTimeout(() => showOfflineModal(offlineReport), 700);
+checkLoginStreak();

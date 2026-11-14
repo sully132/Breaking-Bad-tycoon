@@ -50,8 +50,8 @@ globalThis.webkitAudioContext = FakeAC;
 const src =
   fs.readFileSync("js/data.js", "utf8") + "\n" +
   fs.readFileSync("js/game.js", "utf8") + "\n" +
-  ";globalThis.X_DATA = { BUSINESSES, MAP_LOCATIONS, SCENES, EVENTS, OPPORTUNITIES, EVENT_VISITORS, EVENT_QUOTES, QUOTES, CHAR_NAMES, RELICS, ACHIEVEMENTS, LEGEND_UPGRADES, STORY_ARCS };" +
-  ";globalThis.X_GAME = { get state() { return state; }, newGame, save, load, endDay, bizRevPerSec, bizSynergyMult, flushSceneEvents, rollSceneEvents, cookMult, tapBoost, labFloorCost, buyLabFloor, relicHas, relicTapMult, relicCookMult, relicBizMult, relicPriceMult, relicPurityBonus, rollRelic, showRelics, storyLevel, checkStoryProgress, playCinematic, showStory };";
+  ";globalThis.X_DATA = { BUSINESSES, MAP_LOCATIONS, SCENES, EVENTS, OPPORTUNITIES, EVENT_VISITORS, EVENT_QUOTES, QUOTES, CHAR_NAMES, RELICS, ACHIEVEMENTS, LEGEND_UPGRADES, STORY_ARCS, WEEKEND_EVENTS };" +
+  ";globalThis.X_GAME = { get state() { return state; }, newGame, save, load, endDay, bizRevPerSec, bizSynergyMult, flushSceneEvents, rollSceneEvents, cookMult, tapBoost, labFloorCost, buyLabFloor, relicHas, relicTapMult, relicCookMult, relicBizMult, relicPriceMult, relicPurityBonus, rollRelic, showRelics, storyLevel, checkStoryProgress, playCinematic, showStory, isWeekend, checkLoginStreak, rollWeekendEvent, maybeShowTutorial };";
 (0, eval)(src);
 const D = globalThis.X_DATA;
 const G = globalThis.X_GAME;
@@ -170,6 +170,24 @@ const ihtml5 = fs.readFileSync("index.html", "utf8");
 console.log("overlay cinematique:", ihtml5.includes("story-overlay") && ihtml5.includes("btn-menu-story") ? "OK" : "FAIL");
 console.log("wiring histoire:", fs.readFileSync("js/app.js", "utf8").includes("btn-menu-story") ? "OK" : "FAIL");
 console.log("css recit:", fs.readFileSync("css/style.css", "utf8").includes(".story-overlay") ? "OK" : "FAIL");
+
+// v26 : rétention
+console.log("WEEKEND_EVENTS:", D.WEEKEND_EVENTS && D.WEEKEND_EVENTS.length === 6 ? "OK" : "FAIL");
+console.log("week-end choices:", D.WEEKEND_EVENTS.filter((e) => e.type === "choice" && e.choices && e.choices.length === 2).length === 2 ? "OK" : "FAIL");
+console.log("streak migration:", typeof G.state.loginStreak === "number" && typeof G.state.tutoDone === "boolean" ? "OK" : "FAIL");
+console.log("isWeekend:", typeof G.isWeekend() === "boolean" ? "OK" : "FAIL");
+G.state.lastLogin = "";
+G.state.loginStreak = 0;
+const cashAvant = G.state.cash;
+G.checkLoginStreak();
+console.log("streak connexion:", G.state.loginStreak >= 1 && G.state.cash > cashAvant && G.state.lastLogin !== "" ? "OK (jour " + G.state.loginStreak + ")" : "FAIL");
+console.log("tuto:", typeof G.maybeShowTutorial === "function" ? "OK" : "FAIL");
+const gjs6 = fs.readFileSync("js/game.js", "utf8");
+console.log("week-end dans endDay:", gjs6.includes("isWeekend()) rollWeekendEvent()") ? "OK" : "FAIL");
+console.log("bonus week-end:", gjs6.includes("isWeekend()) rev *= 1.15") ? "OK" : "FAIL");
+console.log("ecran fin detaille:", gjs6.includes("end-stats") && gjs6.includes("Moment fort") ? "OK" : "FAIL");
+console.log("tuto au splash:", fs.readFileSync("js/app.js", "utf8").includes("maybeShowTutorial") ? "OK" : "FAIL");
+console.log("css fin:", fs.readFileSync("css/style.css", "utf8").includes(".end-stats") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);
