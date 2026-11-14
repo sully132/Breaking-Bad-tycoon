@@ -70,3 +70,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - Push direct sur `main`, version bumpée (`sw.js` CACHE + index.html + RESUME.md).
 - `node --check` + smoke test Node avant chaque push.
 - Sauvegarde toujours compatible : migration dans `load()` pour tout nouveau champ.
+
+## Phase 7 — Contenu additionnel (v28+) ✅ LIVRÉE (v28)
+- [x] Mini-jeux par lieu : ⚗️ Cuisson de précision (RV / Superlab) et 🤝 Négociation avec Tuco — récompenses quotidiennes, cooldown par jour *(livré en v28)*
+- [x] 9 nouveaux événements (rats, BBQ de Hank, guerre de trottoir, panneau de Saul, effraction, méthylamine, éclaireurs + chaîne, Mike) *(livré en v28)*
+- [x] 4 nouveaux week-ends à thème (DEA au ralenti, marché noir, orage, cadeau de Jesse) *(livré en v28)*
+- [x] Scènes d'événements animées : entrée marchée du visiteur, faisceau de lumière, braises flottantes, badge « ! » à ondes, bannière glissante, flash au déclenchement, événements plus fréquents (65%) *(livré en v28)*

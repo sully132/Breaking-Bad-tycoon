@@ -2273,9 +2273,221 @@ const OPPORTUNITIES = [
 ];
 
 // ------------------------------------------------------------
+// v28 — ÉVÉNEMENTS SUPPLÉMENTAIRES (thématiques)
+// ------------------------------------------------------------
+EVENTS.push(
+  {
+    id: "rats", loc: "superlab", emoji: "🐀", weight: 5, type: "choice",
+    title: "Des rongeurs dans la laverie",
+    text: "Une colonie de rats s'est installée derrière les machines. Elles rongent les sacs sous vide.",
+    choices: [
+      {
+        label: "Exterminateur professionnel (−15 000$)",
+        can: (s) => s.cash >= 15_000,
+        apply(s) {
+          s.cash -= 15_000;
+          s.purity = cap(s.purity + 3, 0, 100);
+          log("🐀 Laverie dératisée. Pureté +3 — plus une griffe sur les sacs.", "good");
+        },
+      },
+      {
+        label: "Poser des pièges toi-même (risqué)",
+        apply(s) {
+          if (Math.random() < 0.5) {
+            log("🐀 Tes pièges font l'affaire. Rien de perdu.", "good");
+          } else {
+            s.purity = cap(s.purity - 2, 0, 100);
+            log("🐀 Un sac a morflé. Pureté −2.", "bad");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "hankBBQ", loc: "house", emoji: "🍖", weight: 5, type: "choice", cond: (s) => s.day >= 4,
+    title: "Barbecue chez Hank",
+    text: "Hank t'invite à son barbecue de l'agence. Marie a refait sa fameuse salade de raisins... à la tequila.",
+    choices: [
+      {
+        label: "Y aller, bras ouverts (Respect +4)",
+        apply(s) {
+          s.respect = cap(s.respect + 4, 0, 100);
+          if (Math.random() < 0.4) {
+            addHeat(5);
+            log("🍖 Hank a trop parlé boulot. Respect +4... mais Chaleur +5.", "info");
+          } else {
+            log("🍖 Bons steaks, bons ragots. Respect +4.", "good");
+          }
+        },
+      },
+      {
+        label: "Décliner (Respect −1, Chaleur −2)",
+        apply(s) {
+          s.respect = cap(s.respect - 1, 0, 100);
+          addHeat(-2);
+          log("🍖 Tu as « un rendez-vous ». La DEA baisse la garde. Respect −1, Chaleur −2.", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "turfwar", loc: "corner", emoji: "🥊", weight: 5, type: "choice", cond: (s) => s.day >= 5,
+    title: "Guerre de trottoir",
+    text: "Une bande rivale vend devant TON coin de rue. Leurs tarifs cassent les tiens.",
+    choices: [
+      {
+        label: "Payer le tribut (−8 000$)",
+        can: (s) => s.cash >= 8_000,
+        apply(s) {
+          s.cash -= 8_000;
+          log("🥊 Tribut payé. La bande va vendre ailleurs. La paix a un prix.", "info");
+        },
+      },
+      {
+        label: "Envoyer tes hommes (Respect +5, risque)",
+        apply(s) {
+          if (Math.random() < 0.6) {
+            s.respect = cap(s.respect + 5, 0, 100);
+            log("🥊 La bande a plié bagage. Le quartier sait qui est le patron. Respect +5.", "good");
+          } else {
+            addHeat(9);
+            log("🥊 La dispute a attiré une patrouille. Chaleur +9.", "bad");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "billboard", loc: "saul", emoji: "📺", weight: 4, type: "choice", cond: (s) => s.day >= 6,
+    title: "Saul veut t'afficher en 4x3",
+    text: "« Un panneau publicitaire, c'est de la légitimité, amigo. » Saul a déjà le visuel : toi, en costume.",
+    choices: [
+      {
+        label: "Payer la campagne (−25 000$, Marché +20%)",
+        can: (s) => s.cash >= 25_000,
+        apply(s) {
+          s.cash -= 25_000;
+          s.market = cap(s.market + 0.2, 0.7, 1.6);
+          log("📺 Ta tête sur le 4x3. La demande grimpe. Marché +20%.", "good");
+        },
+      },
+      {
+        label: "Rester discret (Respect −1)",
+        apply(s) {
+          s.respect = cap(s.respect - 1, 0, 100);
+          log("📺 Saul boude : « L'humilité, c'est pour les moines. » Respect −1.", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "nightbreakin", loc: "carwash", emoji: "🔦", weight: 4, type: "auto",
+    title: "Effraction nocturne",
+    text: "Les caméras ont filmé deux silhouettes qui forcent la porte arrière du lave-auto, 3h du matin.",
+    apply(s) {
+      const managed = s.businesses && s.businesses.carwash && s.businesses.carwash.manager;
+      if (managed) {
+        s.respect = cap(s.respect + 2, 0, 100);
+        log("🔦 Ton manager a déclenché l'alarme. Les rôdeurs ont déguerpi. Respect +2.", "good");
+      } else if (s.cash > 0) {
+        const lost = Math.min(s.cash * 0.05, 20_000);
+        s.cash -= lost;
+        log("🔦 On t'a sifflé " + fmt(Math.round(lost)) + "$ dans la caisse. Embauche un manager...", "bad");
+      } else {
+        log("🔦 Rien à voler. Les rôdeurs sont repartis déçus.", "info");
+      }
+    },
+  },
+  {
+    id: "precursor", loc: "station", emoji: "🛢️", weight: 5, type: "choice",
+    title: "Bidons douteux à la station",
+    text: "Un routier propose des bidons de méthylamine « tombés du camion ». Prix d'ami.",
+    choices: [
+      {
+        label: "Acheter les bidons (−30 000$, Stock +8 kg)",
+        can: (s) => s.cash >= 30_000,
+        apply(s) {
+          s.cash -= 30_000;
+          s.stock = Math.min(stockCap(), s.stock + 8);
+          log("🛢️ Stock +8 kg. Ne demande pas d'où ça vient.", "good");
+        },
+      },
+      {
+        label: "Refuser poliment",
+        apply(s) {
+          log("🛢️ Trop risqué. Le routier siffle en s'en allant.", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "scouts", loc: "villa", emoji: "🗺️", weight: 4, type: "choice", cond: (s) => s.day >= 10,
+    title: "Éclaireurs au péage",
+    text: "Deux voitures teintées ont photographié ta villa depuis la colline. Des éclaireurs, pas des touristes.",
+    choices: [
+      {
+        label: "Acheter leur silence (−40 000$)",
+        can: (s) => s.cash >= 40_000,
+        apply(s) {
+          s.cash -= 40_000;
+          log("🗺️ Photos brûlées. Les voitures ont disparu.", "good");
+        },
+      },
+      {
+        label: "Les laisser observer (Chaleur +6)",
+        apply(s) {
+          addHeat(6);
+          scheduleEvent("scoutsPayback", 3 + Math.floor(Math.random() * 3));
+          log("🗺️ Tu les ignores. Mauvaise idée, probablement. Chaleur +6.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "scoutsPayback", emoji: "💀", weight: 0, type: "auto",
+    title: "Visite des éclaireurs",
+    text: "Ils ont tout noté : les horaires, les camions, les sorties de la laverie.",
+    apply(s) {
+      addHeat(12);
+      log("💀 Les éclaireurs ont tout rapporté. Chaleur +12.", "bad");
+    },
+  },
+  {
+    id: "mikeJob", loc: "hq", emoji: "🎩", weight: 4, type: "choice", cond: (s) => s.heat >= 20,
+    title: "Mike propose un « nettoyage »",
+    text: "« Vos problèmes de chaleur ? Je connais des gens qui font oublier des choses. » Tarif : sec.",
+    choices: [
+      {
+        label: "Confier le travail (−20 000$, Chaleur −10)",
+        can: (s) => s.cash >= 20_000,
+        apply(s) {
+          s.cash -= 20_000;
+          addHeat(-10);
+          log("🎩 Mike a « parlé » aux bonnes personnes. Chaleur −10.", "good");
+        },
+      },
+      {
+        label: "Gérer seul",
+        apply(s) {
+          log("🎩 Mike hausse les épaules : « Vos funérailles. »", "info");
+        },
+      },
+    ],
+  },
+);
+
+// ------------------------------------------------------------
 // APPARENCES des visiteurs d'événements dans les scènes (v17)
 // ------------------------------------------------------------
 const EVENT_VISITORS = {
+  rats: { shirt: "#6a5a4a", pants: "#3a342c", cap: true },
+  hankBBQ: CHAR_LOOKS.hank,
+  turfwar: { shirt: "#8a3a3a", pants: "#26262c", beanie: true },
+  billboard: CHAR_LOOKS.saul,
+  nightbreakin: { shirt: "#2a2a30", pants: "#1a1a20", beanie: true },
+  precursor: { shirt: "#4a5a4a", pants: "#2a2a30", hat: true, glasses: true },
+  scouts: CHAR_LOOKS.cousins,
+  mikeJob: CHAR_LOOKS.mike,
   hank: CHAR_LOOKS.hank,
   tuco: CHAR_LOOKS.tuco,
   cartel: { shirt: "#2a2a34", pants: "#1e1e26", hat: true },
@@ -2301,6 +2513,14 @@ const EVENT_VISITORS = {
 
 // v21 : répliques d'événements (bulles des visiteurs dans les scènes)
 const EVENT_QUOTES = {
+  rats: ["Ils ont mangé deux sacs. DEUX.", "Grignote, grignote, petit..."],
+  hankBBQ: ["T'apportes tes fameux steaks, ou on commande des pizzas ?", "Marie a refait sa salade de raisins. Sois fort."],
+  turfwar: ["Ce trottoir, il est à nous maintenant.", "Tu veux régler ça à l'ancienne ?"],
+  billboard: ["Un panneau 4x3, c'est de la légitimité, amigo !", "Le visuel est prêt : toi, en costume, souriant."],
+  nightbreakin: ["Fais vite, la caméra tourne...", "Le coffre est où ?!"],
+  precursor: ["Tombé du camion, promis. Prix d'ami.", "Vous voulez la quantité ou la qualité ? Les deux, j'ai."],
+  scouts: ["...", "Nous regardons. Nous notons."],
+  mikeJob: ["Vos problèmes de chaleur ? Je connais des gens.", "Je fais oublier des choses. Le tarif est sec."],
   hank: ["On sait que vous êtes malin. On sait aussi que vous n'êtes pas intouchable.", "Un jour ou l'autre, je vous aurai."],
   tuco: ["Hé ! Tonton ! Tu me cachs quelque chose ?", "TIGHT, TIGHT, TIGHT ! Raconte-moi ça !"],
   cartel: ["Le cartel t'observe. Fais tes preuves.", "Nos amis du sud attendent des résultats."],
@@ -2499,6 +2719,23 @@ const STORY_ARCS = [
 // ============================================================
 
 const WEEKEND_EVENTS = [
+  { id: "wkDeaSlow", emoji: "🛋️", weight: 7, type: "auto", title: "Effectif réduit à la DEA",
+    text: "Week-end oblige : les bureaux de l'agence sont à moitié vides.",
+    apply(s) { addHeat(-8); log("🛋️ La DEA tourne au ralenti. Chaleur −8.", "good"); } },
+  { id: "wkBlackMarket", emoji: "🕶️", weight: 7, type: "auto", title: "Marché noir en effervescence",
+    text: "Des revendeurs de tout l'État font la queue. Les prix montent.",
+    apply(s) { s.market = cap(s.market + 0.12, 0.7, 1.6); log("🕶️ Demande record ce week-end : marché +12%.", "good"); } },
+  { id: "wkStorm", emoji: "⛈️", weight: 6, type: "auto", title: "Orage d'été",
+    text: "L'averse martèle les toits. Personne ne sort — sauf tes clients les plus fidèles.",
+    apply(s) { s.purity = cap(s.purity + 3, 0, 100); s.market = cap(s.market - 0.05, 0.7, 1.6); log("⛈️ Orage : pureté +3 (humidité parfaite), marché −5%.", "info"); } },
+  { id: "wkGift", emoji: "🎁", weight: 5, type: "choice", title: "Cadeau de Jesse",
+    text: "Jesse débarque avec un paquet emballé dans du papier « Bon anniversaire » (ce n'est l'anniversaire de personne).",
+    choices: [
+      { label: "Accepter (+10 000$ d'argent sale)",
+        apply(s) { s.dirty += 10_000; log("🎁 Un peu d'argent sale, emballé avec amour. +10 000$.", "good"); } },
+      { label: "Refuser (Respect +3)",
+        apply(s) { s.respect = cap(s.respect + 3, 0, 100); log("🎁 « C'est le geste qui compte, yo. » Respect +3.", "good"); } },
+    ] },
   { id: "wkRush", emoji: "🎉", weight: 10, type: "auto", title: "Rush du samedi soir",
     text: "Les fêtes battent leur plein. La demande explose.",
     apply(s) { s.market = cap(s.market + 0.15, 0.7, 1.6); s.cash += 5_000; log("🎉 Rush du week-end : marché +15%, +5 000$.", "good"); } },

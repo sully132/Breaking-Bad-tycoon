@@ -199,5 +199,23 @@ console.log("pause arriere-plan:", ljs7.includes("visibilitychange") && mjs7.inc
 console.log("accessibilite css:", fs.readFileSync("css/style.css", "utf8").includes("prefers-reduced-motion") ? "OK" : "FAIL");
 console.log("simulation equilibre:", fs.existsSync("balance.test.js") ? "OK" : "FAIL");
 
+// v28 : mini-jeux + événements thématiques + scènes animées
+const djs8 = fs.readFileSync("js/data.js", "utf8");
+const mgIds = ["rats", "hankBBQ", "turfwar", "billboard", "nightbreakin", "precursor", "scouts", "scoutsPayback", "mikeJob"];
+console.log("evenements v28:", mgIds.every((id) => djs8.includes('id: "' + id + '"')) ? "OK" : "FAIL");
+console.log("week-ends v28:", djs8.includes("wkDeaSlow") && djs8.includes("wkBlackMarket") && djs8.includes("wkStorm") && djs8.includes("wkGift") ? "OK" : "FAIL");
+console.log("visiteurs v28:", djs8.includes("hankBBQ: CHAR_LOOKS.hank") && djs8.includes("mikeJob: CHAR_LOOKS.mike") ? "OK" : "FAIL");
+console.log("minigame.js:", fs.existsSync("js/minigame.js") ? "OK" : "FAIL");
+const ihtml8 = fs.readFileSync("index.html", "utf8");
+console.log("overlay minijeu:", ihtml8.includes("mg-overlay") && ihtml8.includes("mg-canvas") ? "OK" : "FAIL");
+console.log("script minigame:", ihtml8.includes("js/minigame.js") ? "OK" : "FAIL");
+const ljs8 = fs.readFileSync("js/locscene.js", "utf8");
+console.log("entree visiteur animee:", ljs8.includes("evEnterAt") ? "OK" : "FAIL");
+console.log("banniere evenement:", ljs8.includes("drawEventBanner") ? "OK" : "FAIL");
+console.log("braises evenement:", ljs8.includes("evParts") ? "OK" : "FAIL");
+console.log("boutons minijeu:", ljs8.includes("openMinigame(\"cook\")") && ljs8.includes("openMinigame(\"tuco\")") ? "OK" : "FAIL");
+console.log("migrations minijeu:", fs.readFileSync("js/game.js", "utf8").includes("mgCookDay") ? "OK" : "FAIL");
+console.log("SW cache v28:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v28") ? "OK" : "FAIL");
+
 console.log("SMOKE TEST PASSE");
 process.exit(0);

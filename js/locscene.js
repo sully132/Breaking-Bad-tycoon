@@ -552,12 +552,29 @@
   }
 
   let evQuote = null;
+  // v28 : animation d'entrée, bannière, braises, flash
+  let lastEvId = null, evEnterAt = 0, evParts = [], evFlash = 0, evBanner = null;
   function drawEventVisitor(w, h, t, def) {
     const ev = sceneEventFor(currentLocId);
-    if (!ev) { eventVisitor = null; evQuote = null; return; }
+    if (!ev) { eventVisitor = null; evQuote = null; evBanner = null; lastEvId = null; return; }
     const looks = (typeof EVENT_VISITORS !== "undefined") ? EVENT_VISITORS : {};
     const look = looks[ev.id] || { shirt: "#5a5a6a", pants: "#2e2e34" };
     const quotes = (typeof EVENT_QUOTES !== "undefined" && EVENT_QUOTES[ev.id]) || ["..."];
+    if (ev.id !== lastEvId) {
+      lastEvId = ev.id;
+      evEnterAt = anim;
+      evBanner = { emoji: ev.emoji || "❗", title: ev.title || "", until: anim + 7000 };
+      evParts = [];
+      for (let i = 0; i < 14; i++) {
+        evParts.push({
+          x: Math.random(), y: 0.55 + Math.random() * 0.35,
+          vx: (Math.random() - 0.5) * 0.02, vy: -0.02 - Math.random() * 0.05,
+          life: 0.3 + Math.random() * 0.7,
+          size: 1.5 + Math.random() * 2.5,
+          hue: Math.random() < 0.5 ? "#ffb347" : "#ff6b57",
+        });
+      }
+    }
     if (!evQuote || evQuote.eid !== ev.id || anim > evQuote.until) {
       evQuote = { eid: ev.id, text: quotes[Math.floor(Math.random() * quotes.length)], until: anim + 5200 };
     }
@@ -567,12 +584,42 @@
     for (const cand of [0.5, 0.26, 0.74]) {
       if (!spots.some((p) => Math.abs(p[0] - cand) < 0.1)) { px = cand; break; }
     }
-    const x = w * px;
+    const kIn = Math.min(1, (anim - evEnterAt) / 900);
+    const ease = 1 - Math.pow(1 - kIn, 3);
+    const startX = -0.18;
+    const x = w * (startX + (px - startX) * ease);
     const sc = 1.65;
-    drawPerson(x, ground, sc, look);
+    const walking = kIn < 1;
+    const bob = walking ? Math.abs(Math.sin(anim * 0.02)) * 6 : 0;
+    // v28 : faisceau de lumière sur le visiteur
+    const sa = 0.10 + 0.05 * Math.sin(anim * 0.005);
+    const sg = ctx.createRadialGradient(x, ground - 150 * sc, 10, x, ground - 150 * sc, 190 * sc);
+    sg.addColorStop(0, "rgba(255, 220, 150, " + sa.toFixed(3) + ")");
+    sg.addColorStop(1, "rgba(255, 220, 150, 0)");
+    ctx.fillStyle = sg;
+    ctx.fillRect(x - 200 * sc, ground - 360 * sc, 400 * sc, 380 * sc);
+    drawPerson(x, ground - bob, sc, look);
     eventVisitor = { x, y: ground, s: sc };
+    for (const p of evParts) {
+      p.x += p.vx * 0.016; p.y += p.vy * 0.016; p.life -= 0.006;
+      if (p.life <= 0 || p.y < 0.3) { p.x = Math.random(); p.y = 0.9; p.life = 1; }
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life)) * 0.8;
+      ctx.fillStyle = p.hue;
+      ctx.beginPath();
+      ctx.arc(w * p.x, h * p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
     const pulse = 0.7 + 0.3 * Math.sin(t * 4);
-    const by = ground - 96 * sc;
+    const by = ground - 96 * sc - Math.abs(Math.sin(t * 5)) * 5;
+    const ringK = (anim % 1200) / 1200;
+    ctx.globalAlpha = (1 - ringK) * 0.55;
+    ctx.strokeStyle = "#ff8a5c";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, by, 13 + ringK * 24, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
     ctx.fillStyle = "rgba(200, 58, 50, " + pulse.toFixed(2) + ")";
     ctx.beginPath();
     ctx.arc(x, by, 13, 0, Math.PI * 2);
@@ -641,9 +688,44 @@
     ctx.fillRect(0, h * 0.75, w, h * 0.25);
   }
 
+  // v28 : bannière animée d'événement en haut de la scène
+  function drawEventBanner(w, h, t) {
+    if (!evBanner) return;
+    if (anim > evBanner.until) { evBanner = null; return; }
+    const ease = 1 - Math.pow(1 - Math.min(1, (anim - (evBanner.until - 7000)) / 450), 3);
+    const alpha = Math.min(1, (evBanner.until - anim) / 400);
+    const off = (1 - ease) * -w;
+    const bw = Math.min(w - 20, 360);
+    const bh = 40;
+    const bx = (w - bw) / 2 + off;
+    const byy = 12;
+    ctx.save();
+    ctx.globalAlpha = 0.94 * alpha;
+    const g = ctx.createLinearGradient(bx, byy, bx + bw, byy + bh);
+    g.addColorStop(0, "#2a1512");
+    g.addColorStop(1, "#4a1f16");
+    ctx.fillStyle = g;
+    rr(bx, byy, bw, bh, 12);
+    ctx.fill();
+    const pulse = 0.5 + 0.5 * Math.sin(t * 5);
+    ctx.strokeStyle = "rgba(255, 120, 80, " + (0.45 + 0.5 * pulse).toFixed(2) + ")";
+    ctx.lineWidth = 2;
+    rr(bx, byy, bw, bh, 12);
+    ctx.stroke();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#ffd9a0";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(evBanner.emoji + "  " + evBanner.title, bx + bw / 2, byy + bh / 2 + 1);
+    ctx.restore();
+    ctx.textBaseline = "alphabetic";
+  }
+
   function triggerSceneEvent() {
     const ev = sceneEventFor(currentLocId);
     if (!ev) return;
+    evFlash = 1;
     state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);
     eventVisitor = null;
     if (typeof playSfx === "function") playSfx("event");
@@ -2000,7 +2082,13 @@
     if (!def.night) applyPhaseTint(w, h, phase);
     drawFlash(w, h);
     drawEventAura(w, h, t);
+    drawEventBanner(w, h, t);
     drawVignette(w, h, night);
+    if (evFlash > 0.02) {
+      ctx.fillStyle = "rgba(255, 235, 210, " + (evFlash * 0.45).toFixed(3) + ")";
+      ctx.fillRect(0, 0, w, h);
+      evFlash *= 0.88;
+    }
 
     anim += 16;
     // v27 : DPR adaptatif — si le fps chute, on réduit la résolution
@@ -2079,6 +2167,26 @@
         disabled: active || cd > 0,
         apply: () => { activatePubBoost(); buildSheet(); },
       });
+    }
+
+    // v28 : mini-jeux par lieu
+    if (typeof window.openMinigame === "function") {
+      if (loc.id === "rv" || loc.id === "superlab") {
+        const mgDone = state.mgCookDay === state.day;
+        buttons.push({
+          label: mgDone ? "⚗️ Cuisson de précision — réussi aujourd'hui ✔" : "⚗️ Mini-jeu : Cuisson de précision (pureté + bonus)",
+          disabled: mgDone,
+          apply: () => { window.openMinigame("cook"); },
+        });
+      }
+      if (loc.id === "tuco") {
+        const mgDone = state.mgTucoDay === state.day;
+        buttons.push({
+          label: mgDone ? "🤝 Négociation avec Tuco — déjà tentée aujourd'hui ✔" : "🤝 Mini-jeu : Négocier avec Tuco (gros pactole)",
+          disabled: mgDone,
+          apply: () => { window.openMinigame("tuco"); },
+        });
+      }
     }
 
     // v23 : étages du Superlab

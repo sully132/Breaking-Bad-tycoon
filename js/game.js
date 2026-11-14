@@ -947,7 +947,7 @@ function rollSceneEvents() {
   if (!pool.length) return;
   // Garanti : le premier événement de scène arrive dès le jour 2
   const forced = seen === 0 && state.day >= 2;
-  const chance = forced ? 1 : 0.55 + state.heat / 400;
+  const chance = forced ? 1 : 0.65 + state.heat / 400; // v28 : événements plus visibles
   if (Math.random() > chance) return;
   const total = pool.reduce((t, e) => t + e.weight, 0);
   let roll = Math.random() * total;
@@ -1961,6 +1961,8 @@ function load() {
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
     if (state.goal === 10_000_000) state.goal = VICTORY_CASH; // v27 : anciennes parties passees au nouvel objectif
+    if (typeof state.mgCookDay !== "number") state.mgCookDay = 0; // v28
+    if (typeof state.mgTucoDay !== "number") state.mgTucoDay = 0; // v28
     if (typeof state.combo !== "number") state.combo = 0;
     if (typeof state.comboUntil !== "number") state.comboUntil = 0;
     if (typeof state.maxCombo !== "number") state.maxCombo = 0;
