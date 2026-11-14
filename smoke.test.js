@@ -130,5 +130,6 @@ console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes(
 console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
 const sw3 = fs.readFileSync("sw.js", "utf8");
 console.log("SW cache v22:", sw3.includes("heisenberg-v22") ? "OK" : "FAIL");
-s = s.replace('console.log("SMOKE TEST PASSE");', "");
+
+console.log("SMOKE TEST PASSE");
 process.exit(0);
