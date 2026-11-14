@@ -396,45 +396,70 @@ const scene = (() => {
   }
 
   // ---------- Personnages ----------
-  function figure(x, y, opts, f, t) {
-    const o = Object.assign({ shirt: "#3a6b8a", pants: "#2a2a2a", skin: "#e8c39a", hair: "#3a2a1a", hat: null, glasses: false, bald: false, wave: false }, opts);
+   function figure(x, y, opts, f, t) {
+    const o = Object.assign({
+      shirt: "#3a6b8a", pants: "#2a2a2a", skin: "#e8c39a", shoe: "#1a1a1a",
+      hair: "#3a2a1a", hat: null, beanie: null, glasses: false, bald: false,
+      goatee: false, wave: false, scale: 1,
+    }, opts);
     const bob = Math.sin(t / 500 + x) * 1.5;
     ctx.save();
     ctx.translate(x, y + bob);
+    ctx.scale(o.scale, o.scale);
+    ctx.fillStyle = o.shoe;
+    ctx.fillRect(-7, -2, 7, 2.5);
+    ctx.fillRect(0, -2, 7, 2.5);
     ctx.fillStyle = o.pants;
-    ctx.fillRect(-6, -14, 5, 14);
-    ctx.fillRect(1, -14, 5, 14);
+    ctx.fillRect(-6, -15, 5, 14);
+    ctx.fillRect(1, -15, 5, 14);
     ctx.fillStyle = o.shirt;
-    ctx.fillRect(-8, -32, 16, 19);
+    ctx.fillRect(-8, -33, 16, 19);
     ctx.fillStyle = o.skin;
-    ctx.fillRect(-8, -36, 4, 8);
-    ctx.fillRect(4, -36, 4, 8);
+    ctx.fillRect(-10, -33, 3, 12);
+    ctx.fillRect(7, -33, 3, 12);
     if (o.wave) {
-      const wave = Math.sin(t / 220) * 4;
-      ctx.fillRect(4, -40 - Math.max(0, wave), 4, 8);
+      const wave = Math.sin(t / 220) * 5;
+      ctx.fillRect(7, -38 - Math.max(0, wave), 3, 9);
     }
     ctx.beginPath();
-    ctx.arc(0, -40, 8, 0, Math.PI * 2);
+    ctx.arc(0, -41, 8, 0, Math.PI * 2);
     ctx.fill();
-    if (!o.bald) {
+    ctx.fillStyle = "rgba(0,0,0,0.12)";
+    ctx.beginPath();
+    ctx.arc(0, -41, 8, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.fill();
+    if (o.goatee) {
+      ctx.fillStyle = "#4a3a26";
+      ctx.fillRect(-3, -36.5, 6, 3.5);
+    }
+    if (!o.bald && !o.hat && !o.beanie) {
       ctx.fillStyle = o.hair;
       ctx.beginPath();
-      ctx.arc(0, -42, 8, Math.PI, Math.PI * 2);
+      ctx.arc(0, -43, 8, Math.PI * 0.95, Math.PI * 2.05);
       ctx.fill();
+    }
+    if (o.beanie) {
+      ctx.fillStyle = o.beanie;
+      ctx.beginPath();
+      ctx.arc(0, -44, 8.4, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-8.4, -45, 16.8, 3);
     }
     if (o.hat) {
       ctx.fillStyle = o.hat;
-      ctx.fillRect(-11, -47, 22, 4);
-      ctx.fillRect(-6, -55, 12, 9);
+      ctx.fillRect(-11, -48, 22, 3.5);
+      ctx.fillRect(-6, -57, 12, 9.5);
+      ctx.fillStyle = "rgba(255,255,255,0.14)";
+      ctx.fillRect(-6, -57, 12, 2.4);
     }
     if (o.glasses) {
       ctx.strokeStyle = "#111";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.arc(-3.4, -40, 3, 0, Math.PI * 2);
-      ctx.arc(3.4, -40, 3, 0, Math.PI * 2);
-      ctx.moveTo(-0.4, -40);
-      ctx.lineTo(0.4, -40);
+      ctx.arc(-3.4, -41, 3, 0, Math.PI * 2);
+      ctx.arc(3.4, -41, 3, 0, Math.PI * 2);
+      ctx.moveTo(-0.4, -41);
+      ctx.lineTo(0.4, -41);
       ctx.stroke();
     }
     ctx.restore();
@@ -447,9 +472,10 @@ const scene = (() => {
     const hired = (id) => {
       try { return typeof hasStaff === "function" && hasStaff(id); } catch (e) { return false; }
     };
-    figure(baseX, groundY, { shirt: "#2a2a2a", pants: "#1a1a1a", bald: true, hat: "#1a1a1a", glasses: true }, f, t);
+        figure(baseX, groundY, { shirt: "#2a2a2a", pants: "#1a1a1a", bald: true, hat: "#1a1a1a", glasses: true, goatee: true, scale: 1.12 }, f, t);
     let slot = 0;
-    const spot = () => baseX + 34 + slot++ * 26;
+    const spot = () => baseX + 36 + slot++ * 27;
+    if (hired("jesse")) figure(spot(), groundY, { shirt: "#e8c832", pants: "#3a5a8a", beanie: "#c8b44a", wave: Math.sin(t / 3000) > 0.7 }, f, t);
     if (hired("jesse")) figure(spot(), groundY, { shirt: "#e8c832", pants: "#3a5a8a", hair: "#c8b44a", wave: Math.sin(t / 3000) > 0.7 }, f, t);
     if (hired("mike")) figure(spot(), groundY, { shirt: "#5a5a5a", pants: "#333", hair: "#cfcfcf" }, f, t);
     if (hired("saul")) figure(spot(), groundY, { shirt: "#d94f8a", pants: "#444", bald: true }, f, t);
@@ -547,6 +573,48 @@ const scene = (() => {
     }
   }
 
+  // ---------- Accessoires de décor ----------
+  function drawProps(level, f) {
+    const groundY = H * 0.86;
+    const night = f < 0.35;
+    const bx = W * 0.5;
+    const barrels = level === 0 ? [[bx - 118, 0.9]] : level === 1 ? [[bx - 128, 0.9], [bx - 112, 0.92]] : [[bx - 168, 0.9], [bx - 152, 0.92], [bx + 168, 0.9]];
+    for (const [x, fy] of barrels) {
+      const y = H * fy;
+      ctx.fillStyle = "#3a6a8a";
+      roundRect(x - 7, y - 16, 14, 16, 2, true);
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.fillRect(x - 7, y - 12, 14, 2);
+      ctx.fillRect(x - 7, y - 6, 14, 2);
+      if (night) {
+        ctx.fillStyle = "rgba(110,211,255,0.35)";
+        ctx.fillRect(x - 5, y - 15, 10, 3);
+      }
+    }
+    if (level >= 1) {
+      const x = bx + (level === 1 ? 128 : 150);
+      const y = H * 0.905;
+      ctx.fillStyle = "#8a6a42";
+      ctx.fillRect(x - 10, y - 12, 20, 12);
+      ctx.strokeStyle = "#6e5236";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x - 10, y - 12, 20, 12);
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y - 12);
+      ctx.lineTo(x + 10, y);
+      ctx.moveTo(x + 10, y - 12);
+      ctx.lineTo(x - 10, y);
+      ctx.stroke();
+    }
+    const rocks = [[0.24, 0.9], [0.68, 0.92], [0.83, 0.9]];
+    ctx.fillStyle = lerpColor([50, 48, 44], [150, 138, 118], f);
+    for (const [rx, ry] of rocks) {
+      ctx.beginPath();
+      ctx.ellipse(W * rx, H * ry, 5, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
   // ---------- Particules & FX ----------
   function spawnSmoke(x, y) {
     smoke.push({ x: x + (Math.random() - 0.5) * 10, y, vx: (Math.random() - 0.5) * 0.3, vy: -(0.4 + Math.random() * 0.5), r: 4 + Math.random() * 5, life: 1 });
@@ -759,6 +827,7 @@ const scene = (() => {
     drawCactus(W * 0.16, H * 0.84, 0.7, f);
     drawCactus(W * 0.9, H * 0.85, 0.9, f);
     drawBuilding(level, f, t);
+    drawProps(level, f);
     drawCrew(f, t);
     drawTumbleweed(f);
     drawCars(f);
