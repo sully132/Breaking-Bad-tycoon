@@ -1573,3 +1573,152 @@ ACHIEVEMENTS.push(
   { id: "bizLevels100", icon: "🏙️", name: "Empire de façade", desc: "100 niveaux d'affaires cumulés", check: (s) => Object.values(s.businesses || {}).reduce((t, b) => t + b.level, 0) >= 100, reward: { respect: 8 } },
   { id: "bizLevels400", icon: "👑", name: "Magnat d'Albuquerque", desc: "400 niveaux d'affaires cumulés", check: (s) => Object.values(s.businesses || {}).reduce((t, b) => t + b.level, 0) >= 400, reward: { cash: 5_000_000 } },
 );
+
+// ============================================================
+// v11 — LA CARTE COMME ÉCRAN PRINCIPAL + SCÈNES PAR LIEU
+// Chaque affaire (BUSINESSES) est visible sur la carte.
+// SCENES[locId] décrit la mise en scène dessinée en plein écran :
+//   kind : décor principal (dessiné par js/locscene.js)
+//   chars: personnages présents dans la scène
+//   night: scène de nuit
+// ============================================================
+
+// Toutes les affaires ont un lieu sur la carte
+(function () {
+  const byId = {};
+  MAP_LOCATIONS.forEach((l) => { byId[l.id] = l; });
+  const links = [
+    ["carwash", "carwash"], ["pollos", "pollos"], ["junkyard", "junkyard"],
+    ["saulbiz", "saul"], ["laundry", "superlab"],
+  ];
+  for (const [bizId, locId] of links) {
+    const b = BUSINESSES.find((x) => x.id === bizId);
+    if (b) b.locId = locId;
+  }
+})();
+
+// Nouveaux lieux-producteurs sur la carte (affaires sans emplacement)
+MAP_LOCATIONS.push(
+  {
+    id: "nails", name: "Salon de manucure", emoji: "💅", x: 0.38, y: 0.84, color: "#e8c9d8",
+    desc: "Vernis, faux ongles, et liasses dans le tiroir du fond.",
+    unlock: (s) => s.day >= 3,
+    interactions: [
+      {
+        id: "spa", icon: "🫧", label: "Séance détente (Chaleur −4)", apCost: 0,
+        effect(s) { addHeat(-4); spawnPopup("Chaleur −4", "info"); log("🫧 Une manucure, un magazine, zéro soupçon. Chaleur −4.", "good"); },
+      },
+    ],
+  },
+  {
+    id: "corner", name: "Coin de rue", emoji: "🛴", x: 0.2, y: 0.48, color: "#c9b89a",
+    desc: "Combo, Badger et les autres. Le produit descend dans la ville.",
+    unlock: (s) => s.day >= 4,
+    interactions: [
+      {
+        id: "hustle", icon: "🚀", label: "Coups de fil (Respect +2)", apCost: 0,
+        effect(s) { s.respect = cap(s.respect + 2, 0, 100); spawnPopup("Respect +2", "info"); log("🚀 Le réseau s'organise, la rue parle de toi. Respect +2.", "good"); },
+      },
+    ],
+  },
+  {
+    id: "villa", name: "Hacienda d'Éladio", emoji: "🐄", x: 0.93, y: 0.8, color: "#e0c48a",
+    desc: "Piscine, poulet rôti, et un cartel qui investit dans la légalité.",
+    unlock: (s) => s.day >= 20,
+    interactions: [
+      {
+        id: "toast", icon: "🥂", label: "Trinquer avec Don Eladio (Respect +3)", apCost: 0,
+        effect(s) {
+          s.respect = cap(s.respect + 3, 0, 100);
+          addHeat(2);
+          spawnPopup("Respect +3", "info");
+          log("🥂 Eladio rit de tes blagues. Attention au verre de Zafiro Añejo. Respect +3, Chaleur +2.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "rail", name: "Gare de fret", emoji: "🚂", x: 0.68, y: 0.08, color: "#b8c4cc",
+    desc: "Le train de Lydia : wagons scellés, douanes complices, Europe entière.",
+    unlock: (s) => s.staff.includes("lydia"),
+    interactions: [
+      {
+        id: "manifest", icon: "📋", label: "Vérifier les manifests (Chaleur −3)", apCost: 0,
+        effect(s) { addHeat(-3); spawnPopup("Chaleur −3", "info"); log("📋 Les papiers sont impeccables. Madrigal remercie. Chaleur −3.", "good"); },
+      },
+    ],
+  },
+  {
+    id: "hq", name: "QG du Cartel", emoji: "🌎", x: 0.06, y: 0.12, color: "#8a94a8",
+    desc: "Le sommet de la pyramide. Ton bleu sur trois continents.",
+    unlock: (s) => s.day >= 40,
+    interactions: [
+      {
+        id: "council", icon: "🗺️", label: "Conseil des barons (Respect +4, Chaleur +3)", apCost: 0,
+        effect(s) {
+          s.respect = cap(s.respect + 4, 0, 100);
+          addHeat(3);
+          spawnPopup("Respect +4", "info");
+          log("🗺️ Autour de la table, on ne plaisante pas. Ton nom est respecté. Respect +4, Chaleur +3.", "good");
+        },
+      },
+    ],
+  },
+);
+
+// Rattacher les affaires aux nouveaux lieux
+(function () {
+  const links = [
+    ["nails", "nails"], ["street", "corner"], ["villa", "villa"], ["rail", "rail"], ["cartelbiz", "hq"],
+  ];
+  for (const [bizId, locId] of links) {
+    const b = BUSINESSES.find((x) => x.id === bizId);
+    if (b) b.locId = locId;
+  }
+})();
+
+// ------------------------------------------------------------
+// Descriptions de scènes (dessinées en plein écran par js/locscene.js)
+// kind : décor. chars : personnages. night : ambiance nocturne.
+// ------------------------------------------------------------
+const SCENES = {
+  rv:         { kind: "desert",    chars: ["heisenberg", "jesse"] },
+  house:      { kind: "suburb",    chars: ["skyler"] },
+  carwash:    { kind: "carwash",   chars: ["walter"] },
+  pollos:     { kind: "restaurant", chars: ["gus"] },
+  superlab:   { kind: "industrial", chars: ["hazmat", "hazmat2"], night: true },
+  saul:       { kind: "office",    chars: ["saul"] },
+  tuco:       { kind: "desert2",   chars: ["tuco"], night: true },
+  junkyard:   { kind: "junkyard",  chars: ["mike"] },
+  plaza:      { kind: "plaza",     chars: [] },
+  dea:        { kind: "police",    chars: ["hank"] },
+  hank:       { kind: "backyard",  chars: ["hank", "marie"] },
+  jane:       { kind: "apartment", chars: ["jane"], night: true },
+  nails:      { kind: "salon",     chars: [] },
+  corner:     { kind: "street",    chars: ["badger", "combo"] },
+  villa:      { kind: "ranch",     chars: ["eladio"], night: true },
+  rail:       { kind: "station",   chars: ["lydia"] },
+  hq:         { kind: "tower",     chars: [], night: true },
+};
+
+// Apparences des personnages (dessin vectoriel simple)
+const CHAR_LOOKS = {
+  walter:     { shirt: "#4e7a2a", pants: "#8a7a5a", hair: "#2a2a2a", glasses: true, bald: true },
+  heisenberg: { shirt: "#3a5a20", pants: "#6a5a3a", hat: "#1a1a1a", glasses: true, beard: "#4a3a2a", bald: true },
+  jesse:      { shirt: "#e8c93a", pants: "#3a3a44", hair: "#5a4a2a", beanie: "#2a2a2a" },
+  skyler:     { shirt: "#7aa8c8", pants: "#4a5a6a", hair: "#c8a850", hairLong: true },
+  gus:        { shirt: "#e8c84a", pants: "#3a3a3a", tie: true, hair: "#2a2a2a", glasses: true },
+  saul:       { shirt: "#e84848", pants: "#e8c84a", tie: true, hair: "#4a3a2a", loud: true },
+  mike:       { shirt: "#8a8a92", pants: "#4a4a52", flatCap: "#3a3a3a", hair: "#c8c8c8" },
+  tuco:       { shirt: "#4a4a52", pants: "#2a2a2a", hat: "#2a2a2a", hair: "#2a2a2a", gold: true },
+  hank:       { shirt: "#e8883a", pants: "#5a6a4a", cap: "#3a5a2a", hair: "#3a2a1a" },
+  marie:      { shirt: "#8a4a9a", pants: "#5a3a6a", hair: "#5a3a2a", hairLong: true },
+  jane:       { shirt: "#2a2a2a", pants: "#3a3a44", hair: "#1a1a1a", hairLong: true },
+  badger:     { shirt: "#7a8a4a", pants: "#4a4a52", hair: "#3a2a1a", beard: "#3a2a1a" },
+  combo:      { shirt: "#c85a3a", pants: "#3a3a44", hair: "#2a2a2a", cap: "#2a2a2a" },
+  todd:       { shirt: "#d8d8d0", pants: "#6a5a4a", hair: "#c8a850" },
+  lydia:      { shirt: "#4a7a9a", pants: "#3a4a5a", hair: "#e8c84a", hairLong: true },
+  eladio:     { shirt: "#e8e8e0", pants: "#2a2a2a", hair: "#2a2a2a", gold: true },
+  hazmat:     { shirt: "#f0f0e8", pants: "#f0f0e8", hazmat: true },
+  hazmat2:    { shirt: "#f0f0e8", pants: "#f0f0e8", hazmat: true, beard: "#5a4a2a" },
+};

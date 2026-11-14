@@ -1005,3 +1005,130 @@ body {
   .biz-row { flex-wrap: wrap; }
   .biz-actions { flex-direction: row; width: 100%; justify-content: flex-end; }
 }
+
+/* ============================================================
+   v11 — Scènes plein écran par lieu (#locscene)
+   ============================================================ */
+#locscene {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #0a0e14;
+  animation: locscene-in 0.25s ease-out;
+}
+#locscene.hidden { display: none; }
+@keyframes locscene-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+#locscene-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: manipulation;
+}
+#locscene-close {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: 12px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.35);
+  background: rgba(12,16,10,0.7);
+  color: #f4ead0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+#locscene-close:active { transform: scale(0.92); }
+
+#locsheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 52%;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(22,30,16,0.97), rgba(14,19,10,0.99));
+  border-radius: 20px 20px 0 0;
+  border-top: 2px solid #4e7a2a;
+  padding: 14px 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
+  z-index: 2;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+  animation: sheet-up 0.28s ease-out;
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.locsheet-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.locsheet-emoji {
+  font-size: 1.9rem;
+  background: rgba(78,122,42,0.25);
+  border: 1px solid rgba(78,122,42,0.6);
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.locsheet-txt { flex: 1; min-width: 0; }
+.locsheet-txt h3 {
+  margin: 0;
+  color: #f4ead0;
+  font-size: 1.02rem;
+  letter-spacing: 0.03em;
+}
+.locsheet-txt p {
+  margin: 2px 0 0;
+  color: #b8c4a0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+.locsheet-ap {
+  color: #e8c84a;
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.locsheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.loc-btn {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #4e7a2a;
+  background: linear-gradient(160deg, #2c4218, #1e2f10);
+  color: #f4ead0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+.loc-btn:active { transform: scale(0.98); }
+.loc-btn.done {
+  opacity: 0.5;
+  border-color: #3a4a2a;
+  background: #1a2412;
+  font-style: italic;
+}

@@ -1,4 +1,4 @@
-// App mobile — v10
+// App mobile — v11
 // Splash, menu principal, pages de jeu, badges de notification,
 // installation PWA, vibrations, plein écran.
 // Charge après map.js. Tout est défensif : le jeu fonctionne même sans ce fichier.
@@ -138,7 +138,7 @@
     const hash = (location.hash || "").replace("#", "");
     const target = Array.from(buttons).find((b) => b.dataset.tab === hash);
     if (target) activate(hash, target);
-    else if (buttons[0]) buttons[0].classList.add("active");
+    else if (buttons[0]) activate(buttons[0].dataset.tab, buttons[0]);
   }
 
   function setBadge(id, count) {

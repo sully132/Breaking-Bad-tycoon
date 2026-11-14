@@ -115,7 +115,8 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v7 : missions quotidiennes, boutique de légende, frénésie, cristal doré, série de ventes, +événements
 - v8 : carte décorée (soleil, nuages, montagnes, voitures, rivière), sons, haptique
 - v9 : menu principal, splash screen, thème, polish carte
-- **v10 (courante) : système EMPIRE — 10 affaires productrices à niveler avec paliers ×2, 10 managers qui automatisent, gains hors ligne avec modale de retour, achat ×1/×10/×100/MAX, badges de niveau + bulles de collecte sur la carte, 4 succès + 1 mission, formatage des gros nombres (k$ → Qa$)**
+- v10 : système EMPIRE — 10 affaires productrices à niveler avec paliers ×2, 10 managers qui automatisent, gains hors ligne avec modale de retour, achat ×1/×10/×100/MAX, badges de niveau + bulles de collecte sur la carte, 4 succès + 1 mission, formatage des gros nombres (k$ → Qa$)
+- **v11 (courante) : LA CARTE EST L'ÉCRAN PRINCIPAL — chaque lieu s'ouvre en VRAIE SCÈNE PLEIN ÉCRAN animée (`js/locscene.js`, 17 décors canvas distincts jour/nuit : désert RV, banlieue, lave-auto, Pollos, laverie de nuit, cabinet Saul, cabane Tuco, casse, plaza, DEA, jardin Hank, appart de Jane, salon de manucure, coin de rue, hacienda d'Éladio, gare de fret, tour du cartel) avec personnages vectoriels (`CHAR_LOOKS`, 18 apparences : chapeau, casquette, lunettes, barbe, combinaison hazmat…), bottom-sheet d'actions réutilisant les interactions/dialogues, panneau d'affaire (niveau + taux/s) avec billets volants et collecte au tap, 5 nouveaux lieux (nails, corner, villa, rail, hq), les 10 affaires rattachées à un lieu de carte, nav réordonnée (Carte en premier, onglet par défaut)**
 
 ## 8. Idées pour la suite (non implémentées)
 
@@ -124,4 +125,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - Événements temporaires de fin de semaine avec économie dédiée
 - Citations aléatoires de personnages au démarrage de chaque jour
 - Sauvegarde cloud (export/import de la save en JSON)
-- Plus de scènes animées par lieu (canvas par lieu au lieu d'une modale)
+- Personnages animés dans les scènes (marche, gestures) et dialogues en bulle dans la scène
+- Mini-jeux par lieu (cuiser au rythme, négocier avec Tuco)

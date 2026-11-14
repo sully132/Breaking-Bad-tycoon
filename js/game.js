@@ -1271,7 +1271,7 @@ function renderLab() {
   container.className = "cards small-cards";
   container.innerHTML = cards.join("");
   const old = document.getElementById("lab-cards");
-  if (old) old.replaceWith(container);
+  if (old && typeof old.replaceWith === "function") old.replaceWith(container);
   else document.getElementById("investments").before(container);
   container.id = "lab-cards";
   const btn = container.querySelector("#btn-lab");

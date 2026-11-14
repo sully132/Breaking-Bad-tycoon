@@ -481,6 +481,7 @@
         spawnPopup("🔒 Lieu verrouillé", "info");
         return;
       }
+      if (typeof openLocScene === "function" && openLocScene(loc.id)) return;
       visitLocation(loc.id);
     });
 

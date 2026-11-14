@@ -1,6 +1,6 @@
-// Service worker — Heisenberg Tycoon (v10)
+// Service worker — Heisenberg Tycoon (v11)
 // Cache-first sur les ressources du jeu, hors ligne inclus.
-const CACHE = "heisenberg-v10";
+const CACHE = "heisenberg-v11";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const ASSETS = [
   "./js/scene.js",
   "./js/game.js",
   "./js/map.js",
+  "./js/locscene.js",
   "./js/app.js",
   "./manifest.json",
   "./icon.svg",
