@@ -1,5 +1,5 @@
-// App mobile — v6
-// Onglets, installation PWA, vibrations, plein écran.
+// App mobile — v8
+// Splash screen, onglets, installation PWA, vibrations, plein écran.
 // Charge après map.js. Tout est défensif : le jeu fonctionne même sans ce fichier.
 
 (function () {
@@ -9,6 +9,25 @@
     } catch (e) { /* non supporté */ }
   }
   window.haptic = haptic;
+
+  function initSplash() {
+    const splash = document.getElementById("splash");
+    const btn = document.getElementById("btn-start");
+    if (!splash) return;
+    let closed = false;
+    function close() {
+      if (closed) return;
+      closed = true;
+      splash.classList.add("out");
+      haptic(20);
+      try {
+        if (typeof sfx !== "undefined" && sfx && typeof sfx.unlock === "function") sfx.unlock();
+      } catch (e) { /* audio non prêt */ }
+      setTimeout(() => splash.remove(), 450);
+    }
+    if (btn) btn.addEventListener("click", close);
+    setTimeout(close, 6000);
+  }
 
   function initTabs() {
     const nav = document.getElementById("bottom-nav");
@@ -83,6 +102,7 @@
   }
 
   function init() {
+    initSplash();
     initTabs();
     initInstall();
     initFullscreen();
