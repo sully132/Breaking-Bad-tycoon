@@ -214,6 +214,7 @@
           }
         }
       }
+      if (Array.isArray(state.sceneEvents)) mapReady += state.sceneEvents.length;
       setBadge("badge-map", mapReady);
 
       const bizReady = state.contract && state.stock > 0 ? 1 : 0;

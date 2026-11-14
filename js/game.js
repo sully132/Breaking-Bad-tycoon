@@ -127,10 +127,30 @@ function bizNextMilestone(level) {
   return BUSINESS_MILESTONES.find((m) => level < m) || null;
 }
 
+function bizSynergyMult(id) {
+  const b = bizDef(id);
+  if (!b) return 1;
+  let m = 1;
+  if (b.crew) {
+    for (const sid in b.crew) {
+      if (state.staff.includes(sid)) m += b.crew[sid];
+    }
+  }
+  if (b.gear) {
+    for (const uid in b.gear) {
+      if (state.upgrades.includes(uid)) m += b.gear[uid];
+    }
+  }
+  return m;
+}
+
 function bizRevPerSec(id) {
   const b = bizDef(id);
   if (!b || bizLevel(id) <= 0) return 0;
   let rev = b.baseRev * bizLevel(id) * bizMilestoneMult(bizLevel(id));
+  rev *= bizSynergyMult(id);
+  rev *= 0.9 + purityNow() / 400;
+  rev *= state.market;
   rev *= legendMult();
   rev *= 1 + state.respect / 250;
   if (frenzyActive()) rev *= 2;
@@ -850,6 +870,9 @@ function endDay() {
 
   processPendingEvents();
   flushSceneEvents();
+  if (Array.isArray(state.sceneEvents) && state.sceneEvents.length) {
+    spawnPopup("\u2757 " + state.sceneEvents.length + " \u00e9v\u00e9nement(s) en attente sur la carte", "info");
+  }
 
   if (state.contract) {
     state.contract.days -= 1;
@@ -913,7 +936,7 @@ function grabOpportunity(uid) {
 function maybeEvent() {
   const pool = EVENTS.filter((e) => (e.weight || 0) > 0 && (!e.cond || e.cond(state)));
   if (pool.length === 0) return;
-  const chance = 0.15 + state.heat / 300;
+  const chance = 0.30 + state.heat / 300;
   if (Math.random() > chance) return;
 
   const totalWeight = pool.reduce((sum, e) => sum + e.weight, 0);
@@ -1234,10 +1257,14 @@ function showBusinessModal(id) {
   const status = st.manager
     ? `${b.manager.emoji} ${b.manager.name} gère l'affaire : revenus automatiques, réserve de 2 h.`
     : "⚠️ Pas de manager : la réserve plafonne à 15 min de production.";
+  const syn = bizSynergyMult(id);
+  const synTxt = syn > 1
+    ? `🤝 Synergies équipe/équipement : ×${syn.toFixed(2)}`
+    : "🤝 Synergies : recrute l'équipe et achète l'équipement liés à cette affaire (pureté et marché influent aussi).";
   setModalAvatar(b.emoji);
   showModal(
     `${b.emoji} ${b.name} — Niv. ${st.level}`,
-    `${b.desc}\n\nRevenus : ${fmtMoney(rate)}/s · Réserve : ${fmtMoney(pooled)}\n${nextMilestoneText(st.level)}\n${status}`,
+    `${b.desc}\n\nRevenus : ${fmtMoney(rate)}/s · Réserve : ${fmtMoney(pooled)}\n${synTxt}\n${nextMilestoneText(st.level)}\n${status}`,
     choices
   );
 }
