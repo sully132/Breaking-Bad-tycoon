@@ -2,8 +2,17 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Heisenberg Tycoon — Breaking Bad</title>
+  <meta name="theme-color" content="#4e7a2a" />
+  <meta name="description" content="Tycoon idle inspiré de Breaking Bad : cuisine, blanchis, étends ton empire à Albuquerque." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Heisenberg" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -13,6 +22,8 @@
       <h1>HEISENBERG TYCOON</h1>
     </div>
     <div class="topbar-actions">
+      <button id="btn-install" class="btn small install" title="Installer l'app" style="display:none">📲</button>
+      <button id="btn-fs" class="btn small" title="Plein écran">⛶</button>
       <button id="btn-prestige" class="btn small prestige" title="Nouvelle identité (prestige)" style="display:none">🎭</button>
       <button id="btn-ach" class="btn small" title="Succès">🏆</button>
       <button id="btn-sound" class="btn small" title="Son">🔊</button>
@@ -23,49 +34,68 @@
 
   <section class="statbar" id="statbar"></section>
 
-  <div class="scene-wrap">
-    <canvas id="game-canvas"></canvas>
-    <div class="popup-layer" id="popup-layer"></div>
-    <div class="tap-hint" id="tap-hint">👆 Tape le labo pour booster la production !</div>
-    <div class="frenzy-banner hidden" id="frenzy-banner">💎 FRÉNÉSIE ×2 !</div>
-  </div>
-
   <main class="layout">
     <section class="col main-col">
-      <h2 class="section-title">⏳ Jour <span id="day-num">1</span> — Actions restantes : <span id="ap-num">3</span></h2>
 
-      <h2 class="section-title">🗺️ Carte d'Albuquerque — clique un lieu</h2>
-      <div class="map-wrap"><canvas id="map-canvas"></canvas></div>
+      <div class="tab-page active" data-page="base">
+        <h2 class="section-title">⏳ Jour <span id="day-num">1</span> — Actions restantes : <span id="ap-num">3</span></h2>
 
-      <div class="cards" id="actions"></div>
+        <div class="scene-wrap">
+          <canvas id="game-canvas"></canvas>
+          <div class="popup-layer" id="popup-layer"></div>
+          <div class="tap-hint" id="tap-hint">👆 Tape le labo pour booster la production !</div>
+          <div class="frenzy-banner hidden" id="frenzy-banner">💎 FRÉNÉSIE ×2 !</div>
+        </div>
 
-      <div class="day-bar">
-        <button id="btn-next-day" class="btn primary big">🌙 Fin de journée</button>
+        <div class="cards" id="actions"></div>
+
+        <div class="day-bar">
+          <button id="btn-next-day" class="btn primary big">🌙 Fin de journée</button>
+        </div>
       </div>
 
-      <h2 class="section-title">📋 Contrats</h2>
-      <div class="cards small-cards" id="contracts"></div>
+      <div class="tab-page" data-page="map">
+        <h2 class="section-title">🗺️ Carte d'Albuquerque — clique un lieu</h2>
+        <div class="map-wrap"><canvas id="map-canvas"></canvas></div>
+      </div>
 
-      <h2 class="section-title">📈 Investissements</h2>
-      <div class="cards small-cards" id="investments"></div>
+      <div class="tab-page" data-page="biz">
+        <h2 class="section-title">📋 Contrats</h2>
+        <div class="cards small-cards" id="contracts"></div>
 
-      <h2 class="section-title">🏗️ Améliorations</h2>
-      <div class="cards small-cards" id="upgrades"></div>
+        <h2 class="section-title">📈 Investissements</h2>
+        <div class="cards small-cards" id="investments"></div>
+      </div>
 
-      <h2 class="section-title">👥 Équipe</h2>
-      <div class="cards small-cards" id="staff"></div>
+      <div class="tab-page" data-page="crew">
+        <h2 class="section-title">🏗️ Améliorations</h2>
+        <div class="cards small-cards" id="upgrades"></div>
+
+        <h2 class="section-title">👥 Équipe</h2>
+        <div class="cards small-cards" id="staff"></div>
+      </div>
+
+      <div class="tab-page" data-page="log">
+        <h2 class="section-title">📜 Journal</h2>
+        <div class="log" id="log"></div>
+      </div>
+
     </section>
-
-    <aside class="col side-col">
-      <h2 class="section-title">📜 Journal</h2>
-      <div class="log" id="log"></div>
-    </aside>
   </main>
+
+  <nav class="bottom-nav" id="bottom-nav">
+    <button data-tab="base" class="active"><span class="nav-icon">⚗️</span><span class="nav-label">Labo</span></button>
+    <button data-tab="map"><span class="nav-icon">🗺️</span><span class="nav-label">Carte</span></button>
+    <button data-tab="biz"><span class="nav-icon">📋</span><span class="nav-label">Business</span></button>
+    <button data-tab="crew"><span class="nav-icon">👥</span><span class="nav-label">Équipe</span></button>
+    <button data-tab="log"><span class="nav-icon">📜</span><span class="nav-label">Journal</span></button>
+  </nav>
 
   <div class="toasts" id="toasts"></div>
 
   <div class="modal hidden" id="modal">
     <div class="modal-box">
+      <div class="modal-avatar" id="modal-avatar" style="display:none"></div>
       <h3 id="modal-title"></h3>
       <p id="modal-text"></p>
       <div class="modal-choices" id="modal-choices"></div>
@@ -85,5 +115,6 @@
   <script src="js/scene.js"></script>
   <script src="js/game.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
