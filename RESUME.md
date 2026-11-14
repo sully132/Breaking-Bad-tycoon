@@ -120,7 +120,8 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v12 : ÉVÉNEMENTS + OPPORTUNITÉS + SCÈNES VIVANTES — 12 nouveaux événements (course, junkie, cousin + chaîne `cousinBetrayal`, camion de poulet, blackout, balance DEA, planque, rachat, santé, équipe de rue, protection Mike), opportunités éphémères dorées sur la carte (`state.opps`, 1-3/jour, 5 types dans `OPPORTUNITIES`, collecte au tap, succès « Œil de lynx »), bulles de dialogue auto + citations au tap (`QUOTES`), boost au tap sur les affaires, oiseaux/tumbleweed/vignette
 - v13 : scènes vivantes (persos qui marchent, citations du matin), coup de pub ×4 (60 s / recharge 10 min), export/import de sauvegarde
 - v14 : passe graphismes (persos avec ombres/contours/reflets, montagnes lointaines, texture de sol, pins médaillon, polish UI verre dépoli)
-- **v15 (courante) : CYCLE JOUR/NUIT TEMPS RÉEL — le ciel des scènes ET de la carte suit l'heure du téléphone (`timePhase()` : nuit 20h-5h, aube 5h-7h30, jour, crépuscule 18h-20h, teintes superposées), lucioles dans les scènes extérieures la nuit, étoiles filantes occasionnelles (`updateShootingStar`)**
+- v15 : CYCLE JOUR/NUIT TEMPS RÉEL — le ciel des scènes ET de la carte suit l'heure du téléphone (`timePhase()` : nuit 20h-5h, aube 5h-7h30, jour, crépuscule 18h-20h, teintes superposées), lucioles dans les scènes extérieures la nuit, étoiles filantes occasionnelles (`updateShootingStar`)
+- **v16 (courante) : passe design UI — splash animé (fond dérivant, logo pulsant, titre dégradé), boutons menu enrichis, statbar en chips colorées par type (good/warn/blue), cards avec liseré supérieur dégradé par rareté, journal avec bordure latérale colorée par type, bottom-sheet des scènes avec poignée de drag et en-tête affiné, boutons de scènes/modales en dégradé, polish biz-row et modales, scrollbars discrètes.**
 
 ## 8. Idées pour la suite (non implémentées)
 
