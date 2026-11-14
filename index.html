@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Heisenberg Tycoon — Breaking Bad</title>
-  <meta name="theme-color" content="#2e4a1c" />
+  <meta name="theme-color" content="#1c2b14" />
   <meta name="description" content="Tycoon idle inspiré de Breaking Bad : cuisine, blanchis, étends ton empire à Albuquerque." />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -27,86 +27,111 @@
     </div>
   </div>
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="br">Br</span><span class="ba">Ba</span>
-      <h1>HEISENBERG TYCOON</h1>
+  <div id="menu">
+    <div class="menu-bg">
+      <span class="menu-crystal c1"></span>
+      <span class="menu-crystal c2"></span>
+      <span class="menu-crystal c3"></span>
+      <span class="menu-crystal c4"></span>
     </div>
-    <div class="topbar-actions">
-      <button id="btn-install" class="btn small install" title="Installer l'app" style="display:none">📱</button>
-      <button id="btn-fs" class="btn small" title="Plein écran">⛶</button>
-      <button id="btn-prestige" class="btn small prestige" title="Nouvelle identité (prestige)" style="display:none">🎭</button>
-      <button id="btn-ach" class="btn small" title="Succès">🏆</button>
-      <button id="btn-sound" class="btn small" title="Son">🔊</button>
-      <button id="btn-save" class="btn small" title="Sauvegarder">💾</button>
-      <button id="btn-reset" class="btn small danger" title="Recommencer">♻️</button>
+    <div class="menu-inner">
+      <div class="menu-logo"><span class="br">Br</span><span class="ba">Ba</span></div>
+      <h1 class="menu-title">HEISENBERG<br/>TYCOON</h1>
+      <p class="menu-tagline">Bâtis ton empire. Dis mon nom.</p>
+      <p class="menu-info" id="menu-info"></p>
+      <div class="menu-buttons">
+        <button id="btn-play" class="btn primary big menu-play">▶ JOUER</button>
+        <button id="btn-menu-ach" class="btn menu-btn">🏆 Succès</button>
+        <button id="btn-menu-sound" class="btn menu-btn">🔊 Son : ON</button>
+        <button id="btn-menu-fs" class="btn menu-btn">⛶ Plein écran</button>
+        <button id="btn-menu-reset" class="btn menu-btn danger">♻️ Nouvelle vie</button>
+      </div>
+      <p class="menu-version">Heisenberg Tycoon v9 — fan game non officielle</p>
     </div>
-  </header>
+  </div>
 
-  <section class="statbar" id="statbar"></section>
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <span class="br">Br</span><span class="ba">Ba</span>
+        <h1>HEISENBERG TYCOON</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="btn-install" class="btn small install" title="Installer l'app" style="display:none">📱</button>
+        <button id="btn-fs" class="btn small" title="Plein écran">⛶</button>
+        <button id="btn-prestige" class="btn small prestige" title="Nouvelle identité (prestige)" style="display:none">🎭</button>
+        <button id="btn-ach" class="btn small" title="Succès">🏆</button>
+        <button id="btn-sound" class="btn small" title="Son">🔊</button>
+        <button id="btn-save" class="btn small" title="Sauvegarder">💾</button>
+        <button id="btn-reset" class="btn small danger" title="Recommencer">♻️</button>
+      </div>
+    </header>
 
-  <main class="layout">
-    <section class="col main-col">
+    <section class="statbar" id="statbar"></section>
 
-      <div class="tab-page active" data-page="base">
-        <h2 class="section-title">⏳ Jour <span id="day-num">1</span> — Actions restantes : <span id="ap-num">3</span></h2>
+    <main class="layout">
+      <section class="col main-col">
 
-        <div class="scene-wrap">
-          <canvas id="game-canvas"></canvas>
-          <div class="popup-layer" id="popup-layer"></div>
-          <div class="tap-hint" id="tap-hint">👆 Tape le labo pour booster la production !</div>
-          <div class="frenzy-banner hidden" id="frenzy-banner">💎 FRÉNÉSIE ×2 !</div>
+        <div class="tab-page active" data-page="base">
+          <h2 class="section-title">⏳ Jour <span id="day-num">1</span> — Actions restantes : <span id="ap-num">3</span></h2>
+
+          <div class="scene-wrap">
+            <canvas id="game-canvas"></canvas>
+            <div class="popup-layer" id="popup-layer"></div>
+            <div class="tap-hint" id="tap-hint">👆 Tape le labo pour booster la production !</div>
+            <div class="frenzy-banner hidden" id="frenzy-banner">💎 FRÉNÉSIE ×2 !</div>
+          </div>
+
+          <div class="cards" id="actions"></div>
+
+          <h2 class="section-title">🎯 Missions du jour</h2>
+          <div class="cards small-cards" id="missions"></div>
+
+          <div class="day-bar">
+            <button id="btn-next-day" class="btn primary big">🌙 Fin de journée</button>
+          </div>
         </div>
 
-        <div class="cards" id="actions"></div>
-
-        <h2 class="section-title">🎯 Missions du jour</h2>
-        <div class="cards small-cards" id="missions"></div>
-
-        <div class="day-bar">
-          <button id="btn-next-day" class="btn primary big">🌙 Fin de journée</button>
+        <div class="tab-page" data-page="map">
+          <h2 class="section-title">🗺️ Carte d'Albuquerque — clique un lieu</h2>
+          <div class="map-wrap"><canvas id="map-canvas"></canvas></div>
         </div>
-      </div>
 
-      <div class="tab-page" data-page="map">
-        <h2 class="section-title">🗺️ Carte d'Albuquerque — clique un lieu</h2>
-        <div class="map-wrap"><canvas id="map-canvas"></canvas></div>
-      </div>
+        <div class="tab-page" data-page="biz">
+          <h2 class="section-title">📋 Contrats</h2>
+          <div class="cards small-cards" id="contracts"></div>
 
-      <div class="tab-page" data-page="biz">
-        <h2 class="section-title">📋 Contrats</h2>
-        <div class="cards small-cards" id="contracts"></div>
+          <h2 class="section-title">📈 Investissements</h2>
+          <div class="cards small-cards" id="investments"></div>
+        </div>
 
-        <h2 class="section-title">📈 Investissements</h2>
-        <div class="cards small-cards" id="investments"></div>
-      </div>
+        <div class="tab-page" data-page="crew">
+          <h2 class="section-title">🏗️ Améliorations</h2>
+          <div class="cards small-cards" id="upgrades"></div>
 
-      <div class="tab-page" data-page="crew">
-        <h2 class="section-title">🏗️ Améliorations</h2>
-        <div class="cards small-cards" id="upgrades"></div>
+          <h2 class="section-title">👥 Équipe</h2>
+          <div class="cards small-cards" id="staff"></div>
 
-        <h2 class="section-title">👥 Équipe</h2>
-        <div class="cards small-cards" id="staff"></div>
+          <h2 class="section-title">🎭 Boutique de Légende</h2>
+          <div class="cards small-cards" id="legend"></div>
+        </div>
 
-        <h2 class="section-title">🎭 Boutique de Légende</h2>
-        <div class="cards small-cards" id="legend"></div>
-      </div>
+        <div class="tab-page" data-page="log">
+          <h2 class="section-title">📜 Journal</h2>
+          <div class="log" id="log"></div>
+        </div>
 
-      <div class="tab-page" data-page="log">
-        <h2 class="section-title">📜 Journal</h2>
-        <div class="log" id="log"></div>
-      </div>
+      </section>
+    </main>
 
-    </section>
-  </main>
-
-  <nav class="bottom-nav" id="bottom-nav">
-    <button data-tab="base" class="active"><span class="nav-icon">⚗️</span><span class="nav-label">Labo</span></button>
-    <button data-tab="map"><span class="nav-icon">🗺️</span><span class="nav-label">Carte</span></button>
-    <button data-tab="biz"><span class="nav-icon">📋</span><span class="nav-label">Business</span></button>
-    <button data-tab="crew"><span class="nav-icon">👥</span><span class="nav-label">Équipe</span></button>
-    <button data-tab="log"><span class="nav-icon">📜</span><span class="nav-label">Journal</span></button>
-  </nav>
+    <nav class="bottom-nav" id="bottom-nav">
+      <button data-tab="base" class="active"><span class="nav-icon">⚗️</span><span class="nav-label">Labo</span><span class="nav-badge hidden" id="badge-base"></span></button>
+      <button data-tab="map"><span class="nav-icon">🗺️</span><span class="nav-label">Carte</span><span class="nav-badge hidden" id="badge-map"></span></button>
+      <button data-tab="biz"><span class="nav-icon">📋</span><span class="nav-label">Business</span><span class="nav-badge hidden" id="badge-biz"></span></button>
+      <button data-tab="crew"><span class="nav-icon">👥</span><span class="nav-label">Équipe</span><span class="nav-badge hidden" id="badge-crew"></span></button>
+      <button data-tab="log"><span class="nav-icon">📜</span><span class="nav-label">Journal</span></button>
+    </nav>
+  </div>
 
   <div class="toasts" id="toasts"></div>
 
