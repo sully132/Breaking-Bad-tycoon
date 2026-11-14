@@ -91,6 +91,75 @@
     }
   }
 
+  // ---------- v17 : météo — pluie et orage occasionnels ----------
+  let weather = "clear";
+  let rain = [];
+  let flash = 0;
+  let nextBolt = 4000;
+
+  function rollWeather() {
+    const r = Math.random();
+    weather = r < 0.62 ? "clear" : r < 0.88 ? "rain" : "storm";
+    rain = [];
+    flash = 0;
+    nextBolt = 2500 + Math.random() * 6000;
+    if (weather !== "clear") {
+      const n = weather === "storm" ? 130 : 80;
+      for (let i = 0; i < n; i++) {
+        rain.push({ x: Math.random(), y: Math.random(), l: 9 + Math.random() * 13, sp: 0.5 + Math.random() * 0.5 });
+      }
+    }
+  }
+
+  function drawStormClouds(w, h, t) {
+    ctx.fillStyle = weather === "storm" ? "rgba(28, 30, 40, 0.55)" : "rgba(60, 68, 80, 0.4)";
+    for (let i = 0; i < 5; i++) {
+      const cx = ((i * 0.23 + t * 0.008 * (1 + i * 0.2)) % 1.3 - 0.15) * w;
+      const cy = h * (0.04 + (i % 2) * 0.05);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, w * 0.16, h * 0.055, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function updateRain(w, h) {
+    for (const d of rain) {
+      d.y += d.sp * 0.035;
+      d.x -= d.sp * 0.006;
+      if (d.y > 1.05) { d.y = -0.05; d.x = Math.random() * 1.15; }
+      if (d.x < -0.05) d.x += 1.2;
+    }
+  }
+
+  function drawRain(w, h) {
+    ctx.strokeStyle = "rgba(190, 210, 235, 0.4)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (const d of rain) {
+      const x = d.x * w, y = d.y * h;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - d.l * 0.25, y + d.l);
+    }
+    ctx.stroke();
+  }
+
+  function updateStorm(w, h) {
+    if (weather !== "storm") { flash = 0; return; }
+    nextBolt -= 16;
+    if (nextBolt <= 0) {
+      flash = 1;
+      nextBolt = 3500 + Math.random() * 7000;
+    }
+    if (flash > 0) flash -= 0.06;
+  }
+
+  function drawFlash(w, h) {
+    if (flash <= 0) return;
+    const a = flash * (0.35 + Math.random() * 0.2);
+    ctx.fillStyle = "rgba(235, 240, 255, " + a.toFixed(3) + ")";
+    ctx.fillRect(0, 0, w, h);
+  }
+
   function drawFireflies(w, h, t) {
     for (let i = 0; i < 7; i++) {
       const fx = w * (0.15 + 0.7 * ((Math.sin(t * 0.3 + i * 2.7) + 1) / 2));
@@ -286,12 +355,23 @@
       return;
     }
 
+    const walk = Math.sin(t * 5 + x * 0.13) * 0.09;
+    ctx.save();
+    ctx.translate(-4.2, -16);
+    ctx.rotate(walk);
     ctx.fillStyle = look.pants || "#3a3a44";
-    ctx.fillRect(-7, -16, 5.5, 16);
-    ctx.fillRect(1.5, -16, 5.5, 16);
+    ctx.fillRect(-2.75, 0, 5.5, 16);
     ctx.fillStyle = "#2a2a2a";
-    ctx.fillRect(-8, -2, 7, 3);
-    ctx.fillRect(1, -2, 7, 3);
+    ctx.fillRect(-3.75, 14, 7, 3);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(4.2, -16);
+    ctx.rotate(-walk);
+    ctx.fillStyle = look.pants || "#3a3a44";
+    ctx.fillRect(-2.75, 0, 5.5, 16);
+    ctx.fillStyle = "#2a2a2a";
+    ctx.fillRect(-3.25, 14, 7, 3);
+    ctx.restore();
 
     ctx.fillStyle = look.shirt || "#4a6a8a";
     rr(-9, -36, 18, 21, 4);
@@ -536,6 +616,136 @@
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
   }
+
+  // ---------- v17 : extras de décor par scène ----------
+  const EXTRAS = {
+    desert(w, h, t, night) {
+      ctx.strokeStyle = night ? "#2a2a30" : "#5a5248";
+      ctx.lineWidth = 3;
+      const py = h * 0.5;
+      for (const px of [w * 0.08, w * 0.24]) {
+        ctx.beginPath();
+        ctx.moveTo(px, py + h * 0.14);
+        ctx.lineTo(px, py - h * 0.02);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.08, py + h * 0.01);
+      ctx.quadraticCurveTo(w * 0.16, py + h * 0.035, w * 0.24, py + h * 0.01);
+      ctx.moveTo(w * 0.08, py + h * 0.035);
+      ctx.quadraticCurveTo(w * 0.16, py + h * 0.06, w * 0.24, py + h * 0.035);
+      ctx.stroke();
+      ctx.fillStyle = night ? "#3a342c" : "#9a8264";
+      ctx.beginPath();
+      ctx.ellipse(w * 0.68, h * 0.66, 18, 7, 0.3, 0, Math.PI * 2);
+      ctx.ellipse(w * 0.72, h * 0.68, 10, 5, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+    },
+    carwash(w, h, t) {
+      for (let i = 0; i < 6; i++) {
+        const bx = w * (0.3 + 0.4 * ((i * 0.7 + t * 0.05) % 1));
+        const by = h * (0.58 - ((i * 0.37 + t * 0.09) % 1) * 0.16);
+        ctx.strokeStyle = "rgba(230, 245, 255, 0.55)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(bx, by, 3 + (i % 3), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      const rx = w * 0.5, ry = h * 0.6;
+      ctx.save();
+      ctx.translate(rx + 52, ry - 8);
+      ctx.rotate(t * 1.4);
+      ctx.strokeStyle = "#c2483a";
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(i * 2.1) * 16, Math.sin(i * 2.1) * 16);
+        ctx.stroke();
+      }
+      ctx.restore();
+    },
+    restaurant(w, h, t, night) {
+      const sx = w * 0.16, sy = h * 0.34;
+      const glow = 0.5 + 0.5 * Math.sin(t * 2);
+      ctx.fillStyle = "#c8a03a";
+      rr(sx - 34, sy - 22, 68, 34, 6);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 220, 120, " + (0.3 + glow * 0.4).toFixed(2) + ")";
+      ctx.lineWidth = 3;
+      rr(sx - 34, sy - 22, 68, 34, 6);
+      ctx.stroke();
+      ctx.fillStyle = "#fff8e0";
+      ctx.beginPath();
+      ctx.arc(sx, sy - 5, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#c8402a";
+      ctx.beginPath();
+      ctx.moveTo(sx - 8, sy - 10);
+      ctx.lineTo(sx, sy - 18);
+      ctx.lineTo(sx + 8, sy - 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#8a6a20";
+      ctx.fillRect(sx - 2, sy + 12, 4, 14);
+    },
+    street(w, h, t, night) {
+      const flick = Math.random() < 0.03 ? 0.2 : 1;
+      const nx = w * 0.82, ny = h * 0.42;
+      ctx.save();
+      ctx.globalAlpha = flick;
+      ctx.fillStyle = night ? "#e83a6a" : "#d84a7a";
+      rr(nx - 10, ny - 30, 20, 46, 4);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255, 200, 220, " + (night ? 0.5 : 0.2) + ")";
+      rr(nx - 6, ny - 26, 12, 38, 3);
+      ctx.fill();
+      ctx.restore();
+      if (night) {
+        ctx.fillStyle = "rgba(232, 58, 106, 0.12)";
+        ctx.beginPath();
+        ctx.ellipse(nx, ny + 34, 26, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = "#3a3a42";
+      ctx.fillRect(nx - 2, ny + 16, 4, h * 0.24);
+    },
+    police(w, h, t, night) {
+      const cx = w * 0.2, cy = h * 0.72;
+      const on = Math.sin(t * 6) > 0;
+      ctx.fillStyle = on ? "rgba(220, 50, 50, 0.5)" : "rgba(60, 90, 220, 0.5)";
+      ctx.beginPath();
+      ctx.ellipse(cx + (on ? -8 : 8), cy - 26, 7, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = on ? "rgba(220, 50, 50, 0.14)" : "rgba(60, 90, 220, 0.14)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - 10, 44, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+    },
+    industrial(w, h, t, night) {
+      ctx.strokeStyle = night ? "#2e3426" : "#6a705c";
+      ctx.lineWidth = 2.5;
+      for (let i = 0; i < 6; i++) {
+        const fx = w * (0.04 + i * 0.045);
+        ctx.beginPath();
+        ctx.moveTo(fx, h * 0.6);
+        ctx.lineTo(fx, h * 0.52);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.04, h * 0.55);
+      ctx.lineTo(w * 0.28, h * 0.55);
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        const bx = w * 0.88 + i * 13, by = h * 0.66 - i * 2;
+        ctx.fillStyle = ["#3a6a4a", "#8a6a2a", "#6a3a3a"][i];
+        rr(bx, by - 16, 12, 18, 3);
+        ctx.fill();
+      }
+    },
+  };
 
   function drawBills(w, h, biz, t) {
     const pooled = pooledOf(biz.id);
@@ -1492,10 +1702,14 @@
       drawClouds(w, h, night);
       drawBirds(w, h, t);
     }
+    const wet = OUTDOOR_KINDS.has(def.kind) && weather !== "clear";
+    if (wet) drawStormClouds(w, h, t);
 
     const painter = PAINTERS[def.kind] || PAINTERS.desert;
     if (OUTDOOR_KINDS.has(def.kind)) drawDistantHills(w, h, night);
     painter(w, h, t);
+    const extra = EXTRAS[def.kind];
+    if (extra) extra(w, h, t, night);
     drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
 
     if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);
@@ -1512,10 +1726,13 @@
 
     drawSparks(t);
     drawFloaters();
+    if (wet) { updateRain(w, h); drawRain(w, h); }
+    updateStorm(w, h);
     if (night && OUTDOOR_KINDS.has(def.kind)) drawFireflies(w, h, t);
     updateShootingStar(w, h, night);
     drawShootingStar();
     if (!def.night) applyPhaseTint(w, h, phase);
+    drawFlash(w, h);
     drawVignette(w, h, night);
 
     anim += 16;
@@ -1627,6 +1844,7 @@
       bubble = null;
       nextBubbleAt = 3000;
       anim = 0;
+      rollWeather();
       const overlay = document.getElementById("locscene");
       canvas = document.getElementById("locscene-canvas");
       if (!overlay || !canvas) throw new Error("overlay manquant");

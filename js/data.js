@@ -582,6 +582,184 @@ const EVENTS = [
       log("🏪 Vente en gros : +60 000$ d'argent sale. Chaleur +8.", "bad");
     },
   },
+  {
+    id: "comboDeal", emoji: "⚙️", weight: 6,
+    type: "choice",
+    cond(s) { return s.stock >= 2; },
+    title: "Commande combo",
+    text: "Un revendeur veut 2 kg tout de suite, mais négocie sec : moitié prix contre fidélité.",
+    choices: [
+      {
+        label: "Vendre 2 kg à moitié prix (Respect +8)",
+        apply(s) {
+          const lost = Math.min(2, s.stock);
+          s.stock = Math.round((s.stock - lost) * 10) / 10;
+          const gain = Math.round(pricePerKg() * 2 * 0.5);
+          s.dirty += gain;
+          s.respect = cap(s.respect + 8, 0, 100);
+          log(`⚙️ Combo vendu : +${fmt(gain)}$ sale, Respect +8.`, "good");
+        },
+      },
+      {
+        label: "Garder tes prix (Respect −3)",
+        apply(s) {
+          s.respect = cap(s.respect - 3, 0, 100);
+          log("⚙️ Le revendeur repart boudeur. Respect −3.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "galeHelp", emoji: "🧪", weight: 5,
+    type: "choice",
+    cond(s) { return s.day >= 15; },
+    title: "Gale Boetticher propose son aide",
+    text: "« Vos équipements sont... fonctionnels. J'ai des notes qui pourraient les sublimer. »",
+    choices: [
+      {
+        label: "Acheter ses notes (25 000$, Pureté +6)",
+        can(s) { return s.cash >= 25_000; },
+        apply(s) {
+          s.cash -= 25_000;
+          s.purity = cap(s.purity + 6, 0, 100);
+          log("🧪 Notes de Gale intégrées : Pureté +6.", "good");
+        },
+      },
+      {
+        label: "Décliner poliment",
+        apply(s) {
+          log("🧪 Gale hoche la tête, déçu. Rien ne change.", "event");
+        },
+      },
+    ],
+  },
+  {
+    id: "thinIce", emoji: "❄️", weight: 6,
+    type: "auto",
+    cond(s) { return s.heat >= 60; },
+    title: "Glace mince",
+    text: "Une voiture garée devant chez vous depuis deux jours. Personne n'en descend.",
+    apply(s) {
+      addHeat(6);
+      log("❄️ Surveillance discrète... Chaleur +6. Pense à baisser la pression.", "bad");
+    },
+  },
+  {
+    id: "bbqNeighbor", emoji: "🍖", weight: 5,
+    type: "choice",
+    title: "Barbecue entre voisins",
+    text: "Tes voisins t'invitent à leur barbecue. L'occasion de rester discret... ou pas.",
+    choices: [
+      {
+        label: "Y aller avec des bières (3 000$, Respect +4, Chaleur −4)",
+        can(s) { return s.cash >= 3_000; },
+        apply(s) {
+          s.cash -= 3_000;
+          s.respect = cap(s.respect + 4, 0, 100);
+          addHeat(-4);
+          log("🍖 Barbecue réussi : le voisinage vous adore. Respect +4, Chaleur −4.", "good");
+        },
+      },
+      {
+        label: "Rester enfermé au labo (Respect −3)",
+        apply(s) {
+          s.respect = cap(s.respect - 3, 0, 100);
+          log("🍖 Les voisins commencent à trouver ça bizarre... Respect −3.", "bad");
+        },
+      },
+    ],
+  },
+  {
+    id: "tortuga", emoji: "🐢", weight: 4,
+    type: "auto",
+    title: "Message de Tortuga",
+    text: "Une tortue traverse tranquillement votre terrain... avec quelque chose de troublant sur le dos.",
+    apply(s) {
+      addHeat(9);
+      s.respect = cap(s.respect - 2, 0, 100);
+      log("🐢 Le cartel envoie un message. Chaleur +9, Respect −2.", "bad");
+    },
+  },
+  {
+    id: "methHeads", emoji: "🧟", weight: 5,
+    type: "choice",
+    title: "Squatters devant le labo",
+    text: "Deux accros se sont installés juste devant l'entrée. Ils attirent l'attention.",
+    choices: [
+      {
+        label: "Les chasser gentiment (Respect −3, Chaleur −4)",
+        apply(s) {
+          s.respect = cap(s.respect - 3, 0, 100);
+          addHeat(-4);
+          log("🧟 Squatters déplacés. Moins de visites, mais la rue gronde. Respect −3, Chaleur −4.", "event");
+        },
+      },
+      {
+        label: "Les laisser faire (Respect +2, Chaleur +5)",
+        apply(s) {
+          s.respect = cap(s.respect + 2, 0, 100);
+          addHeat(5);
+          log("🧟 Ils font office de paravent... et d'aimant à flics. Respect +2, Chaleur +5.", "event");
+        },
+      },
+    ],
+  },
+  {
+    id: "cousins", emoji: "💀", weight: 4,
+    type: "choice",
+    cond(s) { return s.day >= 40; },
+    title: "Les cousins Salamanca",
+    text: "Deux hommes en costume, silencieux, vous attendent. Le cartel envoie ses factures en nature.",
+    choices: [
+      {
+        label: "Payer le tribut (60 000$, Respect +6)",
+        can(s) { return s.cash >= 60_000; },
+        apply(s) {
+          s.cash -= 60_000;
+          s.respect = cap(s.respect + 6, 0, 100);
+          log("💀 Tribut payé. Les cousins repartent sans un mot. Respect +6.", "bad");
+        },
+      },
+      {
+        label: "Tenir tête (risqué)",
+        apply(s) {
+          if (Math.random() < 0.5) {
+            s.respect = cap(s.respect + 15, 0, 100);
+            log("💀 Ils reculent. Toute la rue vous respecte désormais. Respect +15.", "good");
+          } else {
+            const lost = Math.min(2, s.stock);
+            s.stock = Math.round((s.stock - lost) * 10) / 10;
+            addHeat(10);
+            log("💀 Ça tourne mal : stock saisi, Chaleur +10.", "bad");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "lydiaDemand", emoji: "📋", weight: 5,
+    type: "choice",
+    cond(s) { return s.staff.includes("lydia"); },
+    title: "Lydia serre la vis",
+    text: "« Mes clients exigent de la régularité. Augmentez la cadence, ou je revois nos accords. »",
+    choices: [
+      {
+        label: "Accepter la cadence (Respect +5, Chaleur +6)",
+        apply(s) {
+          s.respect = cap(s.respect + 5, 0, 100);
+          addHeat(6);
+          log("📋 Cadence acceptée : Lydia est satisfaite. Respect +5, Chaleur +6.", "event");
+        },
+      },
+      {
+        label: "Refuser (Respect −4)",
+        apply(s) {
+          s.respect = cap(s.respect - 4, 0, 100);
+          log("📋 Lydia note votre refus dans son classeur coloré. Respect −4.", "bad");
+        },
+      },
+    ],
+  },
 ]
 
 // Descente de police quand la chaleur atteint 100
@@ -1968,6 +2146,14 @@ const OPPORTUNITIES = [
       if (Math.random() < 0.4) { addHeat(8); spawnPopup("Chaleur +8", "bad"); log("🚓 C'était une voiture de police ! Demi-tour rapide. Chaleur +8.", "bad"); }
       else { const g = 3_000 + s.day * 1_000; s.dirty += g; spawnPopup(`+${fmt(g)}$ sale`, "money"); log(`🚓 Juste un acheteur pressé : +${fmt(g)}$ sale.`, "good"); }
     },
+  },
+  {
+    id: "scanner", icon: "📻", label: "Scanner de la police",
+    apply(s) { addHeat(-8); spawnPopup("Chaleur −8", "info"); log("📻 Le scanner révèle un contrôle près de votre zone. Vous soufflez. Chaleur −8.", "good"); },
+  },
+  {
+    id: "fastcash", icon: "💸", label: "Client pressé",
+    apply(s) { const g = 1_500 + s.day * 900; s.dirty += g; spawnPopup(`+${fmt(g)}$ sale`, "money"); log(`💸 Un client paie comptant sans négocier : +${fmt(g)}$ sale.`, "good"); },
   },
 ];
 
