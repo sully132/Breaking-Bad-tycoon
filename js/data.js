@@ -1998,4 +1998,24 @@ const QUOTES = {
 // Succès v12
 ACHIEVEMENTS.push(
   { id: "opps10", icon: "✨", name: "Œil de lynx", desc: "Attraper 10 opportunités sur la carte", check: (s) => (s.stats && s.stats.oppsTaken || 0) >= 10, reward: { cash: 50_000 } },
+  { id: "pub3", icon: "📣", name: "Agent de pub", desc: "Utiliser 3 coups de pub", check: (s) => (s.stats && s.stats.pubUsed || 0) >= 3, reward: { respect: 5 } },
 );
+
+// ============================================================
+// v13 — CITATIONS DU MATIN, COUP DE PUB, SUCCÈS
+// ============================================================
+
+const DAY_QUOTES = [
+  { icon: "🧪", who: "Walter White", line: "La chimie, c'est la transformation. Nous, on transforme." },
+  { icon: "🤓", who: "Jesse Pinkman", line: "Ouais, science, mec !" },
+  { icon: "🐔", who: "Gus Fring", line: "Je ne suis pas un danger. Je suis le contraire du danger." },
+  { icon: "⚖️", who: "Saul Goodman", line: "Mieux vaut appeler Saul !" },
+  { icon: "🧢", who: "Mike Ehrmantraut", line: "Pas de demi-mesures." },
+  { icon: "🤪", who: "Tuco Salamanca", line: "TIGHT, TIGHT, TIGHT !" },
+  { icon: "🚔", who: "Hank Schrader", line: "Heisenberg, c'est un amateur. On va l'avoir." },
+  { icon: "🚬", who: "Jane Margolis", line: "Ce quartier m'étouffe." },
+  { icon: "🚂", who: "Lydia Rodarte-Quayle", line: "Je ne tolère pas les erreurs." },
+  { icon: "🍹", who: "Don Eladio", line: "Assieds-toi. Bois un verre." },
+  { icon: "👶", who: "Walter White Jr.", line: "Papa, ta laverie pue l'argent." },
+  { icon: "💀", who: "Heisenberg", line: "Dis mon nom." },
+];

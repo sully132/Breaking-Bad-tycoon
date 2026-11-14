@@ -35,6 +35,8 @@ function newGame() {
     streak: 0,
     soldToday: false,
     frenzyUntil: 0,
+    pubUntil: 0,
+    pubCdUntil: 0,
     pendingEvents: [],
     goldenCaught: 0,
     visitedToday: {},
@@ -131,6 +133,7 @@ function bizRevPerSec(id) {
   rev *= legendMult();
   rev *= 1 + state.respect / 250;
   if (frenzyActive()) rev *= 2;
+  if (pubBoostActive()) rev *= 4;
   return rev;
 }
 
@@ -205,6 +208,29 @@ function legendLevel(id) {
 
 function frenzyActive() {
   return performance.now() < (state.frenzyUntil || 0);
+}
+
+function pubBoostActive() {
+  return Date.now() < (state.pubUntil || 0);
+}
+
+function pubCdRemaining() {
+  return Math.max(0, (state.pubCdUntil || 0) - Date.now());
+}
+
+function activatePubBoost() {
+  if (pubBoostActive() || pubCdRemaining() > 0) return false;
+  state.pubUntil = Date.now() + 60_000;
+  state.pubCdUntil = Date.now() + 10 * 60_000;
+  state.stats.pubUsed = (state.stats.pubUsed || 0) + 1;
+  spawnPopup("📣 COUP DE PUB ×4 !", "golden");
+  toast("📣 Coup de pub !", "L'empire produit ×4 pendant 60 secondes !");
+  playSfx("golden");
+  if (typeof haptic === "function") haptic(25);
+  checkAchievements();
+  render();
+  save();
+  return true;
 }
 
 function streakBonus() {
@@ -780,6 +806,10 @@ function endDay() {
   state.respect = cap(state.respect, 0, 100);
 
   log(`🌙 Jour ${state.day}. Chaleur ${state.heat}/100. Marché ${Math.round(state.market * 100)}%.`);
+  if (typeof DAY_QUOTES !== "undefined" && DAY_QUOTES.length) {
+    const q = DAY_QUOTES[Math.floor(Math.random() * DAY_QUOTES.length)];
+    log(`${q.icon} ${q.who} : « ${q.line} »`, "event");
+  }
 
   processPendingEvents();
 
@@ -1054,6 +1084,13 @@ function buyLegendUpgrade(id) {
 function renderBusinesses() {
   const container = document.getElementById("businesses");
   if (!container) return;
+  function pubBtnLabel() {
+    if (pubBoostActive()) return "📣 ×4 ACTIF !";
+    const cd = pubCdRemaining();
+    if (cd > 0) return "📣 dispo dans " + Math.ceil(cd / 60000) + " min";
+    return "📣 Coup de pub ×4";
+  }
+
   const header = document.getElementById("empire-summary");
   if (header) {
     header.innerHTML = `
@@ -1062,12 +1099,15 @@ function renderBusinesses() {
         ${["1", "10", "100", "max"].map((v) => `
           <button class="buy-amt ${state.buyAmount === v ? "active" : ""}" data-amt="${v}">${v === "max" ? "MAX" : "×" + v}</button>`).join("")}
         <button class="btn primary" id="btn-collect-all">💰 Tout collecter</button>
+        <button class="btn pub" id="btn-pub">${pubBtnLabel()}</button>
       </div>`;
     header.querySelectorAll("[data-amt]").forEach((btn) => {
       btn.addEventListener("click", () => setBuyAmount(btn.dataset.amt));
     });
     const ca = header.querySelector("#btn-collect-all");
     if (ca) ca.addEventListener("click", () => { collectAllBusinesses(); renderBusinesses(); renderStats(); save(); });
+    const pb = header.querySelector("#btn-pub");
+    if (pb) pb.addEventListener("click", () => { activatePubBoost(); renderBusinesses(); });
   }
 
   container.innerHTML = BUSINESSES.map((b) => {
@@ -1550,7 +1590,7 @@ function load() {
     if (!data || typeof data.day !== "number") return false;
     state = Object.assign(newGame(), data);
     state.flags = Object.assign({ cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 }, data.flags || {});
-    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0 }, data.stats || {});
+    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0, pubUsed: 0 }, data.stats || {});
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     state.visitedToday = Object.assign({}, data.visitedToday || {});
@@ -1561,6 +1601,8 @@ function load() {
       ? { day: data.dailyMissions.day || 0, list: data.dailyMissions.list }
       : { day: 0, list: [] };
     if (typeof state.frenzyUntil !== "number") state.frenzyUntil = 0;
+    if (typeof state.pubUntil !== "number") state.pubUntil = 0;
+    if (typeof state.pubCdUntil !== "number") state.pubCdUntil = 0;
     state.businesses = Object.assign({ carwash: { level: 1, manager: false, pooled: 0 } }, data.businesses || {});
     for (const k of Object.keys(state.businesses)) {
       state.businesses[k] = Object.assign({ level: 0, manager: false, pooled: 0 }, state.businesses[k]);

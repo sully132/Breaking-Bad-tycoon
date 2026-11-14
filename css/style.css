@@ -1142,3 +1142,12 @@ body {
   background: linear-gradient(160deg, #3a5520, #284012);
   border-color: #6a9a3a;
 }
+
+/* v13 — bouton coup de pub */
+.btn.pub {
+  background: linear-gradient(160deg, #b8912a, #7a5c10);
+  border-color: #e8c84a;
+  color: #fff8e0;
+  font-weight: 700;
+}
+.btn.pub:active { transform: scale(0.97); }

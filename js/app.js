@@ -67,10 +67,50 @@
     }, 60);
   }
 
+  function downloadSave(raw) {
+    try {
+      const blob = new Blob([raw], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "heisenberg-tycoon-save.json";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (e) { alert("Export impossible sur cet appareil."); }
+  }
+
   function initMenu() {
     const menu = document.getElementById("menu");
     if (!menu) return;
     updateMenuInfo();
+
+    const exp = document.getElementById("btn-menu-export");
+    if (exp) exp.addEventListener("click", () => {
+      try {
+        const raw = localStorage.getItem("heisenberg-tycoon-save-v2");
+        if (!raw) { alert("Aucune sauvegarde \u00e0 exporter."); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(raw).then(
+            () => alert("Sauvegarde copi\u00e9e dans le presse-papiers !"),
+            () => downloadSave(raw)
+          );
+        } else {
+          downloadSave(raw);
+        }
+      } catch (e) { alert("Export impossible."); }
+    });
+
+    const imp = document.getElementById("btn-menu-import");
+    if (imp) imp.addEventListener("click", () => {
+      const txt = prompt("Colle ici ta sauvegarde (JSON) :");
+      if (!txt) return;
+      try {
+        const data = JSON.parse(txt);
+        if (!data || typeof data.day !== "number") throw new Error("format");
+        localStorage.setItem("heisenberg-tycoon-save-v2", JSON.stringify(data));
+        alert("Sauvegarde import\u00e9e ! Rechargement...");
+        location.reload();
+      } catch (e) { alert("Sauvegarde invalide."); }
+    });
     const play = document.getElementById("btn-play");
     if (play) play.addEventListener("click", showApp);
 

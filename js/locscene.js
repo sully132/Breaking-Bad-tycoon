@@ -327,9 +327,11 @@
     const ground = h * 0.78;
     const list = chars || [];
     charScreens = [];
+    const tw = anim / 1000;
     for (let i = 0; i < list.length; i++) {
       const pos = (positions && positions[i]) || [0.42 + i * 0.14, 1];
-      const x = w * pos[0];
+      const range = w * 0.022;
+      const x = w * pos[0] + Math.sin(tw * 0.4 + i * 2.3) * range;
       const sc = 1.5 * (pos[1] || 1);
       drawPerson(x, ground, sc, looks[list[i]]);
       charScreens.push({ id: list[i], x, y: ground, s: sc });
@@ -1419,6 +1421,19 @@
         ? "💼 Gérer l'affaire" + (pooled >= 1 ? " — collecter (" + (typeof fmtMoney === "function" ? fmtMoney(pooled) : pooled + "$") + ")" : " (niveau " + lvl + ")")
         : "🚧 Ouvrir l'affaire — " + (typeof bizDef === "function" && bizDef(biz.id) ? "démarrer l'activité" : "investir");
       buttons.push({ label, apply: () => { if (typeof showBusinessModal === "function") showBusinessModal(biz.id); } });
+    }
+
+    if (typeof activatePubBoost === "function") {
+      const active = typeof pubBoostActive === "function" && pubBoostActive();
+      const cd = (typeof pubCdRemaining === "function") ? pubCdRemaining() : 0;
+      const label = active
+        ? "📣 Coup de pub ×4 — ACTIF !"
+        : (cd > 0 ? "📣 Coup de pub ×4 — dispo dans " + Math.ceil(cd / 60000) + " min" : "📣 Coup de pub ×4 (60 s)");
+      buttons.push({
+        label,
+        disabled: active || cd > 0,
+        apply: () => { activatePubBoost(); buildSheet(); },
+      });
     }
 
     for (const it of loc.interactions || []) {
