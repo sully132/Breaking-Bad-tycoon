@@ -18,6 +18,7 @@
   let bubble = null;
   let nextBubbleAt = 3000;
   let charScreens = [];
+  let eventVisitor = null;
   const DPR_CAP = 2;
 
   function loc() {
@@ -508,6 +509,69 @@
       drawPerson(x, ground, sc, looks[list[i]]);
       charScreens.push({ id: list[i], x, y: ground, s: sc });
     }
+  }
+
+  // ---------- v17 : événements joués dans la scène ----------
+  function sceneEventFor(locId) {
+    try {
+      const list = (typeof state !== "undefined" && state.sceneEvents) || [];
+      if (typeof EVENTS === "undefined") return null;
+      for (const id of list) {
+        const ev = EVENTS.find((e) => e.id === id);
+        if (ev && ev.loc === locId) return ev;
+      }
+    } catch (err) {}
+    return null;
+  }
+
+  function drawEventVisitor(w, h, t, def) {
+    const ev = sceneEventFor(currentLocId);
+    if (!ev) { eventVisitor = null; return; }
+    const looks = (typeof EVENT_VISITORS !== "undefined") ? EVENT_VISITORS : {};
+    const look = looks[ev.id] || { shirt: "#5a5a6a", pants: "#2e2e34" };
+    const ground = h * 0.78;
+    const spots = CHAR_SPOTS[def.kind] || [];
+    let px = 0.5;
+    for (const cand of [0.5, 0.26, 0.74]) {
+      if (!spots.some((p) => Math.abs(p[0] - cand) < 0.1)) { px = cand; break; }
+    }
+    const x = w * px;
+    const sc = 1.65;
+    drawPerson(x, ground, sc, look);
+    eventVisitor = { x, y: ground, s: sc };
+    const pulse = 0.7 + 0.3 * Math.sin(t * 4);
+    const by = ground - 96 * sc;
+    ctx.fillStyle = "rgba(200, 58, 50, " + pulse.toFixed(2) + ")";
+    ctx.beginPath();
+    ctx.arc(x, by, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#fff3d6";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, by, 13, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("!", x, by + 1);
+  }
+
+  function triggerSceneEvent() {
+    const ev = sceneEventFor(currentLocId);
+    if (!ev) return;
+    state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);
+    eventVisitor = null;
+    if (typeof playSfx === "function") playSfx("event");
+    if (typeof haptic === "function") haptic(15);
+    if (ev.type === "choice" && typeof showEventModal === "function") {
+      showEventModal(ev);
+    } else {
+      try { ev.apply(state); } catch (err) {}
+      if (typeof spawnPopup === "function") spawnPopup(ev.emoji + " " + ev.title, "info");
+      if (typeof render === "function") render();
+    }
+    if (typeof save === "function") save();
   }
 
   function updateBubble(t, chars) {
@@ -1715,6 +1779,7 @@
     if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);
 
     drawCharRow(w, h, def.chars, CHAR_SPOTS[def.kind]);
+    drawEventVisitor(w, h, t, def);
     updateBubble(t, def.chars);
     drawBubble();
 
@@ -1769,6 +1834,14 @@
 
     const used = (it) => state.visitedToday && state.visitedToday[loc.id + ":" + it.id];
     const buttons = [];
+
+    const ev = sceneEventFor(loc.id);
+    if (ev) {
+      buttons.push({
+        label: "❗ " + ev.emoji + " " + ev.title + " — régler ça !",
+        apply: () => { triggerSceneEvent(); buildSheet(); },
+      });
+    }
 
     const biz = bizForLoc(loc.id);
     if (biz) {
@@ -1880,6 +1953,11 @@
     const r = canvas.getBoundingClientRect();
     const mx = e.clientX - r.left;
     const my = e.clientY - r.top;
+
+    if (eventVisitor && Math.hypot(eventVisitor.x - mx, eventVisitor.y - 44 * eventVisitor.s - my) < 38 * eventVisitor.s) {
+      triggerSceneEvent();
+      return;
+    }
 
     const hitChar = charScreens.find((cs) => Math.hypot(cs.x - mx, cs.y - 44 * cs.s - my) < 34 * cs.s);
     if (hitChar && typeof QUOTES !== "undefined" && QUOTES[hitChar.id]) {

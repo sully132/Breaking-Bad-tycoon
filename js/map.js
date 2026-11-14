@@ -377,6 +377,16 @@
     } catch (e) { return hex; }
   }
 
+  function locHasEvent(locId) {
+    try {
+      const list = state.sceneEvents || [];
+      return list.some((id) => {
+        const ev = (typeof EVENTS !== "undefined") ? EVENTS.find((e) => e.id === id) : null;
+        return ev && ev.loc === locId;
+      });
+    } catch (err) { return false; }
+  }
+
   function drawLocations(w, h) {
     for (const loc of MAP_LOCATIONS) {
       const p = locPixel(loc);
@@ -434,6 +444,20 @@
       ctx.fill();
       ctx.fillStyle = "#f5ecd8";
       ctx.fillText(loc.name, p.x, p.y + s + 21);
+
+      if (open && locHasEvent(loc.id)) {
+        const eb = 9 + Math.sin(anim / 200) * 2;
+        ctx.fillStyle = "#c83a32";
+        ctx.beginPath();
+        ctx.arc(p.x + s * 0.78, p.y - s * 0.78, eb, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fff3d6";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillText("!", p.x + s * 0.78, p.y - s * 0.78 + 1);
+      }
       ctx.globalAlpha = 1;
       drawBusinessBadges(w, h, loc, p, s, open);
     }

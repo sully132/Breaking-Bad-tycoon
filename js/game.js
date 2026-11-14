@@ -38,6 +38,7 @@ function newGame() {
     pubUntil: 0,
     pubCdUntil: 0,
     pendingEvents: [],
+    sceneEvents: [],
     goldenCaught: 0,
     visitedToday: {},
     opps: [],
@@ -624,6 +625,42 @@ function scheduleEvent(id, days) {
 }
 
 function fireScheduled(ev) {
+  if (dispatchSceneEvent(ev)) return;
+  playSfx("event");
+  log(`${ev.emoji} ${ev.title}`, "event");
+  if (ev.type === "choice") {
+    showEventModal(ev);
+  } else {
+    ev.apply(state);
+    spawnPopup(ev.emoji + " " + ev.title, "info");
+  }
+}
+
+// ---------- v17 : événements joués dans les scènes ----------
+function hasSceneStage(ev) {
+  return !!(ev && ev.loc && typeof MAP_LOCATIONS !== "undefined" && MAP_LOCATIONS.some((l) => l.id === ev.loc));
+}
+
+function queueSceneEvent(ev) {
+  if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
+  if (state.sceneEvents.includes(ev.id)) return;
+  state.sceneEvents.push(ev.id);
+  const locDef = MAP_LOCATIONS.find((l) => l.id === ev.loc);
+  log(`${ev.emoji} ${ev.title} — ${locDef ? locDef.name : "en ville"}. Va sur place !`, "event");
+  spawnPopup(`${ev.emoji} ${locDef ? locDef.name : "Événement"} : va sur place !`, "info");
+}
+
+function dispatchSceneEvent(ev) {
+  if (!hasSceneStage(ev)) return false;
+  queueSceneEvent(ev);
+  return true;
+}
+
+function flushSceneEvents() {
+  if (!Array.isArray(state.sceneEvents) || state.sceneEvents.length === 0) return;
+  const id = state.sceneEvents.shift();
+  const ev = EVENTS.find((e) => e.id === id);
+  if (!ev) return;
   playSfx("event");
   log(`${ev.emoji} ${ev.title}`, "event");
   if (ev.type === "choice") {
@@ -812,6 +849,7 @@ function endDay() {
   }
 
   processPendingEvents();
+  flushSceneEvents();
 
   if (state.contract) {
     state.contract.days -= 1;
@@ -883,14 +921,7 @@ function maybeEvent() {
   for (const e of pool) {
     roll -= e.weight;
     if (roll <= 0) {
-      playSfx("event");
-      log(`${e.emoji} ${e.title}`, "event");
-      if (e.type === "choice") {
-        showEventModal(e);
-      } else {
-        e.apply(state);
-        spawnPopup(e.emoji + " " + e.title, "info");
-      }
+      fireScheduled(e);
       return;
     }
   }
@@ -1593,6 +1624,7 @@ function load() {
     state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0, pubUsed: 0 }, data.stats || {});
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
+    if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
     state.visitedToday = Object.assign({}, data.visitedToday || {});
     state.opps = Array.isArray(data.opps) ? data.opps : [];
     state.legendCoins = data.legendCoins || 0;

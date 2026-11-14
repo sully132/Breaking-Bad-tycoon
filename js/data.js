@@ -100,14 +100,14 @@ const UPGRADES = [
 // ------------------------------------------------------------
 const EVENTS = [
   {
-    id: "hank", emoji: "🚔", weight: 10,
+    id: "hank", loc: "rv", emoji: "🚔", weight: 10,
     type: "auto",
     title: "Hank Schrader est sur votre piste",
     text: "Un SUV orange traîne près du RV. La DEA resserre l'étau.",
     apply(s) { addHeat(18); log("🚔 Hank ratisse large. Chaleur +18.", "bad"); },
   },
   {
-    id: "tuco", emoji: "🤯", weight: 8,
+    id: "tuco", loc: "tuco", emoji: "🤯", weight: 8,
     type: "choice",
     title: "Tuco Salamanca veut sa part",
     text: "Tuco vous colle un revolver sur la tempe : « C'est du business, tonton ! »",
@@ -139,7 +139,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "cartel", emoji: "🇲🇽", weight: 7,
+    id: "cartel", loc: "hq", emoji: "🇲🇽", weight: 7,
     type: "choice",
     cond(s) { return s.day >= 10; },
     title: "Le cartel propose un partenariat",
@@ -164,7 +164,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "deasurveillance", emoji: "👀", weight: 9,
+    id: "deasurveillance", loc: "house", emoji: "👀", weight: 9,
     type: "choice",
     title: "La DEA surveille le quartier",
     text: "Une voiture garée depuis des heures, deux silhouettes avec des jumelles.",
@@ -206,7 +206,7 @@ const EVENTS = [
     apply(s) { s.flags.priceBonus = 1.25; log("🤝 Gros client intéressé. Prix +25% demain.", "good"); },
   },
   {
-    id: "robbery", emoji: "🔪", weight: 6,
+    id: "robbery", loc: "corner", emoji: "🔪", weight: 6,
     type: "auto",
     title: "Cambriolage",
     text: "Des junkies ont forcé votre planque.",
@@ -231,7 +231,7 @@ const EVENTS = [
   },
   // ---------- Nouveaux événements ----------
   {
-    id: "jesseRage", emoji: "😤", weight: 7,
+    id: "jesseRage", loc: "rv", emoji: "😤", weight: 7,
     type: "choice",
     cond(s) { return s.day >= 5; },
     title: "Jesse veut « gérer le quartier »",
@@ -288,7 +288,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "blackMarket", emoji: "🕶️", weight: 5,
+    id: "blackMarket", loc: "junkyard", emoji: "🕶️", weight: 5,
     type: "auto",
     title: "Marché noir",
     text: "Un ancien contact vous revend de la marchandise confisquée.",
@@ -304,7 +304,7 @@ const EVENTS = [
     },
   },
   {
-    id: "informant", emoji: "🐀", weight: 6,
+    id: "informant", loc: "corner", emoji: "🐀", weight: 6,
     type: "choice",
     cond(s) { return s.staff.length >= 3; },
     title: "Un informateur dans l'équipe ?",
@@ -348,7 +348,7 @@ const EVENTS = [
     },
   },
   {
-    id: "cartelTribute", emoji: "💀", weight: 6,
+    id: "cartelTribute", loc: "hq", emoji: "💀", weight: 6,
     type: "choice",
     cond(s) { return s.day >= 20; },
     title: "Le cartel exige un tribut",
@@ -384,7 +384,7 @@ const EVENTS = [
     },
   },
   {
-    id: "raidWarning", emoji: "🚨", weight: 10,
+    id: "raidWarning", loc: "dea", emoji: "🚨", weight: 10,
     type: "auto",
     cond(s) { return s.heat >= 55; },
     title: "Descente imminente",
@@ -450,7 +450,7 @@ const EVENTS = [
     apply(s) { s.respect += 10; addHeat(-5); log("⛓️ Tuco en prison ! Respect +10, Chaleur −5.", "good"); },
   },
   {
-    id: "gusMeeting", emoji: "🐔", weight: 7,
+    id: "gusMeeting", loc: "pollos", emoji: "🐔", weight: 7,
     type: "choice",
     cond(s) { return s.staff.includes("gus"); },
     title: "Gus vous convoque",
@@ -507,7 +507,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "purityDuel", emoji: "⚔️", weight: 6,
+    id: "purityDuel", loc: "superlab", emoji: "⚔️", weight: 6,
     type: "choice",
     title: "Défi de pureté",
     text: "Un chimiste rival parie 20 000$ que son produit est plus pur que le vôtre.",
@@ -572,7 +572,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "wholesale", emoji: "🏪", weight: 5,
+    id: "wholesale", loc: "rail", emoji: "🏪", weight: 5,
     type: "auto",
     title: "Vente en gros",
     text: "Un distributeur régional veut un lot immédiatement, cash.",
@@ -583,7 +583,7 @@ const EVENTS = [
     },
   },
   {
-    id: "comboDeal", emoji: "⚙️", weight: 6,
+    id: "comboDeal", loc: "corner", emoji: "⚙️", weight: 6,
     type: "choice",
     cond(s) { return s.stock >= 2; },
     title: "Commande combo",
@@ -610,7 +610,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "galeHelp", emoji: "🧪", weight: 5,
+    id: "galeHelp", loc: "superlab", emoji: "🧪", weight: 5,
     type: "choice",
     cond(s) { return s.day >= 15; },
     title: "Gale Boetticher propose son aide",
@@ -670,7 +670,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "tortuga", emoji: "🐢", weight: 4,
+    id: "tortuga", loc: "tuco", emoji: "🐢", weight: 4,
     type: "auto",
     title: "Message de Tortuga",
     text: "Une tortue traverse tranquillement votre terrain... avec quelque chose de troublant sur le dos.",
@@ -681,7 +681,7 @@ const EVENTS = [
     },
   },
   {
-    id: "methHeads", emoji: "🧟", weight: 5,
+    id: "methHeads", loc: "junkyard", emoji: "🧟", weight: 5,
     type: "choice",
     title: "Squatters devant le labo",
     text: "Deux accros se sont installés juste devant l'entrée. Ils attirent l'attention.",
@@ -705,7 +705,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "cousins", emoji: "💀", weight: 4,
+    id: "cousins", loc: "villa", emoji: "💀", weight: 4,
     type: "choice",
     cond(s) { return s.day >= 40; },
     title: "Les cousins Salamanca",
@@ -737,7 +737,7 @@ const EVENTS = [
     ],
   },
   {
-    id: "lydiaDemand", emoji: "📋", weight: 5,
+    id: "lydiaDemand", loc: "hq", emoji: "📋", weight: 5,
     type: "choice",
     cond(s) { return s.staff.includes("lydia"); },
     title: "Lydia serre la vis",
@@ -1908,7 +1908,7 @@ const CHAR_LOOKS = {
 
 EVENTS.push(
   {
-    id: "streetrace", emoji: "🏎️", weight: 5, type: "choice", cond: (s) => s.day >= 3,
+    id: "streetrace", loc: "corner", emoji: "🏎️", weight: 5, type: "choice", cond: (s) => s.day >= 3,
     title: "Course sauvage dans ta rue",
     text: "Des caisses tunées déchirent le bitume devant le lave-auto. Les voisins filment.",
     choices: [
@@ -1936,7 +1936,7 @@ EVENTS.push(
     ],
   },
   {
-    id: "junkie", emoji: "🧟", weight: 6, type: "auto",
+    id: "junkie", loc: "tuco", emoji: "🧟", weight: 6, type: "auto",
     title: "Un junkie dans le labo",
     text: "Tu surprends une silhouette qui fouille les étagères de la laverie.",
     apply(s) {
@@ -2156,6 +2156,33 @@ const OPPORTUNITIES = [
     apply(s) { const g = 1_500 + s.day * 900; s.dirty += g; spawnPopup(`+${fmt(g)}$ sale`, "money"); log(`💸 Un client paie comptant sans négocier : +${fmt(g)}$ sale.`, "good"); },
   },
 ];
+
+// ------------------------------------------------------------
+// APPARENCES des visiteurs d'événements dans les scènes (v17)
+// ------------------------------------------------------------
+const EVENT_VISITORS = {
+  hank: { shirt: "#8a5a2a", pants: "#4a4438", hat: true },
+  tuco: { shirt: "#8a2a3a", pants: "#26262c", gold: true },
+  cartel: { shirt: "#2a2a34", pants: "#1e1e26", hat: true },
+  cousins: { shirt: "#24242e", pants: "#16161c", hat: true, tie: true },
+  deasurveillance: { shirt: "#3a5a8a", pants: "#2a2a30", glasses: true },
+  raidWarning: { shirt: "#3a5a8a", pants: "#2a2a30", hat: true },
+  informant: { shirt: "#5a6a4a", pants: "#3a3428", flatCap: true, glasses: true },
+  robbery: { shirt: "#3a3a3a", pants: "#26262c", beanie: true },
+  jesseRage: { shirt: "#e8c83a", pants: "#3a4a6a", beanie: true },
+  blackMarket: { shirt: "#6a5a3a", pants: "#3a3428", flatCap: true, beard: true },
+  cartelTribute: { shirt: "#2a2a34", pants: "#1e1e26", hat: true },
+  gusMeeting: { shirt: "#e8d878", pants: "#3a3a3a", glasses: true, tie: true },
+  purityDuel: { shirt: "#d8d8d0", pants: "#c8c8c0", glasses: true },
+  wholesale: { shirt: "#4a5a6a", pants: "#2e2e34", flatCap: true },
+  comboDeal: { shirt: "#7a4a8a", pants: "#2e2e34", gold: true },
+  galeHelp: { shirt: "#c8b87a", pants: "#5a5240", glasses: true, beard: true },
+  tortuga: { shirt: "#4a6a3a", pants: "#3a3a30", hat: true },
+  methHeads: { shirt: "#7a7a5a", pants: "#4a4438", beard: true },
+  lydiaDemand: { shirt: "#d8d8e0", pants: "#3a3a4a", tie: true },
+  streetrace: { shirt: "#c84a3a", pants: "#2a2a34", cap: true },
+  junkie: { shirt: "#6a6a5a", pants: "#4a4438", beanie: true },
+};
 
 // ------------------------------------------------------------
 // CITATIONS des personnages (bulles dans les scènes, v12)
