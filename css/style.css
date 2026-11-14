@@ -426,3 +426,142 @@ body {
 @media (max-width: 700px) {
   #map-canvas { height: 240px; }
 }
+
+/* ---------- v6 : App mobile ---------- */
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  overscroll-behavior-y: contain;
+}
+
+.tab-page { display: none; }
+.tab-page.active { display: block; animation: tabIn 0.18s ease-out; }
+
+@keyframes tabIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: none;
+  grid-template-columns: repeat(5, 1fr);
+  background: linear-gradient(180deg, #1c2410, #101408);
+  border-top: 2px solid var(--green-dark);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 8px 0 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: inherit;
+  cursor: pointer;
+  min-height: 56px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav .nav-icon { font-size: 1.35rem; filter: grayscale(0.4); transition: transform 0.12s; }
+.bottom-nav .nav-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.bottom-nav button.active { color: var(--green); }
+.bottom-nav button.active .nav-icon { filter: none; transform: scale(1.18); }
+.bottom-nav button:active .nav-icon { transform: scale(0.9); }
+
+.btn.install { border-color: var(--blue); color: #bfe3f5; animation: installPulse 1.6s infinite; }
+
+@keyframes installPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 163, 217, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(74, 163, 217, 0); }
+}
+
+.modal-avatar {
+  width: 72px;
+  height: 72px;
+  margin: -58px auto 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--panel2), var(--panel));
+  border: 3px solid var(--green);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+}
+
+.modal-box { position: relative; }
+
+@media (max-width: 899px) {
+  .bottom-nav { display: grid; }
+
+  .topbar { padding: 8px 12px; }
+  .brand h1 { font-size: 0.95rem; letter-spacing: 1px; }
+  .br, .ba { font-size: 1.2rem; }
+  .topbar-actions { gap: 5px; }
+  .btn.small { min-width: 38px; min-height: 38px; font-size: 0.95rem; padding: 6px 8px; }
+
+  .statbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 10px 12px 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .statbar::-webkit-scrollbar { display: none; }
+  .stat { min-width: 130px; flex-shrink: 0; padding: 8px 12px; }
+
+  .layout { padding: 0 10px 20px; }
+
+  .scene-wrap { height: 240px; border-radius: 14px; }
+
+  .cards { grid-template-columns: 1fr; gap: 10px; }
+  .small-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .card { padding: 12px; }
+  .card .btn, .btn.big { min-height: 48px; font-size: 1rem; }
+  .btn { -webkit-tap-highlight-color: transparent; }
+
+  .day-bar { position: sticky; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 15; padding: 8px 0; }
+
+  #map-canvas { height: 46vh; }
+
+  .log { max-height: 60vh; }
+
+  .modal {
+    align-items: flex-end;
+  }
+  .modal-box {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px 18px 0 0;
+    margin: 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    animation: sheetUp 0.2s ease-out;
+    max-height: 82vh;
+    overflow-y: auto;
+  }
+  .modal-avatar { margin-top: -46px; }
+
+  @keyframes sheetUp {
+    from { transform: translateY(40px); opacity: 0.4; }
+    to { transform: none; opacity: 1; }
+  }
+
+  .modal-choices .btn { width: 100%; min-height: 50px; text-align: left; margin: 4px 0; }
+}
+
+@media (min-width: 900px) {
+  .bottom-nav { display: none; }
+  .tab-page { display: block; }
+  .modal-avatar { margin-top: -58px; }
+}
