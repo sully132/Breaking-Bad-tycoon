@@ -387,6 +387,34 @@
     } catch (err) { return false; }
   }
 
+  function drawEventBanner(w, h) {
+    let evs = [];
+    try {
+      evs = (state.sceneEvents || [])
+        .map((id) => EVENTS.find((e) => e.id === id))
+        .filter(Boolean);
+    } catch (err) {}
+    if (!evs.length) return;
+    const ev = evs[0];
+    const locDef = MAP_LOCATIONS.find((l) => l.id === ev.loc);
+    const txt = "\u2757 " + ev.title + (locDef ? " \u2014 " + locDef.name : "");
+    ctx.font = "bold 13px sans-serif";
+    const tw = Math.min(w - 24, ctx.measureText(txt).width + 34);
+    const bx = (w - tw) / 2, by = 10;
+    const pulse = 0.78 + 0.22 * Math.sin(anim / 250);
+    ctx.fillStyle = "rgba(158, 40, 36, " + (0.94 * pulse).toFixed(2) + ")";
+    roundRect(bx, by, tw, 30, 15);
+    ctx.fill();
+    ctx.strokeStyle = "#ffd9d0";
+    ctx.lineWidth = 1.5;
+    roundRect(bx, by, tw, 30, 15);
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(txt, w / 2, by + 16);
+  }
+
   function drawLocations(w, h) {
     for (const loc of MAP_LOCATIONS) {
       const p = locPixel(loc);
@@ -492,6 +520,7 @@
     drawCompass(w, h);
     drawTimeTint(w, h);
     drawLocations(w, h);
+    drawEventBanner(w, h);
     drawOpportunities(w, h);
 
     anim += 16;

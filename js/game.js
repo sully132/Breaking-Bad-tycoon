@@ -665,6 +665,8 @@ function queueSceneEvent(ev) {
   if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
   if (state.sceneEvents.includes(ev.id)) return;
   state.sceneEvents.push(ev.id);
+  if (state.stats && typeof state.stats.sceneEventsSeen === "number") state.stats.sceneEventsSeen += 1;
+  else if (state.stats) state.stats.sceneEventsSeen = 1;
   const locDef = MAP_LOCATIONS.find((l) => l.id === ev.loc);
   log(`${ev.emoji} ${ev.title} — ${locDef ? locDef.name : "en ville"}. Va sur place !`, "event");
   spawnPopup(`${ev.emoji} ${locDef ? locDef.name : "Événement"} : va sur place !`, "info");
@@ -674,6 +676,24 @@ function dispatchSceneEvent(ev) {
   if (!hasSceneStage(ev)) return false;
   queueSceneEvent(ev);
   return true;
+}
+
+function rollSceneEvents() {
+  if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
+  const seen = (state.stats && state.stats.sceneEventsSeen) || 0;
+  if (state.sceneEvents.length >= 2) return;
+  const pool = EVENTS.filter((e) => e.loc && (e.weight || 0) > 0 && (!e.cond || e.cond(state)) && !state.sceneEvents.includes(e.id));
+  if (!pool.length) return;
+  // Garanti : le premier événement de scène arrive dès le jour 2
+  const forced = seen === 0 && state.day >= 2;
+  const chance = forced ? 1 : 0.55 + state.heat / 400;
+  if (Math.random() > chance) return;
+  const total = pool.reduce((t, e) => t + e.weight, 0);
+  let roll = Math.random() * total;
+  for (const e of pool) {
+    roll -= e.weight;
+    if (roll <= 0) { queueSceneEvent(e); return; }
+  }
 }
 
 function flushSceneEvents() {
@@ -870,6 +890,7 @@ function endDay() {
 
   processPendingEvents();
   flushSceneEvents();
+  rollSceneEvents();
   if (Array.isArray(state.sceneEvents) && state.sceneEvents.length) {
     spawnPopup("\u2757 " + state.sceneEvents.length + " \u00e9v\u00e9nement(s) en attente sur la carte", "info");
   }
