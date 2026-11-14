@@ -22,13 +22,13 @@ légende, missions quotidiennes, succès, PWA installable.
 - **Critère de réussite** : un joueur actif voit un événement de scène par jour, et le tap
   rapporte sensiblement plus en combo qu'en tapotement dispersé.
 
-## Phase 2 — Progression longue (v23)
+## Phase 2 — Progression longue (v23) ✅ LIVRÉE
 **Objectif : un horizon à plusieurs semaines.**
-- [ ] **Étages d'empire** (à la Idle Miner) : le Superlab gagne des sous-sols (-1, -2, -3)
-      chacun avec un multiplicateur global et son propre visuel dans la scène.
-- [ ] **Collection d'objets légendaires** (plaque d'immatriculation, tortue, chapeau…) à
-      trouver via opportunités rares, chacun avec un bonus passif et une vitrine dans le menu.
-- [ ] **Prestige enrichi** : arbres de légende à 3 branches avec paliers intermédiaires.
+- [x] **Étages d'empire** (à la Idle Miner) : le Superlab gagne des sous-sols (-1, -2, -3)
+      chacun avec un multiplicateur global et son propre visuel dans la scène. *(livré en v23)*
+- [x] **Collection d'objets légendaires** (plaque d'immatriculation, tortue, chapeau…) à
+      trouver via opportunités rares, chacun avec un bonus passif et une vitrine dans le menu. *(livré en v23)*
+- [x] **Prestige enrichi** : arbres de légende à 3 branches avec paliers intermédiaires. *(livré en v23 : améliorations 🏬 biz et 🍀 luck)*
 - **Critère** : un objectif clair toutes les 2-3 sessions.
 
 ## Phase 3 — Un monde vivant (v24)

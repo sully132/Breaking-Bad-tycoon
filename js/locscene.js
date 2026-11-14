@@ -1875,6 +1875,39 @@
 
   // ---------- boucle de rendu ----------
 
+  // v23 : panneau des sous-sols du Superlab
+  function drawFloorsPanel(w, h, t) {
+    const fl = state.labFloors || 0;
+    const px = w * 0.5;
+    const pw = Math.min(160, w * 0.36);
+    const ph = 34 + fl * 30;
+    const py = h * 0.26 - ph / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = "rgba(12, 18, 10, 0.82)";
+    rr(px - pw / 2, py, pw, ph, 10);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(122, 182, 72, 0.55)";
+    ctx.lineWidth = 2;
+    rr(px - pw / 2, py, pw, ph, 10);
+    ctx.stroke();
+    ctx.fillStyle = "#d9c33c";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🏗️ SUPERLAB", px, py + 20);
+    for (let i = 1; i <= fl; i++) {
+      const y = py + 30 + (i - 1) * 30;
+      const lit = 0.55 + 0.35 * Math.sin(t * 2 + i * 1.7);
+      ctx.fillStyle = "rgba(122, 182, 72, " + lit.toFixed(2) + ")";
+      rr(px - pw / 2 + 12, y, pw - 24, 22, 6);
+      ctx.fill();
+      ctx.fillStyle = "#0c120a";
+      ctx.font = "bold 12px sans-serif";
+      ctx.fillText("Étage −" + i + " actif", px, y + 15);
+    }
+    ctx.restore();
+  }
+
   function draw() {
     if (!canvas || !ctx || !currentLocId) return;
     const w = canvas.clientWidth;
@@ -1914,6 +1947,10 @@
     if (biz && levelOf(biz.id) > 0) {
       drawBills(w, h, biz, t);
       drawBizBadge(w, h, biz, t);
+    }
+
+    if (currentLocId === "superlab" && typeof state !== "undefined" && (state.labFloors || 0) > 0) {
+      drawFloorsPanel(w, h, t);
     }
 
     drawSparks(t);
@@ -1992,6 +2029,22 @@
         disabled: active || cd > 0,
         apply: () => { activatePubBoost(); buildSheet(); },
       });
+    }
+
+    // v23 : étages du Superlab
+    if (loc.id === "superlab" && typeof buyLabFloor === "function" && typeof labFloorCost === "function") {
+      const fl = (typeof state.labFloors === "number") ? state.labFloors : 0;
+      if (fl < 3) {
+        const cost = labFloorCost(fl);
+        const costTxt = (typeof fmt === "function") ? fmt(cost) : String(cost);
+        buttons.push({
+          label: "🏗️ Creuser le sous-sol −" + (fl + 1) + " (" + costTxt + "$) — +25% cuisson, +10% affaires",
+          disabled: state.cash < cost,
+          apply: () => { buyLabFloor(); buildSheet(); },
+        });
+      } else {
+        buttons.push({ label: "🏗️ Tous les sous-sols sont creusés ✔", disabled: true, apply: () => {} });
+      }
     }
 
     for (const it of loc.interactions || []) {

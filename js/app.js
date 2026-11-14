@@ -119,6 +119,11 @@
       if (typeof showAchievements === "function") showAchievements();
     });
 
+    const relics = document.getElementById("btn-menu-relics");
+    if (relics) relics.addEventListener("click", () => {
+      if (typeof showRelics === "function") showRelics();
+    });
+
     const sound = document.getElementById("btn-menu-sound");
     if (sound) {
       try {

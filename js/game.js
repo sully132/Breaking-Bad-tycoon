@@ -32,6 +32,8 @@ function newGame() {
     combo: 0,
     comboUntil: 0,
     maxCombo: 0,
+    labFloors: 0,
+    relics: [],
     investments: {},
     legendPoints: 0,
     prestiges: 0,
@@ -156,6 +158,9 @@ function bizRevPerSec(id) {
   rev *= state.market;
   rev *= legendMult();
   rev *= 1 + state.respect / 250;
+  rev *= relicBizMult();
+  rev *= 1 + 0.10 * (state.labFloors || 0);
+  rev *= 1 + 0.08 * legendLevel("biz");
   if (frenzyActive()) rev *= 2;
   if (pubBoostActive()) rev *= 4;
   return rev;
@@ -270,6 +275,7 @@ function purityNow() {
   if (hasUpgrade("mask")) bonus += 8;
   if (hasUpgrade("gear")) bonus += 5;
   if (hasUpgrade("generator")) bonus += 10;
+  bonus += relicPurityBonus();
   return cap(state.purity + bonus, 0, 100);
 }
 
@@ -286,6 +292,8 @@ function cookMult() {
   m *= state.flags.cookPenalty;
   m *= legendMult();
   m *= 1 + 0.15 * legendLevel("cook");
+  m *= relicCookMult();
+  m *= 1 + 0.25 * (state.labFloors || 0);
   if (frenzyActive()) m *= 2;
   return m;
 }
@@ -302,6 +310,7 @@ function pricePerKg() {
   p *= legendMult();
   p *= 1 + 0.15 * legendLevel("price");
   p *= streakBonus();
+  p *= relicPriceMult();
   return p;
 }
 
@@ -323,7 +332,81 @@ function launderVolume() {
 
 function addHeat(n) {
   if (n > 0) n = Math.round(n * (1 - 0.06 * legendLevel("cool")));
+  if (n > 0 && relicHas("tortoise")) n -= 1;
   state.heat = cap(state.heat + n, 0, 100);
+}
+
+// ---------- v23 : reliques & étages du Superlab ----------
+function relicHas(id) {
+  return Array.isArray(state.relics) && state.relics.includes(id);
+}
+function relicTapMult() {
+  return relicHas("plate") ? 1.10 : 1;
+}
+function relicCookMult() {
+  let m = 1;
+  if (relicHas("hat")) m *= 1.05;
+  if (relicHas("marble")) m *= 1.05;
+  return m;
+}
+function relicBizMult() {
+  let m = 1;
+  if (relicHas("mask")) m *= 1.05;
+  if (relicHas("chicken")) m *= 1.10;
+  return m;
+}
+function relicPriceMult() {
+  return relicHas("coin") ? 1.05 : 1;
+}
+function relicPurityBonus() {
+  return relicHas("fly") ? 2 : 0;
+}
+function labFloorCost(lvl) {
+  return LAB_FLOOR_COSTS[Math.min(lvl, LAB_FLOOR_COSTS.length - 1)];
+}
+function buyLabFloor() {
+  if ((state.labFloors || 0) >= 3) return;
+  const cost = labFloorCost(state.labFloors || 0);
+  if (state.cash < cost) { spawnPopup("💸 Pas assez d'argent", "bad"); return; }
+  state.cash -= cost;
+  state.labFloors = (state.labFloors || 0) + 1;
+  playSfx("upgrade");
+  toast("🏗️ Sous-sol −" + state.labFloors, "Le Superlab s'étend sous le désert. +25% cuisson, +10% affaires.");
+  log("🏗️ Sous-sol −" + state.labFloors + " creusé au Superlab.", "good");
+  checkAchievements();
+  if (typeof refreshLocScene === "function") refreshLocScene();
+  render();
+  save();
+}
+function rollRelic() {
+  if (!Array.isArray(state.relics)) state.relics = [];
+  if (state.relics.length >= RELICS.length) return;
+  const missing = RELICS.filter((r) => !state.relics.includes(r.id));
+  if (!missing.length) return;
+  const chance = 0.10 + 0.03 * legendLevel("luck");
+  const forced = state.day >= 5 && state.relics.length === 0;
+  if (!forced && Math.random() > chance) return;
+  const relic = missing[Math.floor(Math.random() * missing.length)];
+  state.relics.push(relic.id);
+  playSfx("golden");
+  toast(relic.icon + " Relique trouvée !", relic.name + " — " + relic.desc);
+  log(relic.icon + " Relique trouvée : " + relic.name + ". " + relic.desc, "good");
+  spawnPopup(relic.icon + " " + relic.name, "golden");
+  checkAchievements();
+}
+function showRelics() {
+  const items = RELICS.map((r) => {
+    const got = relicHas(r.id);
+    return '<div class="ach-item ' + (got ? "unlocked" : "locked") + '">' +
+      '<div class="a-icon">' + r.icon + '</div>' +
+      '<div><div class="a-name">' + r.name + (got ? " ✔" : "") + '</div>' +
+      '<div class="a-desc">' + (got ? r.desc : "??? — à trouver (chance à chaque fin de journée)") + '</div></div></div>';
+  }).join("");
+  showModal("🗄️ Reliques (" + state.relics.length + "/" + RELICS.length + ")",
+    '<div class="ach-list">' + items + '</div>',
+    [{ label: "Fermer", apply() {} }]);
+  const mt = document.getElementById("modal-text");
+  if (mt) mt.innerHTML = '<div class="ach-list">' + items + '</div>';
 }
 
 function log(msg, kind = "") {
@@ -468,7 +551,7 @@ function tapBoost(x = 0.5, y = 0.5) {
   else if (state.combo === 25) { spawnPopup("🔥🔥 MÉGA COMBO x25 !", "combo"); toast("🔥🔥 MÉGA COMBO", "La rue retient ton nom. Respect +2."); state.respect = cap(state.respect + 2, 0, 100); }
   else if (state.combo === 50) { spawnPopup("💥 combo x50 !!", "combo"); toast("💥 IMBATTABLE", "Combo x50 ! Récompense : 5 000$."); state.cash += 5_000; }
   const comboMult = 1 + Math.min(state.combo, 25) * 0.04;
-  const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE * comboMult)) * mult;
+  const gain = Math.max(TAP_CASH_MIN, Math.round(pricePerKg() * TAP_CASH_RATE * comboMult)) * mult * relicTapMult();
   state.cash += gain;
   spawnPopup(`+${fmt(gain)}$${state.combo >= 3 ? " 🔥x" + state.combo : ""}`, "money");
   playSfx("tap");
@@ -870,6 +953,7 @@ function endDay() {
   if (state.dirty > 30_000) heatDrift += 3;
   heatDrift += Math.min(10, Math.floor(totalBizLevels() / 30));
   heatDrift += staffEffect("heatPerDay");
+  heatDrift -= legendLevel("cool");
   if (hasUpgrade("cameras")) heatDrift -= 5;
   heatDrift -= invLevel("security");
   addHeat(Math.round(heatDrift));
@@ -904,6 +988,7 @@ function endDay() {
   processPendingEvents();
   flushSceneEvents();
   rollSceneEvents();
+  rollRelic();
   if (Array.isArray(state.sceneEvents) && state.sceneEvents.length) {
     spawnPopup("\u2757 " + state.sceneEvents.length + " \u00e9v\u00e9nement(s) en attente sur la carte", "info");
   }
@@ -1689,6 +1774,8 @@ function load() {
     if (typeof state.combo !== "number") state.combo = 0;
     if (typeof state.comboUntil !== "number") state.comboUntil = 0;
     if (typeof state.maxCombo !== "number") state.maxCombo = 0;
+    if (typeof state.labFloors !== "number") state.labFloors = 0;
+    if (!Array.isArray(state.relics)) state.relics = [];
     state.visitedToday = Object.assign({}, data.visitedToday || {});
     state.opps = Array.isArray(data.opps) ? data.opps : [];
     state.legendCoins = data.legendCoins || 0;

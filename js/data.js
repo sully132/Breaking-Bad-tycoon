@@ -1577,6 +1577,8 @@ const LEGEND_UPGRADES = [
   { id: "vault", icon: "📦", name: "Planques supplémentaires", desc: "+5 kg de stock maximum par niveau.", max: 3, cost: (lvl) => 2 + lvl },
   { id: "stamina", icon: "⚡", name: "Endurance légendaire", desc: "+1 point d'action par jour.", max: 2, cost: (lvl) => 4 + lvl },
   { id: "cool", icon: "🕵️", name: "Antécédents effacés", desc: "−6% de chaleur gagnée par niveau.", max: 3, cost: (lvl) => 3 + lvl },
+  { id: "biz", icon: "🏬", name: "Franchises secrètes", desc: "+8% de revenus d'affaires par niveau, permanent.", max: 3, cost: (lvl) => 2 + lvl },
+  { id: "luck", icon: "🍀", name: "Étoile filante", desc: "+3% de chance de trouver une relique par niveau.", max: 3, cost: (lvl) => 2 + lvl },
 ];
 
 // ------------------------------------------------------------
@@ -2392,3 +2394,27 @@ const DAY_QUOTES = [
   { icon: "👶", who: "Walter White Jr.", line: "Papa, ta laverie pue l'argent." },
   { icon: "💀", who: "Heisenberg", line: "Dis mon nom." },
 ];
+
+// ============================================================
+// v23 — ÉTAGES DU SUPERLAB + COLLECTION DE RELIQUES
+// ============================================================
+
+// Sous-sols du Superlab (-1 à -3) : multiplicateurs permanents
+const LAB_FLOOR_COSTS = [5_000_000, 25_000_000, 100_000_000];
+
+// Collection de reliques : trouvées par chance en fin de journée
+const RELICS = [
+  { id: "plate", icon: "🚙", name: "Plaque tordue", desc: "+10% sur chaque tap." },
+  { id: "tortoise", icon: "🐢", name: "Tortue de Tortuga", desc: "−1 de chaleur à chaque gain." },
+  { id: "hat", icon: "🎩", name: "Chapeau de Heisenberg", desc: "+5% de cuisson." },
+  { id: "fly", icon: "🪰", name: "Mouche du labo", desc: "+2 de pureté effective." },
+  { id: "coin", icon: "🪙", name: "Pièce de Saul", desc: "+5% sur le prix au kilo." },
+  { id: "mask", icon: "😷", name: "Masque rose", desc: "+5% de revenus d'affaires." },
+  { id: "marble", icon: "🔮", name: "Boule de Todd", desc: "+5% de cuisson." },
+  { id: "chicken", icon: "🍗", name: "Seau Los Pollos", desc: "+10% de revenus d'affaires." },
+];
+
+ACHIEVEMENTS.push(
+  { id: "floors3", icon: "🏗️", name: "Sous-sols infinis", desc: "Creuser les 3 sous-sols du Superlab", check: (s) => (s.labFloors || 0) >= 3, reward: { cash: 2_000_000 } },
+  { id: "relic4", icon: "🗄️", name: "Collectionneur", desc: "Trouver 4 reliques", check: (s) => (s.relics || []).length >= 4, reward: { respect: 10 } },
+);
