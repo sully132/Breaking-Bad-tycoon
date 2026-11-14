@@ -37,6 +37,7 @@ function newGame() {
     frenzyUntil: 0,
     pendingEvents: [],
     goldenCaught: 0,
+    visitedToday: {},
     gameOver: false,
     victory: false,
     log: [],
@@ -514,6 +515,7 @@ function endDay() {
     state.streak = 0;
   }
   state.soldToday = false;
+  state.visitedToday = {};
 
   state.day += 1;
   state.ap = AP_PER_DAY;
@@ -1012,6 +1014,7 @@ function load() {
     state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0 }, data.stats || {});
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
+    state.visitedToday = Object.assign({}, data.visitedToday || {});
     if (typeof state.frenzyUntil !== "number") state.frenzyUntil = 0;
     return true;
   } catch (e) {
