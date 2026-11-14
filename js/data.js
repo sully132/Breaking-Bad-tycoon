@@ -1150,3 +1150,114 @@ const DIALOGUES = {
     ],
   },
 };
+
+// ------------------------------------------------------------
+// v6 — LIEUX SUPPLÉMENTAIRES (push sur la carte v5)
+// ------------------------------------------------------------
+MAP_LOCATIONS.push(
+  {
+    id: "hank", name: "Maison de Hank", emoji: "🌵", x: 0.9, y: 0.12, color: "#d9cfae",
+    desc: "Barbecue, bières, et un beau-frère qui se prend pour Schrader Bratwurst.",
+    unlock: (s) => s.day >= 5,
+    interactions: [
+      {
+        id: "bbq", icon: "🍖", label: "Barbecue de famille", apCost: 0,
+        effect(s) {
+          s.respect = cap(s.respect + 2, 0, 100);
+          addHeat(-3);
+          log("🍖 Burger de Marie, compliments de Hank. Respect +2, Chaleur −3.", "good");
+        },
+      },
+      {
+        id: "garage", icon: "🔦", label: "Fouiner dans le garage (risqué)", apCost: 1,
+        effect(s) {
+          if (Math.random() < 0.5) {
+            addHeat(-8);
+            spawnPopup("Chaleur −8", "info");
+            log("🔦 Tu glisses une note qui envoie Hank sur une fausse piste. Chaleur −8.", "good");
+          } else {
+            addHeat(6);
+            log("🔦 Presque attrapé les mains dans les dossiers. Chaleur +6.", "bad");
+          }
+        },
+      },
+      {
+        id: "talkHank", icon: "💬", label: "Parler à Hank", apCost: 0, dialogue: "hank",
+        cond: (s) => s.respect >= 25,
+      },
+    ],
+  },
+  {
+    id: "jane", name: "Appartement de Jane", emoji: "🎨", x: 0.72, y: 0.82, color: "#e3c9d8",
+    desc: "Tapisseries, vinyles, et une locataire qui pose trop de bonnes questions.",
+    unlock: (s) => s.day >= 7,
+    interactions: [
+      {
+        id: "chill", icon: "🛋️", label: "Chiller avec Jesse", apCost: 0,
+        effect(s) {
+          if (!hasStaff("jesse")) { log("🛋️ Jesse n'est pas dans l'équipe.", "info"); return; }
+          addHeat(-4);
+          s.respect = cap(s.respect + 1, 0, 100);
+          log("🛋️ Jesse repart la tête un peu moins pleine. Chaleur −4, Respect +1.", "good");
+        },
+      },
+      {
+        id: "painting", icon: "🖼️", label: "Revendre un tableau", apCost: 1,
+        effect(s) {
+          const cash = 800 + Math.floor(Math.random() * 900);
+          s.dirty += cash;
+          spawnPopup(`+${fmt(cash)}$ (sale)`, "money");
+          log(`🖼️ Une « pièce de collection » écoulée : +${fmt(cash)}$ sale.`, "good");
+        },
+      },
+      {
+        id: "talkJane", icon: "💬", label: "Parler à Jane", apCost: 0, dialogue: "jane",
+        cond: (s) => hasStaff("jesse"),
+      },
+    ],
+  },
+);
+
+// ------------------------------------------------------------
+// v6 — DIALOGUES SUPPLÉMENTAIRES
+// ------------------------------------------------------------
+Object.assign(DIALOGUES, {
+  hank: {
+    name: "Hank Schrader", emoji: "🌵",
+    lines: [
+      {
+        text: "« Tu sais ce que c'est, un labo de meth ? Non ? Parce que moi, je commence à bien savoir. »",
+        choices: [
+          { label: "« Aucune idée, capitaine. » (Chaleur −4)", effect(s) { addHeat(-4); } },
+          { label: "« Tu vas le choper, ce cuisinier ? » (Respect +3, Chaleur +3)", effect(s) { s.respect = cap(s.respect + 3, 0, 100); addHeat(3); } },
+        ],
+      },
+      {
+        text: "« Entre nous, ce Heisenberg... c'est un génie. Et ça me rend malade. »",
+        choices: [
+          { label: "« Tu finiras par l'avoir. » (Respect +4)", effect(s) { s.respect = cap(s.respect + 4, 0, 100); } },
+          { label: "« Ou peut-être qu'il t'aura, toi. » (Respect −2, Chaleur −6)", effect(s) { s.respect = cap(s.respect - 2, 0, 100); addHeat(-6); } },
+        ],
+      },
+    ],
+  },
+  jane: {
+    name: "Jane Margolis", emoji: "🎨",
+    lines: [
+      {
+        text: "« Ton pote Jesse, c'est mon voisin. Il raconte des trucs... intéressants. »",
+        choices: [
+          { label: "« Il exagère tout. » (Chaleur −3)", effect(s) { addHeat(-3); } },
+          { label: "« Et toi, tu écoutes bien ? » (Respect +2, +5 000$ sale)", effect(s) { s.respect = cap(s.respect + 2, 0, 100); s.dirty += 5_000; } },
+        ],
+      },
+      {
+        text: "« Je dessine ce que je vois. Et là, je vois quelqu'un de très occupé. »",
+        choices: [
+          { label: "« L'art demande des sacrifices. » (Respect +3)", effect(s) { s.respect = cap(s.respect + 3, 0, 100); } },
+          { label: "« Tu n'as rien vu. » (Chaleur −5)", effect(s) { addHeat(-5); } },
+        ],
+      },
+    ],
+  },
+});
