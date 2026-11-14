@@ -1,6 +1,7 @@
-// Carte interactive d'Albuquerque — v6
+// Carte interactive d'Albuquerque — v8
+// Décor animé : soleil rayonnant, nuages, montagnes enneigées,
+// immeubles avec fenêtres, voitures qui circulent, rivière + pont.
 // Dépend de game.js (state, showModal, helpers) et data.js (MAP_LOCATIONS, DIALOGUES).
-// Charge APRÈS game.js.
 
 (function () {
   let canvas = null;
@@ -40,14 +41,28 @@
   function drawSun(w, h) {
     const sx = w * 0.92;
     const sy = h * 0.1;
-    const glow = ctx.createRadialGradient(sx, sy, 4, sx, sy, 60);
+    const t = anim / 1000;
+    const glow = ctx.createRadialGradient(sx, sy, 4, sx, sy, 64);
     glow.addColorStop(0, "rgba(255, 236, 160, 0.9)");
     glow.addColorStop(1, "rgba(255, 236, 160, 0)");
     ctx.fillStyle = glow;
-    ctx.fillRect(sx - 70, sy - 70, 140, 140);
+    ctx.fillRect(sx - 74, sy - 74, 148, 148);
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(t * 0.3);
+    ctx.strokeStyle = "rgba(255, 230, 140, 0.55)";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 20, Math.sin(a) * 20);
+      ctx.lineTo(Math.cos(a) * 27, Math.sin(a) * 27);
+      ctx.stroke();
+    }
+    ctx.restore();
     ctx.fillStyle = "#fff3c4";
     ctx.beginPath();
-    ctx.arc(sx, sy, 16, 0, Math.PI * 2);
+    ctx.arc(sx, sy, 15, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -57,7 +72,7 @@
       { x: (0.55 + Math.cos(anim / 12000) * 0.05), y: 0.2, s: 0.7 },
       { x: (0.8 + Math.sin(anim / 7000) * 0.03), y: 0.08, s: 0.85 },
     ];
-    ctx.fillStyle = "rgba(255, 250, 235, 0.5)";
+    ctx.fillStyle = "rgba(255, 250, 235, 0.55)";
     for (const c of clouds) {
       const cx = c.x * w;
       const cy = c.y * h;
@@ -84,23 +99,44 @@
     ctx.lineTo(0, 0);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "rgba(255, 240, 210, 0.35)";
-    ctx.beginPath();
-    ctx.moveTo(w * 0.45, h * 0.05);
-    ctx.lineTo(w * 0.5, h * 0.12);
-    ctx.lineTo(w * 0.41, h * 0.12);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillStyle = "rgba(255, 240, 210, 0.4)";
+    for (const [px, py, s] of [[0.12, 0.08, 0.05], [0.45, 0.05, 0.06], [0.8, 0.07, 0.045]]) {
+      ctx.beginPath();
+      ctx.moveTo(w * px, h * py);
+      ctx.lineTo(w * (px + s), h * (py + 0.07));
+      ctx.lineTo(w * (px - s), h * (py + 0.07));
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
   function drawCityBlocks(w, h) {
-    ctx.fillStyle = "rgba(90, 110, 70, 0.18)";
+    let seed = 42;
+    const rnd = () => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
     for (let i = 0; i < 7; i++) {
       for (let j = 0; j < 3; j++) {
         const bx = w * (0.06 + i * 0.135);
         const by = h * (0.62 + j * 0.11);
+        ctx.fillStyle = "rgba(90, 110, 70, 0.18)";
         roundRect(bx, by, w * 0.1, h * 0.075, 5);
         ctx.fill();
+        const n = 2 + Math.floor(rnd() * 2);
+        for (let k = 0; k < n; k++) {
+          const hx = bx + w * 0.012 + k * w * 0.032;
+          const hy = by + h * 0.012;
+          ctx.fillStyle = j % 2 === 0 ? "rgba(196, 168, 128, 0.75)" : "rgba(168, 152, 122, 0.75)";
+          ctx.fillRect(hx, hy, w * 0.026, h * 0.05);
+          ctx.fillStyle = "rgba(120, 90, 60, 0.8)";
+          ctx.beginPath();
+          ctx.moveTo(hx - 2, hy);
+          ctx.lineTo(hx + w * 0.013, hy - h * 0.014);
+          ctx.lineTo(hx + w * 0.026 + 2, hy);
+          ctx.closePath();
+          ctx.fill();
+        }
       }
     }
   }
@@ -116,6 +152,12 @@
     ctx.stroke();
     ctx.strokeStyle = "rgba(190, 225, 245, 0.4)";
     ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(150, 110, 70, 0.9)";
+    ctx.lineWidth = Math.max(6, h * 0.016);
+    ctx.beginPath();
+    ctx.moveTo(w * 0.62, h * 0.55);
+    ctx.lineTo(w * 0.74, h * 0.615);
     ctx.stroke();
     ctx.lineCap = "butt";
   }
@@ -145,6 +187,41 @@
     ctx.setLineDash([]);
   }
 
+  function drawCars(w, h) {
+    const defs = [
+      { t: (anim / 14) % (w + 80) - 40, y: h * 0.538, dir: 1, color: "#c94f3d" },
+      { t: w - ((anim / 18) % (w + 80)) + 40 - 80, y: h * 0.562, dir: -1, color: "#4e7a8a" },
+      { t: (anim / 21) % (h + 80) - 40, x: w * 0.538, vertical: true, color: "#d9c33c" },
+    ];
+    for (const c of defs) {
+      ctx.save();
+      if (c.vertical) {
+        ctx.translate(c.x, c.t);
+        ctx.fillStyle = c.color;
+        roundRect(-5, -9, 10, 18, 3);
+        ctx.fill();
+        ctx.fillStyle = "rgba(180, 220, 240, 0.9)";
+        ctx.fillRect(-3, -5, 6, 5);
+      } else {
+        ctx.translate(c.t, c.y);
+        ctx.scale(c.dir, 1);
+        ctx.fillStyle = c.color;
+        roundRect(-10, -5, 20, 7, 2.5);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-5, -5);
+        ctx.lineTo(-2, -9);
+        ctx.lineTo(5, -9);
+        ctx.lineTo(7, -5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "rgba(180, 220, 240, 0.9)";
+        ctx.fillRect(-1, -8, 5, 3);
+      }
+      ctx.restore();
+    }
+  }
+
   function drawLocations(w, h) {
     for (const loc of MAP_LOCATIONS) {
       const p = locPixel(loc);
@@ -167,7 +244,10 @@
       }
 
       ctx.globalAlpha = open ? 1 : 0.35;
-      ctx.fillStyle = loc.color;
+      const badge = ctx.createLinearGradient(p.x, p.y - s, p.x, p.y + s);
+      badge.addColorStop(0, loc.color);
+      badge.addColorStop(1, "rgba(60, 40, 20, 0.55)");
+      ctx.fillStyle = badge;
       ctx.strokeStyle = isHover ? "#ffffff" : "rgba(60, 35, 20, 0.75)";
       ctx.lineWidth = isHover ? 3 : 2;
       roundRect(p.x - s, p.y - s, s * 2, s * 2, 14);
@@ -213,6 +293,7 @@
     drawMountains(w, h);
     drawCityBlocks(w, h);
     drawRoads(w, h);
+    drawCars(w, h);
     drawRiver(w, h);
     drawLocations(w, h);
 
@@ -340,12 +421,8 @@ function runInteraction(loc, it) {
   state.visitedToday[key] = true;
   playSfx("click");
   if (typeof haptic === "function") haptic(15);
-  state.visitedToday[key] = true;
-  playSfx("click");
-  if (typeof haptic === "function") haptic(15);
   if (typeof trackMission === "function") trackMission("map", 1);
 
- 
   if (it.dialogue && DIALOGUES[it.dialogue]) {
     playDialogue(DIALOGUES[it.dialogue]);
   } else if (typeof it.effect === "function") {
