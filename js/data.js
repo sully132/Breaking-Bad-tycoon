@@ -7,7 +7,7 @@
 const SAVE_KEY = "heisenberg-tycoon-save-v2";
 
 // Objectif de victoire : argent propre accumulé
-const VICTORY_CASH = 10_000_000;
+const VICTORY_CASH = 150_000_000; // v27 : équilibrage simulé — victoire visée ~jour 60-90 en jeu actif
 
 // Points d'action par jour
 const AP_PER_DAY = 3;
@@ -1754,7 +1754,7 @@ const BUSINESSES = [
   {
     id: "carwash", name: "Lave-auto A1A", emoji: "🧽", locId: "carwash",
     desc: "Le tout premier front. Chaque voiture est un alibi.",
-    baseCost: 250, costMult: 1.09, baseRev: 90, cycle: 2,
+    baseCost: 250, costMult: 1.21, baseRev: 90, cycle: 2,
     crew: { jesse: 0.15 }, gear: { carwash: 0.5 },
     unlock: () => true,
     manager: { id: "m_jr", name: "Walter White Jr.", emoji: "🧢", cost: 12_000,
@@ -1763,7 +1763,7 @@ const BUSINESSES = [
   {
     id: "nails", name: "Salon de manucure", emoji: "💅",
     desc: "Vernis, faux ongles, et liasses dans le tiroir du fond.",
-    baseCost: 3_500, costMult: 1.12, baseRev: 1_100, cycle: 5,
+    baseCost: 3_500, costMult: 1.24, baseRev: 1_100, cycle: 5,
     crew: { huell: 0.2 },
     unlock: (s) => s.day >= 3,
     manager: { id: "m_francesca", name: "Francesca Liddy", emoji: "💁‍♀️", cost: 60_000,
@@ -1772,7 +1772,7 @@ const BUSINESSES = [
   {
     id: "street", name: "Réseau de rue", emoji: "🛴",
     desc: "Combo, Badger et les autres. Le produit descend dans la ville.",
-    baseCost: 25_000, costMult: 1.13, baseRev: 9_600, cycle: 8,
+    baseCost: 25_000, costMult: 1.25, baseRev: 9_600, cycle: 8,
     crew: { jesse: 0.1, huell: 0.1 }, gear: { van: 0.25, railnetwork: 0.35 },
     unlock: (s) => s.day >= 4,
     manager: { id: "m_badger", name: "Badger", emoji: "🦡", cost: 250_000,
@@ -1781,7 +1781,7 @@ const BUSINESSES = [
   {
     id: "pollos", name: "Los Pollos Hermanos", emoji: "🍗", locId: "pollos",
     desc: "Friture, sourire professionnel, et camions frigorifiques très bien remplis.",
-    baseCost: 120_000, costMult: 1.14, baseRev: 55_200, cycle: 12,
+    baseCost: 120_000, costMult: 1.26, baseRev: 1_500, cycle: 12,
     crew: { gus: 0.25 }, gear: { cameras: 0.2 },
     unlock: (s) => s.day >= 6,
     manager: { id: "m_lyle", name: "Lyle", emoji: "👱", cost: 800_000,
@@ -1790,7 +1790,7 @@ const BUSINESSES = [
   {
     id: "junkyard", name: "Casse de Old Joe", emoji: "🔧", locId: "junkyard",
     desc: "Pièces détachées le jour, preuves disparues la nuit.",
-    baseCost: 500_000, costMult: 1.15, baseRev: 440_000, cycle: 20,
+    baseCost: 500_000, costMult: 1.27, baseRev: 1_000, cycle: 20,
     crew: { todd: 0.2 }, gear: { generator: 0.25 },
     unlock: (s) => s.day >= 8,
     manager: { id: "m_joe", name: "Old Joe", emoji: "👨‍🔧", cost: 2_500_000,
@@ -1799,7 +1799,7 @@ const BUSINESSES = [
   {
     id: "saulbiz", name: "Cabinet Saul Goodman", emoji: "⚖️", locId: "saul",
     desc: "Des avocats, des caisses d'« associations caritatives », des factures imaginaires.",
-    baseCost: 1_500_000, costMult: 1.15, baseRev: 1_800_000, cycle: 30,
+    baseCost: 1_500_000, costMult: 1.27, baseRev: 1_300, cycle: 30,
     crew: { saul: 0.3 }, gear: { cameras: 0.15 },
     unlock: (s) => s.staff.includes("saul"),
     manager: { id: "m_huell", name: "Huell Babineaux", emoji: "💼", cost: 8_000_000,
@@ -1808,7 +1808,7 @@ const BUSINESSES = [
   {
     id: "laundry", name: "Laverie industrielle", emoji: "🏭", locId: "superlab",
     desc: "Le couvre-feu de Gus : de l'argent propre, à la chaîne.",
-    baseCost: 6_000_000, costMult: 1.16, baseRev: 27_000_000, cycle: 45,
+    baseCost: 6_000_000, costMult: 1.28, baseRev: 2_200, cycle: 45,
     crew: { todd: 0.15, mike: 0.2 }, gear: { methylamine: 0.3, generator: 0.2 },
     unlock: (s) => s.labLevel >= 2,
     manager: { id: "m_todd", name: "Todd Alquist", emoji: "😐", cost: 30_000_000,
@@ -1817,7 +1817,7 @@ const BUSINESSES = [
   {
     id: "villa", name: "Hacienda d'Éladio", emoji: "🐄",
     desc: "Piscine, poulet rôti, et un cartel qui investit dans la légalité.",
-    baseCost: 25_000_000, costMult: 1.17, baseRev: 168_000_000, cycle: 60,
+    baseCost: 25_000_000, costMult: 1.29, baseRev: 4_200, cycle: 60,
     crew: { mike: 0.15 }, gear: { cameras: 0.15 },
     unlock: (s) => s.day >= 20,
     manager: { id: "m_bolsa", name: "Juan Bolsa", emoji: "🕴️", cost: 120_000_000,
@@ -1826,7 +1826,7 @@ const BUSINESSES = [
   {
     id: "rail", name: "Export Tchéquie", emoji: "🚂",
     desc: "Le train de Lydia : wagons scellés, douanes complices, Europe entière.",
-    baseCost: 120_000_000, costMult: 1.18, baseRev: 1_350_000_000, cycle: 90,
+    baseCost: 120_000_000, costMult: 1.30, baseRev: 9_000, cycle: 90,
     crew: { lydia: 0.3 }, gear: { railnetwork: 0.5 },
     unlock: (s) => s.staff.includes("lydia"),
     manager: { id: "m_lydia", name: "Lydia Rodarte-Quayle", emoji: "📋", cost: 600_000_000,
@@ -1835,7 +1835,7 @@ const BUSINESSES = [
   {
     id: "cartelbiz", name: "Cartel international", emoji: "🌎",
     desc: "Le sommet de la pyramide. Ton bleu sur trois continents.",
-    baseCost: 800_000_000, costMult: 1.19, baseRev: 14_400_000_000, cycle: 120,
+    baseCost: 800_000_000, costMult: 1.31, baseRev: 27_000, cycle: 120,
     crew: { gus: 0.2, lydia: 0.15 }, gear: { railnetwork: 0.4 },
     unlock: (s) => s.day >= 40,
     manager: { id: "m_gus", name: "Gus Fring", emoji: "🐔", cost: 4_000_000_000,

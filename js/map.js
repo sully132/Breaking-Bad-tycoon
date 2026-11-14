@@ -18,7 +18,9 @@
   let mapWeather = "clear";
   let mapFlash = 0;
 
-  const DPR_CAP = 2;
+  let DPR_CAP = 2;
+  let fpsFrames = 0;
+  let fpsLast = 0;
   const HIT_RADIUS = 36;
 
   function unlocked(loc) {
@@ -617,6 +619,19 @@
     drawEventBanner(w, h);
     drawOpportunities(w, h);
 
+    // v27 : DPR adaptatif — si le fps chute, on réduit la résolution
+    fpsFrames += 1;
+    const fpsNow = performance.now();
+    if (!fpsLast) fpsLast = fpsNow;
+    if (fpsNow - fpsLast >= 2000) {
+      const fps = (fpsFrames * 1000) / (fpsNow - fpsLast);
+      fpsFrames = 0;
+      fpsLast = fpsNow;
+      if (fps < 45 && DPR_CAP > 1) {
+        DPR_CAP = Math.max(1, DPR_CAP - 0.5);
+        resize();
+      }
+    }
     anim += 16;
     rafId = requestAnimationFrame(draw);
   }
@@ -721,6 +736,15 @@
     resize();
     rollMapWeather();
     window.addEventListener("resize", resize);
+
+    // v27 : pause du canvas quand l'app passe en arrière-plan (batterie)
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      } else if (!rafId) {
+        rafId = requestAnimationFrame(draw);
+      }
+    });
 
     canvas.addEventListener("pointermove", (e) => {
       const r = canvas.getBoundingClientRect();

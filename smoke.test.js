@@ -125,7 +125,7 @@ const gjs3 = fs.readFileSync("js/game.js", "utf8");
 console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes("comboUntil = now + 2500") ? "OK" : "FAIL");
 console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
 const sw3 = fs.readFileSync("sw.js", "utf8");
-console.log("SW cache v25:", sw3.includes("heisenberg-v25") ? "OK" : "FAIL");
+console.log("SW cache v27:", sw3.includes("heisenberg-v27") ? "OK" : "FAIL");
 
 // v23 : étages du Superlab + reliques + prestige
 console.log("labFloors migration:", typeof G.state.labFloors === "number" ? "OK" : "FAIL");
@@ -146,7 +146,7 @@ console.log("succes v23:", djs4.includes("floors3") && djs4.includes("relic4") ?
 console.log("bouton reliques:", fs.readFileSync("index.html", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("wiring reliques:", fs.readFileSync("js/app.js", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("scene superlab v23:", fs.readFileSync("js/locscene.js", "utf8").includes("drawFloorsPanel") ? "OK" : "FAIL");
-console.log("SW cache v24:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v24") ? "OK" : "FAIL");
+console.log("SW cache v27 (finale):", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v27") ? "OK" : "FAIL");
 
 // v24 : monde vivant
 const mjs5 = fs.readFileSync("js/map.js", "utf8");
@@ -188,6 +188,16 @@ console.log("bonus week-end:", gjs6.includes("isWeekend()) rev *= 1.15") ? "OK" 
 console.log("ecran fin detaille:", gjs6.includes("end-stats") && gjs6.includes("Moment fort") ? "OK" : "FAIL");
 console.log("tuto au splash:", fs.readFileSync("js/app.js", "utf8").includes("maybeShowTutorial") ? "OK" : "FAIL");
 console.log("css fin:", fs.readFileSync("css/style.css", "utf8").includes(".end-stats") ? "OK" : "FAIL");
+
+// v27 : finition
+const ljs7 = fs.readFileSync("js/locscene.js", "utf8");
+console.log("DPR adaptatif scenes:", ljs7.includes("let DPR_CAP") && ljs7.includes("fps < 45") ? "OK" : "FAIL");
+console.log("eclairage dynamique:", ljs7.includes("drawLighting") && ljs7.includes("LIGHT_SPOTS") ? "OK" : "FAIL");
+const mjs7 = fs.readFileSync("js/map.js", "utf8");
+console.log("DPR adaptatif carte:", mjs7.includes("let DPR_CAP") && mjs7.includes("fps < 45") ? "OK" : "FAIL");
+console.log("pause arriere-plan:", ljs7.includes("visibilitychange") && mjs7.includes("visibilitychange") ? "OK" : "FAIL");
+console.log("accessibilite css:", fs.readFileSync("css/style.css", "utf8").includes("prefers-reduced-motion") ? "OK" : "FAIL");
+console.log("simulation equilibre:", fs.existsSync("balance.test.js") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);

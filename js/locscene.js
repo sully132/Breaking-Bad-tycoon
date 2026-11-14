@@ -19,7 +19,9 @@
   let nextBubbleAt = 3000;
   let charScreens = [];
   let eventVisitor = null;
-  const DPR_CAP = 2;
+  let DPR_CAP = 2;
+  let fpsFrames = 0;
+  let fpsLast = 0;
 
   function loc() {
     if (!currentLocId || typeof MAP_LOCATIONS === "undefined") return null;
@@ -1908,6 +1910,40 @@
     ctx.restore();
   }
 
+  // v27 : éclairage dynamique — halos de lampes la nuit, rayons de soleil le jour
+  const LIGHT_SPOTS = {
+    desert: [[0.18, 0.62, 0.16], [0.85, 0.64, 0.14]],
+    desert2: [[0.5, 0.6, 0.2]],
+    station: [[0.5, 0.58, 0.22]],
+    ranch: [[0.25, 0.6, 0.16], [0.78, 0.62, 0.14]],
+    default: [[0.22, 0.6, 0.16], [0.62, 0.58, 0.18], [0.88, 0.63, 0.13]],
+  };
+  function drawLighting(w, h, t, night) {
+    const def = sceneDef();
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    if (night) {
+      const spots = LIGHT_SPOTS[def.kind] || LIGHT_SPOTS.default;
+      for (const sp of spots) {
+        const x = w * sp[0];
+        const y = h * sp[1];
+        const r = w * sp[2] * (1 + 0.04 * Math.sin(t * 1.7 + x));
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, "rgba(255, 200, 110, 0.20)");
+        g.addColorStop(1, "rgba(255, 200, 110, 0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+    } else {
+      const g = ctx.createLinearGradient(w * 0.7, 0, w * 0.2, h);
+      g.addColorStop(0, "rgba(255, 240, 200, 0.10)");
+      g.addColorStop(1, "rgba(255, 240, 200, 0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.restore();
+  }
+
   function draw() {
     if (!canvas || !ctx || !currentLocId) return;
     const w = canvas.clientWidth;
@@ -1935,6 +1971,7 @@
     const extra = EXTRAS[def.kind];
     if (extra) extra(w, h, t, night);
     drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
+    drawLighting(w, h, t, night);
 
     if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);
 
@@ -1966,6 +2003,19 @@
     drawVignette(w, h, night);
 
     anim += 16;
+    // v27 : DPR adaptatif — si le fps chute, on réduit la résolution
+    fpsFrames += 1;
+    const fpsNow = performance.now();
+    if (!fpsLast) fpsLast = fpsNow;
+    if (fpsNow - fpsLast >= 2000) {
+      const fps = (fpsFrames * 1000) / (fpsNow - fpsLast);
+      fpsFrames = 0;
+      fpsLast = fpsNow;
+      if (fps < 45 && DPR_CAP > 1) {
+        DPR_CAP = Math.max(1, DPR_CAP - 0.5);
+        resize();
+      }
+    }
     rafId = requestAnimationFrame(draw);
   }
 
@@ -2195,6 +2245,16 @@
 
     window.addEventListener("resize", () => {
       if (currentLocId) resize();
+    });
+
+    // v27 : pause du canvas quand l'app passe en arrière-plan (batterie)
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+        try { if (typeof sfx !== "undefined" && sfx && sfx.ambient) sfx.ambient.stop(); } catch (e) {}
+      } else if (!rafId && currentLocId) {
+        rafId = requestAnimationFrame(draw);
+      }
     });
 
     canvas.addEventListener("pointerdown", onTap);

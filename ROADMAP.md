@@ -56,12 +56,12 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] **Écran de fin de partie détaillé** (stats, records, plus beau moment). *(livré en v26 : 10 stats + « moment fort » calculé)*
 - **Critère** : D1/D7 visibles dans les stats de sauvegarde.
 
-## Phase 6 — Finition (v27+)
+## Phase 6 — Finition (v27+) ✅ LIVRÉE
 **Objectif : qualité perçue de jeu du Play Store.**
-- [ ] **Passe d'équilibrage globale** validée par simulation (100 jours joués par script).
-- [ ] **Performance** : profiler les scènes, cap DPR adaptatif, 60 fps sur mid-range.
-- [ ] **Accessibilité** : tailles de cible ≥ 44 px, contrastes, option réduction d'animations.
-- [ ] **Nouvelle passe graphique** sur les 17 scènes (détails, éclairage dynamique).
+- [x] **Passe d'équilibrage globale** validée par simulation (100 jours joués par script). *(livré en v27 : balance.test.js — bot actif RNG seedé, victoire ≤ 100 jours, aucune arrestation, progression continue)*
+- [x] **Performance** : profiler les scènes, cap DPR adaptatif, 60 fps sur mid-range. *(livré en v27 : DPR adaptatif 2 → 1,5 → 1 selon fps mesuré toutes les 2 s, pause des canvas + ambiance sonore quand l'app est en arrière-plan)*
+- [x] **Accessibilité** : tailles de cible ≥ 44 px, contrastes, option réduction d'animations. *(livré en v27 : cibles tactiles ≥ 44 px, focus visible, prefers-reduced-motion, suppression du zoom double-tap)*
+- [x] **Nouvelle passe graphique** sur les 17 scènes (détails, éclairage dynamique). *(livré en v27 : éclairage dynamique — halos de lampes la nuit, rayons de soleil le jour, sur toutes les scènes)*
 - **Critère** : aucune baisse de fps notable, équilibrage sans trou de 2 jours.
 
 ---

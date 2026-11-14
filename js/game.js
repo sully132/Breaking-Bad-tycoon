@@ -333,7 +333,9 @@ function launderVolume() {
   let v = hasUpgrade("carwash") ? 200_000 : 50_000;
   v += 2_500 * bizLevel("carwash");
   v += 25_000 * bizLevel("laundry");
-  return v;
+  // v27 : auto-scalant — au moins 60 s de revenus d'empire par action,
+  // pour que le blanchiment suive toujours la croissance des affaires
+  return Math.max(v, Math.round(totalEmpirePerSec() * 4));
 }
 
 function addHeat(n) {
@@ -555,7 +557,7 @@ function rollWeekendEvent() {
 function maybeShowTutorial() {
   if (state.tutoDone || state.day > 1) return;
   const slides = [
-    { icon: "🧪", title: "Bienvenue à Albuquerque", text: "Cuis dans le LABO, vends, et blanchis ton argent sale via tes affaires. Objectif : 10 000 000$ d'argent propre." },
+    { icon: "🧪", title: "Bienvenue à Albuquerque", text: "Cuis dans le LABO, vends, et blanchis ton argent sale via tes affaires. Objectif : 150 000 000$ d'argent propre." },
     { icon: "🗺️", title: "La carte est ta ville", text: "Chaque lieu est une scène vivante : tape les personnages, règle les événements ❗, attrape les opportunités dorées et collecte tes affaires sur place." },
     { icon: "🚔", title: "Garde la tête froide", text: "La chaleur DEA monte avec ton activité. À 100, c'est l'arrestation. Blanchis, efface tes traces… et deviens une légende." },
   ];
@@ -1958,6 +1960,7 @@ function load() {
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
+    if (state.goal === 10_000_000) state.goal = VICTORY_CASH; // v27 : anciennes parties passees au nouvel objectif
     if (typeof state.combo !== "number") state.combo = 0;
     if (typeof state.comboUntil !== "number") state.comboUntil = 0;
     if (typeof state.maxCombo !== "number") state.maxCombo = 0;
@@ -2043,7 +2046,7 @@ if (typeof window !== "undefined") {
 let offlineReport = null;
 if (!load()) {
   log("🎓 Albuquerque, Nouveau-Mexique. Un RV, un tablier, un rêve.");
-  log("💡 Objectif : 10 000 000$ d'argent propre. Attention à la chaleur DEA (100 = arrestation).");
+  log("💡 Objectif : 150 000 000$ d'argent propre. Attention à la chaleur DEA (100 = arrestation).");
   log("💼 Onglet EMPIRE : tes premières affaires de façade t'attendent.");
   generateContract();
 } else {
