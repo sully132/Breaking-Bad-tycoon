@@ -221,3 +221,12 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Profondeur de champ simulée sans blur — zéro coût pour la perf mobile *(livré en v51)*
 - [x] Intensité du voile lissée (8 %/frame) : apparition/disparition en fondu synchronisée avec les transitions de plans *(livré en v51)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
+## Phase 32 — Le labo au niveau du reste du jeu (v52) ✅ LIVRÉE (v52)
+- [x] Doublon de Jesse corrigé : il n'apparaît plus deux fois dans le RV *(livré en v52)*
+- [x] Équipe du labo redessinée avec les looks des scènes (CHAR_LOOKS) : combinaisons hazmat dans le RV, Walter qui devient Heisenberg au jour 8, Mike/Saul/Gus/Todd/Lydia identiques à leurs scènes *(livré en v52)*
+- [x] Moteur de persos du labo enrichi : vestes, cravates, barbes, moustaches, casquettes, tabliers, badges, colliers, cheveux longs, contours et ombres portées *(livré en v52)*
+- [x] Cycle jour/nuit du labo en TEMPS RÉEL (synchronisé avec la carte et les scènes) *(livré en v52)*
+- [x] Bulles de dialogue au tap sur chaque membre de l'équipe du labo *(livré en v52)*
+- [x] Badge « ! » doré pulsant au-dessus du labo quand un événement RV/superlab est en attente — tap = ouvre directement la scène *(livré en v52)*
+- [x] Lucioles la nuit dans le labo *(livré en v52)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur

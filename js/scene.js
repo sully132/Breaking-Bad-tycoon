@@ -17,6 +17,10 @@ const scene = (() => {
   let tumbleweed = { x: -30, y: 0, rot: 0, speed: 0.6 };
   let ripples = [];    // effets de tap {x,y,r,life}
   let golden = null;
+  let crewScreens = []; // v52 : positions des persos du labo (bulles au tap)
+  let labBubble = null; // v52 : bulle de dialogue du labo
+  let evBadge = null; // v52 : badge « ! » d'événement en attente
+  let fireflies = []; // v52 : lucioles la nuit
 
   const FX = { cook: 0, sell: 0, launder: 0 };
   const CYCLE_MS = 60_000;
@@ -80,6 +84,24 @@ const scene = (() => {
         return;
       }
     }
+    // v52 : badge « ! » d'événement en attente → ouvre la scène du lieu
+    const mx = x * W, my = y * H;
+    if (evBadge && Math.hypot(mx - evBadge.x, my - evBadge.y) < 26) {
+      const locId = evBadge.loc;
+      evBadge = null;
+      if (typeof openLocScene === "function") { try { openLocScene(locId); } catch (e) {} }
+      return;
+    }
+    // v52 : tap sur un membre de l'équipe → bulle de dialogue
+    for (const c of crewScreens) {
+      if (Math.hypot(mx - c.x, my - (c.y - 24)) < 30) {
+        const lines = (typeof QUOTES !== "undefined" && QUOTES[c.id]) ? QUOTES[c.id] : ["Le compte est bon."];
+        labBubble = { id: c.id, text: lines[Math.floor(Math.random() * lines.length)], until: performance.now() + 3400 };
+        if (typeof playSfx === "function") { try { playSfx("click"); } catch (e) {} }
+        if (typeof haptic === "function") { try { haptic(12); } catch (e) {} }
+        return;
+      }
+    }
     if (typeof tapBoost === "function") tapBoost(x, y);
   }
 
@@ -109,6 +131,17 @@ const scene = (() => {
     return (typeof state !== "undefined" && state) ? state.heat : 0;
   }
 
+  // v52 : cycle jour/nuit en TEMPS RÉEL — synchronisé avec les scènes de la carte
+  let fCur = 0.55;
+  const PHASE_F = { night: 0.12, dawn: 0.22, day: 0.55, dusk: 0.85 };
+  function realDayFactor() {
+    let target = 0.55;
+    try {
+      if (typeof window !== "undefined" && typeof window.heisTimePhase === "function") target = PHASE_F[window.heisTimePhase()] || 0.55;
+    } catch (e) {}
+    fCur += (target - fCur) * 0.008;
+    return fCur;
+  }
   function dayFactor(t) {
     const phase = (t % CYCLE_MS) / CYCLE_MS;
     return 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
@@ -396,7 +429,10 @@ const scene = (() => {
   }
 
   // ---------- Personnages ----------
-   function figure(x, y, opts, f, t) {
+  // v52 : moteur enrichi — veste, cravate, barbe, moustache, casquettes, tablier,
+  // badge, collier, cheveux longs, chemise criarde, contours et ombre portée :
+  // les persos du labo sont maintenant au niveau de ceux des scènes (CHAR_LOOKS)
+  function figure(x, y, opts, f, t) {
     const o = Object.assign({
       shirt: "#3a6b8a", pants: "#2a2a2a", skin: "#e8c39a", shoe: "#1a1a1a",
       hair: "#3a2a1a", hat: null, beanie: null, glasses: false, bald: false,
@@ -406,14 +442,57 @@ const scene = (() => {
     ctx.save();
     ctx.translate(x, y + bob);
     ctx.scale(o.scale, o.scale);
+    // ombre portée
+    ctx.fillStyle = "rgba(20, 14, 8, 0.28)";
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 13, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // jambes + chaussures
     ctx.fillStyle = o.shoe;
     ctx.fillRect(-7, -2, 7, 2.5);
     ctx.fillRect(0, -2, 7, 2.5);
     ctx.fillStyle = o.pants;
     ctx.fillRect(-6, -15, 5, 14);
     ctx.fillRect(1, -15, 5, 14);
+    // torse contouré + reflet
     ctx.fillStyle = o.shirt;
     ctx.fillRect(-8, -33, 16, 19);
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-8, -33, 16, 19);
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    ctx.fillRect(-8, -33, 16, 4);
+    if (o.loud) { // chemise criarde (Saul) — petits motifs clairs
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      for (let i = 0; i < 5; i++) ctx.fillRect(-6 + (i % 3) * 5, -31 + Math.floor(i / 3) * 7, 2, 2);
+    }
+    if (o.apron) { // tablier
+      ctx.fillStyle = o.apron;
+      ctx.fillRect(-6, -30, 12, 15);
+    }
+    if (o.jacket) { // veste ouverte par-dessus
+      ctx.fillStyle = o.jacket;
+      ctx.fillRect(-10, -33, 4, 19);
+      ctx.fillRect(6, -33, 4, 19);
+    }
+    if (o.lapel) { // revers de costume
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.beginPath(); ctx.moveTo(-8, -33); ctx.lineTo(-3, -33); ctx.lineTo(-6, -24); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(8, -33); ctx.lineTo(3, -33); ctx.lineTo(6, -24); ctx.closePath(); ctx.fill();
+    }
+    if (o.tie) { // cravate
+      ctx.fillStyle = o.tie;
+      ctx.fillRect(-1.5, -33, 3, 12);
+    }
+    if (o.badge) { // badge DEA
+      ctx.fillStyle = "#d9c33c";
+      ctx.beginPath(); ctx.arc(5, -28, 2.2, 0, Math.PI * 2); ctx.fill();
+    }
+    if (o.necklace || o.gold) { // collier / chaîne en or
+      ctx.fillStyle = o.gold ? "#d9c33c" : "#e8e8e8";
+      ctx.fillRect(-4, -34, 8, 1.4);
+    }
+    // bras
     ctx.fillStyle = o.skin;
     ctx.fillRect(-10, -33, 3, 12);
     ctx.fillRect(7, -33, 3, 12);
@@ -421,18 +500,38 @@ const scene = (() => {
       const wave = Math.sin(t / 220) * 5;
       ctx.fillRect(7, -38 - Math.max(0, wave), 3, 9);
     }
+    // tête contourée + reflet
+    ctx.fillStyle = o.skin;
     ctx.beginPath();
     ctx.arc(0, -41, 8, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.3)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
     ctx.fillStyle = "rgba(0,0,0,0.12)";
     ctx.beginPath();
     ctx.arc(0, -41, 8, Math.PI * 0.15, Math.PI * 0.85);
     ctx.fill();
+    if (o.hairLong && !o.bald && !o.hat && !o.beanie) { // cheveux longs
+      ctx.fillStyle = o.hair;
+      ctx.fillRect(-9.5, -47, 4, 14);
+      ctx.fillRect(5.5, -47, 4, 14);
+    }
+    if (o.mustache) { // moustache
+      ctx.fillStyle = o.mustache;
+      ctx.fillRect(-4, -37.5, 8, 2);
+    }
+    if (o.beard) { // barbe
+      ctx.fillStyle = o.beard;
+      ctx.beginPath();
+      ctx.arc(0, -37, 6.5, 0, Math.PI);
+      ctx.fill();
+    }
     if (o.goatee) {
       ctx.fillStyle = "#4a3a26";
       ctx.fillRect(-3, -36.5, 6, 3.5);
     }
-    if (!o.bald && !o.hat && !o.beanie) {
+    if (!o.bald && !o.hat && !o.beanie && !o.cap && !o.flatCap) {
       ctx.fillStyle = o.hair;
       ctx.beginPath();
       ctx.arc(0, -43, 8, Math.PI * 0.95, Math.PI * 2.05);
@@ -451,6 +550,21 @@ const scene = (() => {
       ctx.fillRect(-6, -57, 12, 9.5);
       ctx.fillStyle = "rgba(255,255,255,0.14)";
       ctx.fillRect(-6, -57, 12, 2.4);
+    }
+    if (o.cap) { // casquette (Hank, Badger, Combo)
+      ctx.fillStyle = o.cap;
+      ctx.beginPath();
+      ctx.arc(0, -44, 8.2, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(0, -44.5, 11, 2.6);
+    }
+    if (o.flatCap) { // casquette plate (Mike)
+      ctx.fillStyle = o.flatCap;
+      ctx.beginPath();
+      ctx.arc(0, -45, 8.2, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-9, -46.5, 18, 2.4);
+      ctx.fillRect(2, -46.5, 12, 2);
     }
     if (o.glasses) {
       ctx.strokeStyle = "#111";
@@ -472,17 +586,128 @@ const scene = (() => {
     const hired = (id) => {
       try { return typeof hasStaff === "function" && hasStaff(id); } catch (e) { return false; }
     };
-        figure(baseX, groundY, { shirt: "#2a2a2a", pants: "#1a1a1a", bald: true, hat: "#1a1a1a", glasses: true, goatee: true, scale: 1.12 }, f, t);
+    const LK = (typeof CHAR_LOOKS !== "undefined") ? CHAR_LOOKS : {}; // v52 : looks cohérents avec les scènes
+    const day = (typeof state !== "undefined" && state) ? (state.day || 0) : 0;
+    crewScreens.length = 0; // v52 : positions pour les bulles au tap
+    // v52 : dans le RV, l'équipe cuisine en combinaison ; dehors, Walter devient Heisenberg (jour 8+)
+    const bossLook = level === 0
+      ? (LK.hazmat2 || { shirt: "#2a2a2a", bald: true, hat: "#1a1a1a", glasses: true })
+      : (day >= 8 ? (LK.heisenberg || LK.walter) : (LK.walter || { shirt: "#2a2a2a", bald: true, glasses: true }));
+    figure(baseX, groundY, Object.assign({ scale: 1.12 }, bossLook), f, t);
+    crewScreens.push({ id: level === 0 || day >= 8 ? "heisenberg" : "walter", x: baseX, y: groundY });
     let slot = 0;
     const spot = () => baseX + 36 + slot++ * 27;
-    if (hired("jesse")) figure(spot(), groundY, { shirt: "#e8c832", pants: "#3a5a8a", beanie: "#c8b44a", wave: Math.sin(t / 3000) > 0.7 }, f, t);
-    if (hired("jesse")) figure(spot(), groundY, { shirt: "#e8c832", pants: "#3a5a8a", hair: "#c8b44a", wave: Math.sin(t / 3000) > 0.7 }, f, t);
-    if (hired("mike")) figure(spot(), groundY, { shirt: "#5a5a5a", pants: "#333", hair: "#cfcfcf" }, f, t);
-    if (hired("saul")) figure(spot(), groundY, { shirt: "#d94f8a", pants: "#444", bald: true }, f, t);
-    if (hired("gus")) figure(spot(), groundY, { shirt: "#e8d44a", pants: "#333", hair: "#222", glasses: false }, f, t);
-    if (hired("huell")) figure(spot(), groundY, { shirt: "#7a4a8a", pants: "#222", bald: true }, f, t);
-    if (hired("todd")) figure(spot(), groundY, { shirt: "#c8c8b8", pants: "#5a4a3a", hair: "#e8d8a0" }, f, t);
-    if (hired("lydia")) figure(spot(), groundY, { shirt: "#3a7a9a", pants: "#223a4a", hair: "#e8c86a" }, f, t);
+    if (hired("jesse")) {
+      const jx = spot();
+      figure(jx, groundY, Object.assign({ scale: 1.05 }, level === 0 ? (LK.hazmat || { shirt: "#e8c93a", beanie: "#2a2a2a" }) : (LK.jesse || { shirt: "#e8c93a", beanie: "#2a2a2a" })), f, t); // v52 : un seul Jesse (doublon supprimé)
+      crewScreens.push({ id: "jesse", x: jx, y: groundY });
+    }
+    if (hired("mike")) {
+      const mx = spot();
+      figure(mx, groundY, Object.assign({ scale: 1.05 }, LK.mike || { shirt: "#5a5a5a", pants: "#333", hair: "#cfcfcf" }), f, t);
+      crewScreens.push({ id: "mike", x: mx, y: groundY });
+    }
+    if (hired("saul")) {
+      const sx = spot();
+      figure(sx, groundY, Object.assign({ scale: 1.05 }, LK.saul || { shirt: "#d94f8a", pants: "#444", bald: true }), f, t);
+      crewScreens.push({ id: "saul", x: sx, y: groundY });
+    }
+    if (hired("gus")) {
+      const gx = spot();
+      figure(gx, groundY, Object.assign({ scale: 1.05 }, LK.gus || { shirt: "#e8d44a", pants: "#333", hair: "#222" }), f, t);
+      crewScreens.push({ id: "gus", x: gx, y: groundY });
+    }
+    if (hired("huell")) {
+      const hx = spot();
+      figure(hx, groundY, { shirt: "#7a4a8a", pants: "#222", bald: true, scale: 1.05 }, f, t);
+      crewScreens.push({ id: "huell", x: hx, y: groundY });
+    }
+    if (hired("todd")) {
+      const tx = spot();
+      figure(tx, groundY, Object.assign({ scale: 1.05 }, LK.todd || { shirt: "#c8c8b8", pants: "#5a4a3a", hair: "#e8d8a0" }), f, t);
+      crewScreens.push({ id: "todd", x: tx, y: groundY });
+    }
+    if (hired("lydia")) {
+      const lx = spot();
+      figure(lx, groundY, Object.assign({ scale: 1.05 }, LK.lydia || { shirt: "#3a7a9a", pants: "#223a4a", hair: "#e8c86a" }), f, t);
+      crewScreens.push({ id: "lydia", x: lx, y: groundY });
+    }
+  }
+
+  // v52 : bulle de dialogue au tap sur un membre de l'équipe
+  function drawLabBubble() {
+    if (!labBubble || performance.now() > labBubble.until) { labBubble = null; return; }
+    const c = crewScreens.find((cs) => cs.id === labBubble.id);
+    if (!c) return;
+    const by = c.y - 62;
+    ctx.font = "bold 11px sans-serif";
+    const tw = ctx.measureText(labBubble.text).width + 14;
+    const x0 = Math.max(4, Math.min(W - tw - 4, c.x - tw / 2));
+    ctx.fillStyle = "#fffdf4";
+    roundRect(x0, by - 22, tw, 20, 7, true);
+    ctx.strokeStyle = "#4e7a2a";
+    ctx.lineWidth = 1.5;
+    roundRect(x0, by - 22, tw, 20, 7, false);
+    ctx.stroke();
+    ctx.fillStyle = "#1a2410";
+    ctx.textAlign = "center";
+    ctx.fillText(labBubble.text, x0 + tw / 2, by - 8);
+    ctx.textAlign = "left";
+  }
+
+  // v52 : événement en attente au labo (rv / superlab) — badge « ! » au-dessus du bâtiment
+  function pendingLabEvent() {
+    try {
+      if (typeof state === "undefined" || !state || !Array.isArray(state.sceneEvents) || typeof EVENTS === "undefined") return null;
+      for (const id of state.sceneEvents) {
+        const ev = EVENTS.find((e) => e.id === id);
+        if (ev && (ev.loc === "rv" || ev.loc === "superlab")) return ev;
+      }
+    } catch (e) {}
+    return null;
+  }
+  function drawEventBadge(t) {
+    evBadge = null;
+    const ev = pendingLabEvent();
+    if (!ev) return;
+    const level = labLevel();
+    const bx = W * 0.5;
+    const by = H * 0.86 - (level === 0 ? 80 : level === 1 ? 122 : 155);
+    const pulse = 1 + Math.sin(t / 240) * 0.12;
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = "#d9c33c";
+    ctx.beginPath();
+    ctx.arc(0, 0, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#1a2410";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#1a2410";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("!", 0, 5);
+    ctx.textAlign = "left";
+    ctx.restore();
+    evBadge = { x: bx, y: by, loc: ev.loc };
+  }
+
+  // v52 : lucioles la nuit (comme dans les scènes de la carte)
+  function drawFirefliesLab(f, t) {
+    if (f >= 0.35) return;
+    if (!fireflies.length) {
+      for (let i = 0; i < 6; i++) fireflies.push({ x: Math.random() * W, y: H * (0.5 + Math.random() * 0.35), p: Math.random() * 6.28 });
+    }
+    for (const fl of fireflies) {
+      fl.x += Math.sin(t / 900 + fl.p) * 0.4;
+      fl.y += Math.cos(t / 1100 + fl.p) * 0.3;
+      const a = 0.35 + 0.4 * Math.sin(t / 300 + fl.p * 3);
+      ctx.fillStyle = "rgba(220, 255, 140, " + Math.max(0, a).toFixed(3) + ")";
+      ctx.beginPath();
+      ctx.arc(fl.x, fl.y, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // ---------- Bâtiments ----------
@@ -811,7 +1036,7 @@ const scene = (() => {
   function loop() {
     if (!ctx) return;
     const t = performance.now();
-    const f = dayFactor(t);
+    const f = realDayFactor(); // v52 : temps réel
 
     drawSky(f);
     drawStars(f, t);
@@ -829,6 +1054,8 @@ const scene = (() => {
     drawBuilding(level, f, t);
     drawProps(level, f);
     drawCrew(f, t);
+    drawLabBubble(); // v52 : bulle de dialogue
+    drawEventBadge(t); // v52 : événement en attente
     drawTumbleweed(f);
     drawCars(f);
     drawParticles();
@@ -836,6 +1063,7 @@ const scene = (() => {
     drawGolden(t);
     drawFrenzy(t);
     drawPoliceLights();
+    drawFirefliesLab(f, t); // v52 : lucioles la nuit
     drawVignette();
 
     requestAnimationFrame(loop);
