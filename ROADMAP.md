@@ -197,3 +197,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Retour progressif au cadre neutre quand la cinématique se termine *(livré en v47)*
 - [x] Roulis de caméra (légère rotation) pendant la secousse dramatique *(livré en v47)*
 - [ ] Prochaines pistes : flou d'arrière-plan sur les plans poitrine, réactions des passants pendant la cinématique, contrats express à durée limitée
+
+## Phase 28 — Passants réactifs & contrats express (v48) ✅ LIVRÉE (v48)
+- [x] Les passants s'écartent prudemment du visiteur pendant les cinématiques *(livré en v48)*
+- [x] Marque de réaction (! doré si tension, ? bleu sinon) au-dessus du passant le plus proche *(livré en v48)*
+- [x] Contrats express : petites livraisons chronométrées en TEMPS RÉEL (10 minutes), paiement ×2,2 immédiat, apparition quotidienne aléatoire *(livré en v48)*
+- [x] Succès « Livreur express » : 5 contrats express réussis (+30 000$, +5 respect) *(livré en v48)*
+- [ ] Prochaines pistes : contrats express visibles sur la carte, chaîne de prestige post-reset, flou d'arrière-plan sur les plans poitrine

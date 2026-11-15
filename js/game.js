@@ -22,10 +22,11 @@ function newGame() {
     staff: ["jesse"],
     upgrades: [],
     flags: { cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 },
-    stats: { cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, mgPlayed: 0, mgBest: 0, mgTucoBest: 0, mgSellBest: 0 },
+    stats: { cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, mgPlayed: 0, mgBest: 0, mgTucoBest: 0, mgSellBest: 0, expressDone: 0 },
     achievements: [],
     contract: null,
     contractCooldown: 0,
+    express: null, // v48 : contrat express en cours
     goal: VICTORY_CASH,
     endless: false,
     taps: 0,
@@ -764,9 +765,60 @@ function completeContract(success) {
   if (success) trackMission("contract", 1);
 }
 
+// ---------- v48 : contrats express (chronométrés en temps réel) ----------
+function spawnExpress() {
+  if (state.express || state.gameOver || state.victory) return;
+  if (Math.random() > 0.4) return;
+  const client = EXPRESS_CLIENTS[Math.floor(Math.random() * EXPRESS_CLIENTS.length)];
+  const kg = Math.round(rand(2, 5) * 10) / 10;
+  state.express = {
+    emoji: client.emoji,
+    client: client.name,
+    kg,
+    reward: Math.round(kg * pricePerKg() * rand(2.0, 2.4)),
+    until: Date.now() + 10 * 60 * 1000,
+  };
+  log(`⚡ Contrat express : ${kg} kg pour ${client.name} — 10 minutes réelles !`, "event");
+  toast("⚡ Contrat express !", `${client.name} veut ${kg} kg dans les 10 minutes.`);
+}
+
+function deliverExpress() {
+  const ex = state.express;
+  if (!ex || state.stock < ex.kg) return;
+  state.stock = Math.round((state.stock - ex.kg) * 10) / 10;
+  state.dirty += ex.reward;
+  state.respect = cap(state.respect + 2, 0, 100);
+  state.stats.expressDone = (state.stats.expressDone || 0) + 1;
+  state.stats.totalEarned += ex.reward;
+  state.soldToday = true;
+  spawnPopup(`⚡ Express livré ! +${fmt(ex.reward)}$`, "money");
+  playSfx("cash");
+  log(`⚡ Contrat express honoré : ${ex.kg} kg livrés à ${ex.client} pour ${fmt(ex.reward)}$. Respect +2.`, "good");
+  state.express = null;
+  checkAchievements();
+  render();
+  save();
+}
+
+function expireExpress() {
+  const ex = state.express;
+  if (!ex) return false;
+  if (Date.now() > ex.until) {
+    state.express = null;
+    state.respect = cap(state.respect - 1, 0, 100);
+    log(`⚡ Contrat express raté : ${ex.client} est parti. Respect −1.`, "bad");
+    return true;
+  }
+  return false;
+}
+
 // ---------- Production idle (temps réel) ----------
 function idleTick() {
   if (state.gameOver || state.victory) return;
+  if (state.express) { // v48 : expiration + compte à rebours des contrats express
+    if (expireExpress()) { render(); save(); }
+    else renderContracts();
+  }
   const kg = lab().cook * cookMult() * 0.04;
   if (kg <= 0 || state.stock >= stockCap()) return;
   const space = stockCap() - state.stock;
@@ -1251,6 +1303,7 @@ function endDay() {
   processPendingEvents();
   flushSceneEvents();
   rollSceneEvents();
+  spawnExpress(); // v48 : contrat express possible chaque jour
   rollRelic();
   checkStoryProgress();
   if (isWeekend()) rollWeekendEvent();
@@ -1750,18 +1803,12 @@ function renderActions() {
 function renderContracts() {
   const container = document.getElementById("contracts");
   const c = state.contract;
-  if (!c) {
-    container.innerHTML = `
-      <div class="card locked">
-        <div class="icon">📞</div>
-        <h3>Aucun contrat en cours</h3>
-        <p>Les clients vous rappelleront dans ${Math.max(0, state.contractCooldown)} jour(s)...</p>
-      </div>`;
-    return;
-  }
-  const pct = (c.progress / c.kg) * 100;
-  const urgent = c.days <= 1;
-  container.innerHTML = `
+  const ex = state.express;
+  let html = "";
+  if (c) {
+    const pct = (c.progress / c.kg) * 100;
+    const urgent = c.days <= 1;
+    html += `
     <div class="card" style="border-color: var(--blue);">
       <div class="icon">${c.emoji}</div>
       <h3>${c.client}</h3>
@@ -1771,8 +1818,32 @@ function renderContracts() {
       <div class="contract-deadline ${urgent ? "urgent" : ""}">⏳ ${c.days} jour(s) restant(s)</div>
       <button class="btn primary" id="btn-deliver" ${state.stock > 0 && c.progress < c.kg ? "" : "disabled"}>Livrer le stock (gratuit)</button>
     </div>`;
+  }
+  if (ex) {
+    // v48 : contrat express — chronométré en temps réel
+    const left = Math.max(0, Math.ceil((ex.until - Date.now()) / 60_000));
+    html += `
+    <div class="card" style="border-color: var(--yellow);">
+      <div class="icon">⚡</div>
+      <h3>Express — ${ex.client}</h3>
+      <p>Livrer <b>${ex.kg} kg</b> en moins de 10 minutes réelles. Paiement immédiat : <b>${fmt(ex.reward)}$</b> (sale) + 2 respect.</p>
+      <div class="contract-deadline urgent">⏱ ${left} min restante(s)</div>
+      <button class="btn primary" id="btn-express" ${state.stock >= ex.kg ? "" : "disabled"}>Livrer ${ex.kg} kg d'un coup</button>
+    </div>`;
+  }
+  if (!html) {
+    html = `
+      <div class="card locked">
+        <div class="icon">📞</div>
+        <h3>Aucun contrat en cours</h3>
+        <p>Les clients vous rappelleront dans ${Math.max(0, state.contractCooldown)} jour(s)...</p>
+      </div>`;
+  }
+  container.innerHTML = html;
   const btn = container.querySelector("#btn-deliver");
   if (btn) btn.addEventListener("click", deliverContract);
+  const ebx = container.querySelector("#btn-express");
+  if (ebx) ebx.addEventListener("click", deliverExpress);
 }
 
 function renderLab() {
@@ -2131,7 +2202,7 @@ function load() {
     if (!data || typeof data.day !== "number") return false;
     state = Object.assign(newGame(), data);
     state.flags = Object.assign({ cookPenalty: 1, priceBonus: 1, precursorDiscount: 1 }, data.flags || {});
-    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0, pubUsed: 0, mgPlayed: 0, mgBest: 0, mgTucoBest: 0, mgSellBest: 0 }, data.stats || {});
+    state.stats = Object.assign({ cooked: 0, sold: 0, laundered: 0, contractsDone: 0, totalEarned: 0, oppsTaken: 0, pubUsed: 0, mgPlayed: 0, mgBest: 0, mgTucoBest: 0, mgSellBest: 0, expressDone: 0 }, data.stats || {});
     state.investments = Object.assign({}, data.investments || {});
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
@@ -2140,6 +2211,7 @@ function load() {
     if (typeof state.introPending !== "boolean") state.introPending = false; // v38 : pas d'intro sur les vieilles sauvegardes
     if (typeof state.evSeen !== "object" || !state.evSeen) state.evSeen = {}; // v38 : album
     if (typeof state.albumTier !== "number") state.albumTier = 0; // v39 : palier de collection atteint
+    if (typeof state.express === "undefined") state.express = null; // v48 : contrats express
     if (typeof state.mgCookDay !== "number") state.mgCookDay = 0; // v28
     if (typeof state.mgTucoDay !== "number") state.mgTucoDay = 0; // v28
     if (typeof state.mgSellDay !== "number") state.mgSellDay = 0; // v29

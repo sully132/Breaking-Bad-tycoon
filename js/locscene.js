@@ -1009,12 +1009,15 @@
       // v33 : pendant une cinématique, les persos s'arrêtent et regardent
       const cineOn = !!evCine;
       const range = cineOn ? w * 0.004 : w * 0.022;
-      const x = w * pos[0] + Math.sin(tw * 0.4 + i * 2.3) * range;
+      let x = w * pos[0] + Math.sin(tw * 0.4 + i * 2.3) * range;
       const sc = 1.5 * (pos[1] || 1);
       const cm = (charMood && charMood.id === list[i] && anim < charMoodUntil) ? charMood.mood
         : (cineOn ? ((typeof EV_MOODS !== "undefined" && evCine.ev && EV_MOODS[evCine.ev.id]) || "worried") : "neutral");
       lookTargetX = cineOn && eventVisitor ? eventVisitor.x : null; // v39
       if (cineOn && eventVisitor) {
+        // v48 : les passants s'écartent prudemment du visiteur
+        const away = Math.sign(x - eventVisitor.x) || 1;
+        x += away * Math.min(w * 0.035, Math.abs(eventVisitor.x - x) * 0.15);
         // v39 : léger penché de curiosité vers le visiteur
         const lean = Math.max(-0.05, Math.min(0.05, (eventVisitor.x - x) * 0.0004));
         ctx.save();
@@ -1026,6 +1029,27 @@
         drawPerson(x, ground, sc, looks[list[i]], cm);
       }
       charScreens.push({ id: list[i], x, y: ground, s: sc });
+    }
+    // v48 : marque de réaction (! / ?) au-dessus du passant le plus proche du visiteur
+    if (cineOn && eventVisitor && charScreens.length) {
+      let nearest = null, nd = Infinity;
+      for (const cs of charScreens) {
+        const d = Math.abs(cs.x - eventVisitor.x);
+        if (d < nd) { nd = d; nearest = cs; }
+      }
+      if (nearest && nd > 40) {
+        const angry = (typeof EV_MOODS !== "undefined" && evCine.ev && EV_MOODS[evCine.ev.id] === "angry");
+        const rm = angry ? "!" : "?";
+        const rk = Math.min(1, (anim - evCine.start) / 280);
+        ctx.save();
+        ctx.globalAlpha = rk;
+        ctx.font = "bold " + Math.round(17 * (0.6 + 0.4 * rk)) + "px sans-serif";
+        ctx.fillStyle = angry ? "#e8c84a" : "#cfe3ff";
+        ctx.textAlign = "center";
+        ctx.fillText(rm, nearest.x, nearest.y - 128 * nearest.s + Math.sin(anim / 300) * 3);
+        ctx.textAlign = "left";
+        ctx.restore();
+      }
     }
   }
 

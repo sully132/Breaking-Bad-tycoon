@@ -890,6 +890,15 @@ const CONTRACT_CLIENTS = [
 // Délai (en jours) avant qu'un nouveau contrat apparaisse
 const CONTRACT_COOLDOWN_DAYS = 2;
 
+// v48 : clients des contrats express (livraisons chronométrées en temps réel)
+const EXPRESS_CLIENTS = [
+  { emoji: "🛹", name: "Skinny Pete" },
+  { emoji: "🚲", name: "Brandon" },
+  { emoji: "🕶️", name: "Emilio" },
+  { emoji: "🎲", name: "Krazy-8" },
+  { emoji: "🧢", name: "Un dealer de passage" },
+];
+
 // ------------------------------------------------------------
 // SUCCÈS — check(s) est appelé avec l'état, reward appliqué à l'unlock
 // ------------------------------------------------------------
@@ -2511,6 +2520,10 @@ ACHIEVEMENTS.push(
 // v45 — succès des chaînes
 ACHIEVEMENTS.push(
   { id: "chainMaster", icon: "🔗", name: "Maître des chaînes", desc: "Mener les 3 chaînes d'événements à leur terme", check: (s) => !!(s.evSeen && s.evSeen.deaSting && s.evSeen.methylamineDeal && s.evSeen.turfMeet), reward: { cash: 50_000, respect: 15 } },
+);
+// v48 — succès des contrats express
+ACHIEVEMENTS.push(
+  { id: "express5", icon: "⚡", name: "Livreur express", desc: "Réussir 5 contrats express", check: (s) => ((s.stats && s.stats.expressDone) || 0) >= 5, reward: { cash: 30_000, respect: 5 } },
 );
 
 // ------------------------------------------------------------
