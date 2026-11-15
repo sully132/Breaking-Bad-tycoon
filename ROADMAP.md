@@ -265,3 +265,11 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Nouvel arc d'histoire « L'Ère Légende » : 3 chapitres + cinématique finale, débloqué au jour 25 ou après un prestige *(livré en v58)*
 - [x] Interface des choix refaite : cartes pleine largeur en dégradé, visiteur affiché en avatar dans la modale d'événement *(livré en v58)*
 - [ ] Prochaines pistes : passe équilibrage selon retours réels du joueur, chaînes d'événements utilisant les nouveaux choix
+
+## Phase 39 — Personnages vivants (v59) ✅ LIVRÉE (v59)
+- [x] Morphologie des personnages : silhouettes slim / lourde / grande par perso (Jesse slim, Tuco/Hank/Mike lourds, Todd grand…) *(livré en v59)*
+- [x] Vie des personnages : respiration d'idle, vitesse de marche individuelle, cigarettes fumantes, téléphone en main *(livré en v59)*
+- [x] Conversations croisées dans les scènes : locuteur alterné, réplique de réponse plus rapide *(livré en v59)*
+- [x] Trafic de fond dans les scènes urbaines : voitures qui traversent, phares la nuit *(livré en v59)*
+- [x] Poignée visuelle sur la bottom-sheet des scènes *(livré en v59)*
+- [ ] Prochaines pistes : passe équilibrage selon retours réels du joueur, habillage du superlab intérieur

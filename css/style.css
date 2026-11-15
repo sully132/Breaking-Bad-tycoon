@@ -1723,3 +1723,13 @@ button {
 .modal-choices .btn { width: 100%; text-align: left; background: linear-gradient(135deg, rgba(122,182,72,0.16), rgba(122,182,72,0.05)); border: 1px solid rgba(122,182,72,0.35); }
 .modal-choices .btn:disabled { opacity: 0.45; }
 #modal-avatar { font-size: 34px; }
+
+/* v59 — Personnages vivants : poignée de bottom-sheet */
+.locsheet-handle {
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.28);
+  margin: 7px auto 2px;
+  flex-shrink: 0;
+}

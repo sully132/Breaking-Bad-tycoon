@@ -1998,21 +1998,21 @@ const SCENES = {
 // Apparences des personnages (dessin vectoriel simple)
 const CHAR_LOOKS = {
   // v31 : skin, mustache, badge, necklace, apron, jacket, lapel — persos plus développés
-  walter:     { shirt: "#4e7a2a", pants: "#8a7a5a", hair: "#2a2a2a", glasses: true, bald: true, mustache: "#4a3a2a", apron: "#8a9a4a", skin: "#e8b58a" },
+  walter:     { shirt: "#4e7a2a", pants: "#8a7a5a", hair: "#2a2a2a", glasses: true, bald: true, mustache: "#4a3a2a", apron: "#8a9a4a", skin: "#e8b58a", gs: 0.85 }, // v59
   heisenberg: { shirt: "#3a5a20", pants: "#6a5a3a", hat: "#1a1a1a", glasses: true, beard: "#4a3a2a", bald: true, jacket: "#2e2e26", skin: "#e8b58a" },
-  jesse:      { shirt: "#e8c93a", pants: "#3a3a44", hair: "#5a4a2a", beanie: "#2a2a2a", jacket: "#6a3a3a", skin: "#e8b58a" },
+  jesse:      { shirt: "#e8c93a", pants: "#3a3a44", hair: "#5a4a2a", beanie: "#2a2a2a", jacket: "#6a3a3a", skin: "#e8b58a", build: "slim", smoke: true, gs: 1.1 }, // v59
   skyler:     { shirt: "#7aa8c8", pants: "#4a5a6a", hair: "#c8a850", hairLong: true, necklace: true, skin: "#eec09a" },
-  gus:        { shirt: "#e8c84a", pants: "#3a3a3a", tie: "#7a2a2a", hair: "#2a2a2a", glasses: true, mustache: "#2a2a2a", skin: "#a87848" },
-  saul:       { shirt: "#e84848", pants: "#e8c84a", tie: "#2a4a8a", hair: "#4a3a2a", loud: true, lapel: true, skin: "#e8b58a" },
-  mike:       { shirt: "#8a8a92", pants: "#4a4a52", flatCap: "#3a3a3a", hair: "#c8c8c8", beard: "#9a9a94", jacket: "#5a5a62", skin: "#dfb08e" },
-  tuco:       { shirt: "#4a4a52", pants: "#2a2a2a", hat: "#2a2a2a", hair: "#2a2a2a", gold: true, mustache: "#2a2a2a", skin: "#b8845a" },
-  hank:       { shirt: "#e8883a", pants: "#5a6a4a", cap: "#3a5a2a", hair: "#3a2a1a", mustache: "#3a2a1a", badge: true, skin: "#e8b58a" },
+  gus:        { shirt: "#e8c84a", pants: "#3a3a3a", tie: "#7a2a2a", hair: "#2a2a2a", glasses: true, mustache: "#2a2a2a", skin: "#a87848", gs: 0.85 }, // v59
+  saul:       { shirt: "#e84848", pants: "#e8c84a", tie: "#2a4a8a", hair: "#4a3a2a", loud: true, lapel: true, skin: "#e8b58a", phone: true }, // v59
+  mike:       { shirt: "#8a8a92", pants: "#4a4a52", flatCap: "#3a3a3a", hair: "#c8c8c8", beard: "#9a9a94", jacket: "#5a5a62", skin: "#dfb08e", build: "heavy", gs: 0.8 }, // v59
+  tuco:       { shirt: "#4a4a52", pants: "#2a2a2a", hat: "#2a2a2a", hair: "#2a2a2a", gold: true, mustache: "#2a2a2a", skin: "#b8845a", build: "heavy" }, // v59
+  hank:       { shirt: "#e8883a", pants: "#5a6a4a", cap: "#3a5a2a", hair: "#3a2a1a", mustache: "#3a2a1a", badge: true, skin: "#e8b58a", build: "heavy" }, // v59
   marie:      { shirt: "#8a4a9a", pants: "#5a3a6a", hair: "#5a3a2a", hairLong: true, necklace: true, skin: "#eec09a" },
-  jane:       { shirt: "#2a2a2a", pants: "#3a3a44", hair: "#1a1a1a", hairLong: true, necklace: true, jacket: "#3a2a3a", skin: "#eec09a" },
-  badger:     { shirt: "#7a8a4a", pants: "#4a4a52", hair: "#3a2a1a", beard: "#3a2a1a", cap: "#4a4a3a", skin: "#e8b58a" },
-  combo:      { shirt: "#c85a3a", pants: "#3a3a44", hair: "#2a2a2a", cap: "#2a2a2a", gold: true, skin: "#a87848" },
-  todd:       { shirt: "#d8d8d0", pants: "#6a5a4a", hair: "#c8a850", apron: "#5a6a7a", skin: "#eec09a" },
-  lydia:      { shirt: "#4a7a9a", pants: "#3a4a5a", hair: "#e8c84a", hairLong: true, necklace: true, skin: "#f0ccaa" },
+  jane:       { shirt: "#2a2a2a", pants: "#3a3a44", hair: "#1a1a1a", hairLong: true, necklace: true, jacket: "#3a2a3a", skin: "#eec09a", build: "slim", smoke: true }, // v59
+  badger:     { shirt: "#7a8a4a", pants: "#4a4a52", hair: "#3a2a1a", beard: "#3a2a1a", cap: "#4a4a3a", skin: "#e8b58a", gs: 1.15 }, // v59
+  combo:      { shirt: "#c85a3a", pants: "#3a3a44", hair: "#2a2a2a", cap: "#2a2a2a", gold: true, skin: "#a87848", gs: 1.15 }, // v59
+  todd:       { shirt: "#d8d8d0", pants: "#6a5a4a", hair: "#c8a850", apron: "#5a6a7a", skin: "#eec09a", build: "tall" }, // v59
+  lydia:      { shirt: "#4a7a9a", pants: "#3a4a5a", hair: "#e8c84a", hairLong: true, necklace: true, skin: "#f0ccaa", build: "slim", phone: true }, // v59
   eladio:     { shirt: "#e8e8e0", pants: "#2a2a2a", hair: "#2a2a2a", gold: true, mustache: "#2a2a2a", skin: "#b8845a" },
   hazmat:     { shirt: "#f0f0e8", pants: "#f0f0e8", hazmat: true },
   hazmat2:    { shirt: "#f0f0e8", pants: "#f0f0e8", hazmat: true, beard: "#5a4a2a" },

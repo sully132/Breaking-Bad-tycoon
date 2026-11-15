@@ -17,6 +17,7 @@
   let shoot = null;
   let bubble = null;
   let nextBubbleAt = 3000;
+  let lastSpeaker = null; // v59 : conversation croisee
   let charScreens = [];
   let eventVisitor = null;
   let DPR_CAP = 2;
@@ -389,6 +390,9 @@
     ctx.save();
     ctx.translate(x, y + bob);
     ctx.scale(s, s);
+    // v59 : morphologie (slim / heavy / tall) + respiration d'idle
+    const B = look.build === "slim" ? 0.85 : look.build === "heavy" ? 1.2 : 1;
+    const br = 1 + 0.02 * Math.sin(t * 2.2 + x * 0.07);
 
     if (!noShadow) {
       // v40 : ombre portée selon l'heure réelle (soleil bas = ombre longue et décalée)
@@ -442,10 +446,10 @@
     // v32 : jambes articulées — cuisse + tibia, genou qui plie
     for (let side = -1; side <= 1; side += 2) {
       const ph = side < 0 ? 0 : Math.PI;
-      const a1 = Math.sin(t * 5 + x * 0.13 + ph) * 0.30;
-      const a2 = Math.max(0, Math.sin(t * 5 + x * 0.13 + ph + 1.2)) * 0.5;
+      const a1 = Math.sin(t * 5 * (look.gs || 1) + x * 0.13 + ph) * 0.30;
+      const a2 = Math.max(0, Math.sin(t * 5 * (look.gs || 1) + x * 0.13 + ph + 1.2)) * 0.5;
       ctx.save();
-      ctx.translate(side * 4.2, -16);
+      ctx.translate(side * 4.2 * B, -16);
       ctx.rotate(a1);
       ctx.fillStyle = look.pants || "#3a3a44";
       ctx.fillRect(-2.75, 0, 5.5, 9);
@@ -458,11 +462,11 @@
     }
 
     ctx.fillStyle = look.shirt || "#4a6a8a";
-    rr(-9, -36, 18, 21, 4);
+    rr(-9 * B, -36, 18 * B, 21 * br, 4);
     ctx.fill();
     ctx.strokeStyle = "rgba(15, 12, 8, 0.55)";
     ctx.lineWidth = 1.2;
-    rr(-9, -36, 18, 21, 4);
+    rr(-9 * B, -36, 18 * B, 21 * br, 4);
     ctx.stroke();
     ctx.strokeStyle = "rgba(15, 12, 8, 0.25)";
     ctx.lineWidth = 1;
@@ -471,10 +475,10 @@
     ctx.lineTo(0, -17);
     ctx.stroke();
     ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
-    rr(-7, -35, 4, 18, 2);
+    rr(-7 * B, -35, 4 * B, 18 * br, 2);
     ctx.fill();
     ctx.fillStyle = shade(look.shirt || "#4a6a8a", -25);
-    ctx.fillRect(-9, -19, 18, 4);
+    ctx.fillRect(-9 * B, -19, 18 * B, 4);
     // v31 : accessoires de torse
     if (look.apron) {
       ctx.fillStyle = look.apron;
@@ -551,9 +555,9 @@
       ctx.fillRect(-11, -27.5, 4, 3.2);
       ctx.fillRect(7, -27.5, 4, 3.2);
     } else {
-      const armSw = Math.sin(t * 5 + x * 0.13 + Math.PI) * 0.13;
+      const armSw = Math.sin(t * 5 * (look.gs || 1) + x * 0.13 + Math.PI) * 0.13;
       ctx.save();
-      ctx.translate(-11, -33);
+      ctx.translate(-11 * B, -33);
       ctx.rotate(armSw);
       ctx.fillStyle = look.shirt || "#4a6a8a";
       ctx.fillRect(-2, 0, 4, 13);
@@ -561,7 +565,7 @@
       ctx.fillRect(-2, 13, 4, 3.2);
       ctx.restore();
       ctx.save();
-      ctx.translate(11, -33);
+      ctx.translate(11 * B, -33);
       ctx.rotate(-armSw);
       ctx.fillStyle = look.shirt || "#4a6a8a";
       ctx.fillRect(-2, 0, 4, 13);
@@ -720,6 +724,33 @@
       ctx.fillStyle = "#e84848";
       ctx.fillRect(-9, -36, 18, 2.5);
     }
+    // v59 : cigarette + fumee qui monte
+    if (look.smoke) {
+      ctx.strokeStyle = "#f0ead8";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(4, -40);
+      ctx.lineTo(8, -40.6);
+      ctx.stroke();
+      ctx.fillStyle = "#e86838";
+      ctx.fillRect(7.4, -41.4, 1.4, 1.4);
+      for (let si = 0; si < 3; si++) {
+        const sph = (t * 0.5 + si / 3) % 1;
+        ctx.fillStyle = "rgba(200, 200, 205, " + (0.3 * (1 - sph)).toFixed(3) + ")";
+        ctx.beginPath();
+        ctx.arc(8 + Math.sin(t * 1.7 + si * 2.1) * 2.5 * sph, -42 - sph * 16, 1.4 + sph * 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // v59 : telephone en main (ecran allume)
+    if (look.phone) {
+      ctx.fillStyle = "#1a1e24";
+      rr(11 * B - 2.5, -24, 5.5, 8.5, 1.5);
+      ctx.fill();
+      ctx.fillStyle = "rgba(140, 200, 255, 0.85)";
+      rr(11 * B - 1.6, -23, 3.7, 5.8, 1);
+      ctx.fill();
+    }
     ctx.restore();
   }
 
@@ -738,6 +769,53 @@
       ctx.beginPath();
       ctx.ellipse(p.x * w - p.rx * 0.2, p.y * h - 1, p.rx * 0.4, p.ry * 0.4, 0, 0, Math.PI * 2);
       ctx.fill();
+    }
+  }
+
+  // v59 : trafic de fond — voitures qui traversent les scenes urbaines
+  const TRAFFIC_KINDS = new Set(["street", "suburb", "plaza", "station", "carwash", "office"]);
+  let cars = [];
+  function drawTraffic(w, h, t, night) {
+    if (!TRAFFIC_KINDS.has(sceneDef().kind)) return;
+    if (!cars.length) {
+      for (let i = 0; i < 2; i++) {
+        cars.push({ lane: i, x: i ? 0.8 : 0.2, dir: i ? -1 : 1, sp: 0.014 + Math.random() * 0.012,
+          col: ["#8a3a3a", "#3a5a8a", "#6a6a72", "#3a6a4a"][i % 4] });
+      }
+    }
+    const gy = h * 0.66;
+    for (const c of cars) {
+      c.x += c.dir * c.sp / 60;
+      if (c.x > 1.25 || c.x < -0.25) {
+        c.x = c.dir > 0 ? -0.25 : 1.25;
+        c.col = ["#8a3a3a", "#3a5a8a", "#6a6a72", "#3a6a4a"][Math.floor(Math.random() * 4)];
+      }
+      const cx = c.x * w, cy = gy + c.lane * 10;
+      ctx.fillStyle = night ? shade(c.col, -40) : c.col;
+      rr(cx - 26, cy - 9, 52, 12, 4);
+      ctx.fill();
+      ctx.fillStyle = shade(c.col, -18);
+      rr(cx - 12, cy - 15, 22, 8, 3);
+      ctx.fill();
+      ctx.fillStyle = night ? "rgba(255, 230, 150, 0.9)" : "rgba(180, 220, 255, 0.75)";
+      rr(cx - 9, cy - 14, 7, 5, 1.5);
+      ctx.fill();
+      rr(cx + 1, cy - 14, 7, 5, 1.5);
+      ctx.fill();
+      ctx.fillStyle = "#1a1a1c";
+      ctx.beginPath();
+      ctx.arc(cx - 15, cy + 3, 3.4, 0, Math.PI * 2);
+      ctx.arc(cx + 15, cy + 3, 3.4, 0, Math.PI * 2);
+      ctx.fill();
+      if (night) {
+        ctx.fillStyle = "rgba(255, 240, 180, 0.16)";
+        ctx.beginPath();
+        ctx.moveTo(cx + c.dir * 24, cy - 4);
+        ctx.lineTo(cx + c.dir * 70, cy - 10);
+        ctx.lineTo(cx + c.dir * 70, cy + 6);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
   }
 
@@ -1567,14 +1645,18 @@
     if (typeof QUOTES === "undefined") return;
     if (bubble && anim > bubble.until) {
       bubble = null;
-      nextBubbleAt = anim + 4500 + Math.random() * 4500;
+      // v59 : apres une replique, l'autre personnage repond plus vite (conversation croisee)
+      nextBubbleAt = anim + (lastSpeaker ? 1600 + Math.random() * 2200 : 4500 + Math.random() * 4500);
       return;
     }
     if (!bubble && !evCine && anim > nextBubbleAt && chars && chars.length) {
-      const id = chars[Math.floor(Math.random() * chars.length)];
+      // v59 : on ne repete pas le meme locuteur quand il y a du monde
+      const pool = (chars.length >= 2 && lastSpeaker) ? chars.filter((c) => c !== lastSpeaker) : chars;
+      const id = pool[Math.floor(Math.random() * pool.length)] || chars[0];
       const lines = QUOTES[id];
       if (lines && lines.length) {
         bubble = { id, text: lines[Math.floor(Math.random() * lines.length)], until: anim + 3000 };
+        lastSpeaker = id;
       } else {
         nextBubbleAt = anim + 5000;
       }
@@ -3025,6 +3107,7 @@
     drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
     if (!night && OUTDOOR_KINDS.has(def.kind)) drawCloudShadows(w, h, t); // v42 : ombres de nuages
     drawPuddles(w, h, t); // v41 : flaques
+    drawTraffic(w, h, t, night); // v59 : trafic de fond
     drawProps(w, h, t, night); // v39 : détails de décor
     drawFauna(w, h, t, night); // v40 : faune de fond
     drawLighting(w, h, t, night);
