@@ -168,3 +168,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] 3 événements de saison liés au calendrier réel : tempête de neige en hiver (chaleur −10), canicule en été (pureté +4), récolte d'automne (+25 000$) *(livré en v43)*
 - [x] 2 succès d'événements : Témoin de tout (10 événements vus) et Toujours au courant (40 événements vus) *(livré en v43)*
 - [ ] Prochaines pistes : contrats express à durée limitée, événements en chaîne multi-lieux, difficulté adaptive selon la progression
+
+## Phase 24 — Événements en chaîne multi-lieux (v44) ✅ LIVRÉE (v44)
+- [x] Système de chaînes : un événement résolu déclenche l'étape suivante sur un AUTRE lieu (lien 🔗 « L'affaire continue ! ») *(livré en v44)*
+- [x] Chaîne « Cargaison bloquée » : grève des aiguilleurs → vol du camion à la casse → piège de la DEA (Saul ou poker face) *(livré en v44)*
+- [x] Chaîne « Précurseur » : canicule → offre de méthylamine au superlab (stock +6 kg, pureté +2) *(livré en v44)*
+- [x] Chaîne « Guerre de territoire » : concert de la plaza → dealers intrus sur le coin → rendez-vous dans le désert (intimidation ou tribut) *(livré en v44)*
+- [ ] Prochaines pistes : contrats express à durée limitée, chaîne de prestige post-reset, difficulté adaptive selon la progression

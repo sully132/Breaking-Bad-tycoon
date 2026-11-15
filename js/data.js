@@ -2011,6 +2011,8 @@ const CHAR_LOOKS = {
 
 // v21 : noms affichés dans les bulles de dialogue
 const CHAR_NAMES = {
+  cargoHijack: "Chauffeur", deaSting: "Hank", methylamineDeal: "Lydia",
+  turfThreat: "Dealer", turfMeet: "Tuco",
   labInspector: "Inspecteur", copperScore: "Combo", nailsTip: "Cliente",
   plazaConcert: "Roadie", villaParty: "Don Eladio", railStrike: "Aiguilleur",
   snowstorm: "Voisin", heatwave: "Passant", harvest: "Contremaître",
@@ -2660,6 +2662,7 @@ EVENTS.push(
   },
   {
     id: "plazaConcert", loc: "plaza", emoji: "🎸", weight: 5, type: "choice",
+    chainNext: "turfThreat",
     title: "Concert sur la place",
     text: "Un groupe joue sur la plaza, la foule est dense. Un revendeur vous souffle : « Occasion en or, tout le monde est dehors ce soir. »",
     choices: [
@@ -2706,6 +2709,7 @@ EVENTS.push(
   },
   {
     id: "railStrike", loc: "rail", emoji: "🚂", weight: 5, type: "auto",
+    chainNext: "cargoHijack",
     title: "Grève des aiguilleurs",
     text: "Les trains de fret sont bloqués sur toute la ligne : la marchandise se raréfie et les prix flambent.",
     apply(s) {
@@ -2727,6 +2731,7 @@ EVENTS.push(
   },
   {
     id: "heatwave", loc: "villa", emoji: "🔥", weight: 6, type: "auto",
+    chainNext: "methylamineDeal",
     cond: (s) => { const m = new Date().getMonth(); return m >= 5 && m <= 7; },
     title: "Canicule sur le désert",
     text: "40°C à l'ombre. Le RV surchauffe, mais un laboratoire bien réglé tourne à la perfection.",
@@ -2746,6 +2751,135 @@ EVENTS.push(
       s.respect = cap(s.respect + 2, 0, 100);
       log("🌾 Contrats de récolte signés. +25 000$ propre, respect +2.", "good");
     },
+  },
+);
+
+// ------------------------------------------------------------
+// v44 — ÉVÉNEMENTS EN CHAÎNE MULTI-LIEUX (weight 0 = uniquement via chainNext)
+// ------------------------------------------------------------
+EVENTS.push(
+  {
+    id: "cargoHijack", loc: "junkyard", emoji: "🚚", weight: 0, type: "choice",
+    title: "Cargaison bloquée",
+    text: "Un semi-remorque immobilisé par la grève croupit à la casse. Old Joe : « Personne n'est venu le chercher. Personne ne le cherchera. »",
+    choices: [
+      {
+        label: "Vider le camion (+40 000$ sale, Chaleur +6)",
+        apply(s) {
+          s.dirty += 40_000;
+          addHeat(6);
+          log("🚚 Cargaison écoulée dans la nuit. +40 000$ sale, chaleur +6.", "good");
+        },
+      },
+      {
+        label: "Prévenir le chauffeur (Respect +2)",
+        apply(s) {
+          s.respect = cap(s.respect + 2, 0, 100);
+          log("🚚 Le chauffeur récupère son camion et se tait. Respect +2.", "good");
+        },
+      },
+    ],
+    chainNext: "deaSting",
+  },
+  {
+    id: "deaSting", loc: "dea", emoji: "🚔", weight: 0, type: "choice",
+    cond: (s) => s.day >= 8,
+    title: "Piège de la DEA",
+    text: "Hank a retracé le camion volé. Le parking de la DEA est vide… beaucoup trop vide. C'est une souricière.",
+    choices: [
+      {
+        label: "Payer Saul (−20 000$, Chaleur −8)",
+        can: (s) => s.cash >= 20_000,
+        apply(s) {
+          s.cash -= 20_000;
+          s.heat = cap(s.heat - 8, 0, 100);
+          log("🚔 Saul a « un problème de procédure » au bureau. Chaleur −8.", "good");
+        },
+      },
+      {
+        label: "Nier en bloc",
+        apply(s) {
+          if (Math.random() < 0.5) {
+            s.respect = cap(s.respect + 3, 0, 100);
+            log("🚔 Aucune preuve, aucune accusation. Respect +3.", "good");
+          } else {
+            addHeat(10);
+            log("🚔 Ils ont des photos de la casse. Chaleur +10.", "bad");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "methylamineDeal", loc: "superlab", emoji: "🧪", weight: 0, type: "choice",
+    title: "Offre de méthylamine",
+    text: "La canicule a forcé un concurrent à brader ses réserves. Un bidon de méthylamine qualité pharmaceutique est à saisir.",
+    choices: [
+      {
+        label: "Acheter le bidon (−25 000$, Stock +6 kg, Pureté +2)",
+        can: (s) => s.cash >= 25_000,
+        apply(s) {
+          s.cash -= 25_000;
+          s.stock = Math.min(stockCap(), s.stock + 6);
+          s.purity = cap(s.purity + 2, 0, 100);
+          log("🧪 Précurseur de haut niveau en réserve. Stock +6 kg, pureté +2.", "good");
+        },
+      },
+      {
+        label: "Refuser poliment",
+        apply(s) {
+          log("🧪 Vous déclinez. Le bidon disparaît dans la nature.", "info");
+        },
+      },
+    ],
+  },
+  {
+    id: "turfThreat", loc: "corner", emoji: "⚠️", weight: 0, type: "choice",
+    title: "Sale temps sur le coin",
+    text: "Des dealers inconnus vendent sur VOTRE coin de rue. Ils vous regardent en souriant.",
+    choices: [
+      {
+        label: "Les chasser (Respect +4, Chaleur +5)",
+        apply(s) {
+          s.respect = cap(s.respect + 4, 0, 100);
+          addHeat(5);
+          log("⚠️ Le coin reverdit à votre couleur. Respect +4, chaleur +5.", "good");
+        },
+      },
+      {
+        label: "Encaisser la paix (+10 000$ sale, Respect −2)",
+        apply(s) {
+          s.dirty += 10_000;
+          s.respect = cap(s.respect - 2, 0, 100);
+          log("⚠️ Ils paient pour rester. +10 000$ sale, respect −2.", "info");
+        },
+      },
+    ],
+    chainNext: "turfMeet",
+  },
+  {
+    id: "turfMeet", loc: "tuco", emoji: "🏜️", weight: 0, type: "choice",
+    title: "Rendez-vous dans le désert",
+    text: "Le chef des intrus vous convoque au milieu du désert. Deux voitures, moteurs tournants, hommes armés.",
+    choices: [
+      {
+        label: "Intimider (Respect +6, Chaleur +8)",
+        apply(s) {
+          s.respect = cap(s.respect + 6, 0, 100);
+          addHeat(8);
+          log("🏜️ Ils sont repartis en marche arrière. Respect +6, chaleur +8.", "good");
+        },
+      },
+      {
+        label: "Payer un tribut (−15 000$, Chaleur +1)",
+        can: (s) => s.cash >= 15_000,
+        apply(s) {
+          s.cash -= 15_000;
+          s.heat = cap(s.heat + 1, 0, 100);
+          log("🏜️ Tribut versé, guerre évitée. −15 000$.", "info");
+        },
+      },
+    ],
   },
 );
 
@@ -2796,10 +2930,21 @@ const EVENT_VISITORS = {
   snowstorm: { shirt: "#6a6a7a", pants: "#3a3a44", beanie: true },
   heatwave: { shirt: "#d9c33c", pants: "#8a7a3a", bald: true },
   harvest: CHAR_LOOKS.gus,
+  // v44 — visiteurs des chaînes
+  cargoHijack: { shirt: "#5a6a4a", pants: "#3a3a30", cap: "#2a3a2a", beard: "#3a3a2a" },
+  deaSting: CHAR_LOOKS.hank,
+  methylamineDeal: CHAR_LOOKS.lydia,
+  turfThreat: { shirt: "#7a2a3a", pants: "#26262e", gold: true, loud: true },
+  turfMeet: CHAR_LOOKS.tuco,
 };
 
 // v21 : répliques d'événements (bulles des visiteurs dans les scènes)
 const EVENT_QUOTES = {
+  cargoHijack: ["Ce camion appartient au domaine du silence.", "On vide ça avant le lever du jour."],
+  deaSting: ["Sortez les mains. Lentement.", "Ce camion vous a mené droit à moi."],
+  methylamineDeal: ["Un bidon. Qualité pharma. Pas une goutte de plus.", "Ce bidon n'a jamais existé. Compris ?"],
+  turfThreat: ["Ce coin est à nous maintenant.", "Le grand chef veut te rencontrer. Seul."],
+  turfMeet: ["Alors c'est toi, le fameux cuisinier ?", "Tu paies, ou tu disparais. Choisis."],
   labInspector: ["Cet équipement n'a pas d'homologation, monsieur.", "Un rapport propre, ça se rédige… ou ça se paie."],
   copperScore: ["Le cuivre, ça pèse lourd en trésorerie.", "Ou alors tu t'en sers. Je te fais un prix d'ami."],
   nailsTip: ["On dit que la police a perdu votre trace.", "Moi, je n'ai rien vu, hein. Rien entendu non plus."],
@@ -2952,6 +3097,8 @@ ACHIEVEMENTS.push(
 // ============================================================
 
 const EV_MOODS = {
+  cargoHijack: "worried", deaSting: "angry", methylamineDeal: "worried",
+  turfThreat: "angry", turfMeet: "angry",
   labInspector: "worried", copperScore: "happy", nailsTip: "neutral",
   plazaConcert: "happy", villaParty: "happy", railStrike: "angry",
   snowstorm: "worried", heatwave: "happy", harvest: "happy",
@@ -2970,6 +3117,9 @@ const EV_MOODS = {
 // ============================================================
 
 const EVENT_REPLIES = {
+  deaSting: { who: "Saul", text: "Pas un mot. Pas un geste. Je m'occupe de tout." },
+  turfThreat: { who: "Jesse", text: "Yo, c'est NOTRE coin, ils peuvent pas faire ça !" },
+  turfMeet: { who: "Tuco", text: "Touchez à son coin et je vous fais goûter au bitume !" },
   villaParty: { who: "Mike", text: "Souriez. Parlez peu. Partez tôt." },
   labInspector: { who: "Saul", text: "Laissez-moi lui parler. J'ai un cousin notaire." },
   snowstorm: { who: "Jesse", text: "Yo, y a même plus d'école. On fait quoi ?" },
@@ -2990,6 +3140,8 @@ const EVENT_REPLIES = {
 // ============================================================
 
 const EV_SOUNDS = {
+  deaSting: "alarm", turfMeet: "shot", methylamineDeal: "crystal",
+  cargoHijack: "cash", turfThreat: "horn",
   railStrike: "alarm", villaParty: "golden", plazaConcert: "horn",
   harvest: "cash", copperScore: "cash",
   turfwar: "shot", nightbreakin: "shot", cousin: "shot", scoutsPayback: "shot",

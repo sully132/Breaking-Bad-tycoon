@@ -1276,6 +1276,7 @@
       if (typeof spawnPopup === "function") spawnPopup(ev.emoji + " " + ev.title, "info");
       if (typeof render === "function") render();
     }
+    if (typeof queueChainEvent === "function") { try { queueChainEvent(ev.chainNext); } catch (e) {} } // v44 : chaîne
     if (typeof save === "function") save();
   }
 

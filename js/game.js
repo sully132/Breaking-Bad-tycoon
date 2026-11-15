@@ -996,6 +996,7 @@ function fireScheduled(ev) {
     ev.apply(state);
     spawnPopup(ev.emoji + " " + ev.title, "info");
   }
+  if (typeof queueChainEvent === "function") { try { queueChainEvent(ev.chainNext); } catch (e) {} } // v44
 }
 
 // ---------- v17 : événements joués dans les scènes ----------
@@ -1051,6 +1052,22 @@ function flushSceneEvents() {
     ev.apply(state);
     spawnPopup(ev.emoji + " " + ev.title, "info");
   }
+  if (typeof queueChainEvent === "function") { try { queueChainEvent(ev.chainNext); } catch (e) {} } // v44
+}
+
+// v44 : chaînes d'événements multi-lieux — l'étape suivante se déclenche sur un autre lieu
+function queueChainEvent(id) {
+  if (!id) return;
+  const ev = EVENTS.find((e) => e.id === id);
+  if (!ev || !hasSceneStage(ev)) return;
+  if (ev.cond && !ev.cond(state)) return;
+  if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
+  if (state.sceneEvents.includes(ev.id)) return;
+  state.sceneEvents.push(ev.id);
+  if (state.stats) state.stats.sceneEventsSeen = (state.stats.sceneEventsSeen || 0) + 1;
+  const locDef = MAP_LOCATIONS.find((l) => l.id === ev.loc);
+  log(`🔗 ${ev.emoji} ${ev.title} — ${locDef ? locDef.name : "en ville"}. L'affaire continue !`, "event");
+  if (typeof spawnPopup === "function") spawnPopup(`🔗 ${ev.emoji} ${locDef ? locDef.name : "Suite"} : l'affaire continue !`, "info");
 }
 
 function processPendingEvents() {
