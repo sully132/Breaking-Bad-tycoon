@@ -123,3 +123,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Fondu rapide entre chaque ligne de cinématique (cut au montage) *(livré en v35)*
 - [x] Bruitages signature par événement : coups de feu (guerre de territoire, cambriolage), klaxon (course de rue), alarme (rats, filaire, blackout), cristal (précurseurs), caisse (ventes) *(livré en v35)*
 - [ ] Prochaines pistes : générique de fin animé à la victoire, photos « polaroid » des événements dans le journal, mode cinéma pour les raids DEA
+
+## Phase 16 — Grand écran (v36) ✅ LIVRÉE (v36)
+- [x] Raids DEA en mode cinéma : cinématique rouge (gyrophares + Hank « ENCLEVEZ TOUT ! ») avant la résolution *(livré en v36)*
+- [x] Moteur de cinématique DOM générique (runCineBeats) partagé par les arcs story et les raids *(livré en v36)*
+- [x] Générique de fin animé à la victoire : crédits qui défilent avec le casting de l'empire *(livré en v36)*
+- [ ] Prochaines pistes : cinématique de prestige (nouvelle identité), photos polaroïd des événements dans le journal, statistiques de fin enrichies

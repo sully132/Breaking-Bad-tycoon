@@ -150,4 +150,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v32 : vivant & émotions — expressions faciales (sourcils + bouche selon l'humeur), jambes articulées avec genou, humeurs contextuelles, cinématiques story en mode cinéma (letterbox, locuteur en or, typewriter).
 - v33 : cinématiques vivantes — bips de dialogue pendant les sous-titres, visiteur en pose bras croisés, persos qui s'arrêtent et regardent l'événement, bulles auto coupées, furieux qui crient.
 - v34 : plan de réalisateur — caméra de cinématique (zoom + pan vers le visiteur), répliques à deux voix, nappe musicale de tension.
-- **v35 (courante) : montage final — portrait du locuteur en médaillon doré à côté des sous-titres (visages réellement dessinés, animés), fondu rapide entre chaque ligne (cut au montage), bruitages signature par événement (coups de feu, klaxon, alarme, cristal, caisse).**
+- v35 : montage final — portrait du locuteur en médaillon doré, fondu entre les lignes, bruitages signature par événement.
+- **v36 (courante) : grand écran — raids DEA en mode cinéma (cinématique rouge « ENCLEVEZ TOUT ! » avant la résolution), moteur de cinématique DOM générique (story + raids), générique de fin animé qui défile à la victoire (crédits style série avec le casting de l'empire).**

@@ -1591,3 +1591,39 @@ button {
 }
 #story-cine .story-line.done::after { content: ""; animation: none; }
 @keyframes story-caret { 50% { opacity: 0; } }
+
+/* ============================================================
+   v36 — GRAND ÉCRAN : raids au cinéma + générique de fin
+   ============================================================ */
+.story-overlay.raid {
+  background: radial-gradient(ellipse at center, #2a0d0d 0%, #0a0303 78%);
+}
+.story-overlay.raid .story-who { color: #ff6b57; }
+.story-overlay.raid #story-cine .story-line::after { color: rgba(255, 107, 87, 0.75); }
+.story-overlay.raid .story-icon { filter: drop-shadow(0 4px 18px rgba(255, 80, 60, 0.5)); }
+.end-credits {
+  margin-top: 14px;
+  height: 108px;
+  overflow: hidden;
+  position: relative;
+  border-top: 1px solid rgba(217, 195, 60, 0.3);
+  mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+}
+.end-credits-inner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+  font-size: 13px;
+  color: #d9c33c;
+  font-weight: 700;
+  animation: credits-roll 16s linear infinite;
+}
+@keyframes credits-roll {
+  from { transform: translateY(110px); }
+  to { transform: translateY(-100%); }
+}

@@ -453,24 +453,35 @@ function checkStoryProgress() {
     if (arc) setTimeout(() => { try { playCinematic(arc); } catch (e) {} }, 600);
   }
 }
-function playCinematic(arc) {
+// v36 : moteur générique de cinématique DOM (story + raids DEA)
+function runCineBeats(beats, onDone, cls) {
   const overlay = document.getElementById("story-overlay");
   const cine = document.getElementById("story-cine");
-  if (!overlay || !cine) return;
-  const beats = (arc.finale && arc.finale.length ? arc.finale : [{ icon: arc.icon, line: arc.name }])
-    .concat([{ icon: "📖", line: "Arc terminé : " + arc.name + " ✔" }]);
+  // hors navigateur (tests) : on enchaîne directement
+  if (!overlay || !cine || typeof Element === "undefined" || !(overlay instanceof Element)) {
+    if (onDone) onDone();
+    return;
+  }
+  if (cls) overlay.classList.add(cls);
   let i = 0;
   let timer = null;
   let busy = false;
-  let typeTimer = null, curLine = null, curText = "", curPos = 0; // v32 : typewriter
+  let typeTimer = null, curLine = null, curText = "", curPos = 0;
+  function cleanup() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+    document.removeEventListener("click", onTap);
+    overlay.classList.add("hidden");
+    if (cls) overlay.classList.remove(cls);
+    cine.classList.remove("visible");
+  }
   function showBeat() {
-    if (i >= beats.length) { end(); return; }
+    if (i >= beats.length) { cleanup(); if (onDone) onDone(); return; }
     if (busy) return;
     busy = true;
     const b = beats[i];
     cine.classList.remove("visible");
     setTimeout(() => {
-      // v32 : locuteur en or + texte au typewriter
       const whoHtml = b.who ? '<div class="story-who">' + b.who + '</div>' : "";
       cine.innerHTML = '<div class="story-icon">' + b.icon + '</div>' + whoHtml + '<div class="story-line"></div>';
       cine.classList.add("visible");
@@ -481,7 +492,7 @@ function playCinematic(arc) {
       if (typeTimer) clearInterval(typeTimer);
       typeTimer = setInterval(() => {
         curPos += 1;
-        if (curPos % 3 === 0 && typeof playSfx === "function") playSfx("bip"); // v33
+        if (curPos % 3 === 0 && typeof playSfx === "function") playSfx("bip");
         if (curLine) curLine.textContent = curText.slice(0, curPos);
         if (curPos >= curText.length) {
           clearInterval(typeTimer);
@@ -494,19 +505,7 @@ function playCinematic(arc) {
       timer = setTimeout(showBeat, 2000 + curText.length * 32);
     }, 350);
   }
-  function end() {
-    if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
-    if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} } // v34
-    overlay.classList.add("hidden");
-    cine.classList.remove("visible");
-    if (typeof document !== "undefined") document.removeEventListener("click", onTap);
-    if (timer) clearTimeout(timer);
-    checkAchievements();
-    render();
-    save();
-  }
   function onTap() {
-    // v32 : 1er tap = compléter la ligne, 2e tap = avancer
     if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
     if (curLine && curPos < curText.length) {
       curLine.textContent = curText;
@@ -520,9 +519,29 @@ function playCinematic(arc) {
     showBeat();
   }
   overlay.classList.remove("hidden");
-  if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} } // v34
   document.addEventListener("click", onTap);
   showBeat();
+}
+
+function playCinematic(arc) {
+  const beats = (arc.finale && arc.finale.length ? arc.finale : [{ icon: arc.icon, line: arc.name }])
+    .concat([{ icon: "📖", line: "Arc terminé : " + arc.name + " ✔" }]);
+  if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
+  runCineBeats(beats, () => {
+    if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
+    checkAchievements();
+    render();
+    save();
+  });
+}
+
+// v36 : descente de la DEA en mode cinéma (rouge + sirènes)
+function playRaidCinematic(onDone) {
+  const beats = [
+    { icon: "🚨", who: "La DEA", line: "Les gyrophares déchirent la nuit. Tout le quartier s'illumine." },
+    { icon: "🚨", who: "Hank", line: "« C'est lui. ENCLEVEZ TOUT ! »" },
+  ];
+  runCineBeats(beats, onDone, "raid");
 }
 function showStory() {
   const items = STORY_ARCS.map((arc) => {
@@ -1268,21 +1287,25 @@ function maybeEvent() {
 }
 
 function checkRaid() {
-  if (state.heat >= 100) {
+  if (state.heat < 100 || state.gameOver || state.victory) return;
+  // v36 : la descente commence au cinéma — gyrophares, sirènes, Hank
+  playSfx("alarm");
+  if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
+  playRaidCinematic(() => {
+    if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
     if (hasStaffEffect("arrestProtect")) {
       const msg = RAID.withSaul(state);
       if (msg) showModal(msg.title, msg.text, [{ label: "Ouf...", apply() {} }]);
+      render();
+      save();
     } else {
       state.gameOver = true;
       state.gameOverReason = "arrest";
+      setTimeout(() => playSfx("lose"), 400);
+      render();
+      showOverlay(false);
     }
-  }
-  if (state.gameOver) {
-    playSfx("alarm");
-    setTimeout(() => playSfx("lose"), 1200);
-    render();
-    showOverlay(false);
-  }
+  });
 }
 
 // ---------- Recrutement & améliorations (gratuits en PA) ----------
@@ -1927,7 +1950,14 @@ function showOverlay(win) {
   const statsHtml = '<div class="end-stats">' +
     endRows.map((r) => '<div class="end-row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join("") +
     '<div class="end-best">✨ Moment fort : ' + best + '</div></div>';
-  document.getElementById("overlay-text").innerHTML = introText + statsHtml;
+  // v36 : générique de fin qui défile à la victoire
+  const creditsHtml = win ? '<div class="end-credits"><div class="end-credits-inner">' +
+    ["👑 SAY MY NAME.", "Un empire de " + fmt(state.cash) + "$", state.day + " jours à Albuquerque",
+     "Cuisinier : Walter White", "Associé : Jesse Pinkman", "Avocat : Saul Goodman",
+     "Fixer : Mike Ehrmantraut", state.achievements.length + " succès décrochés",
+     "Musique : WebAudio", "Fan game non officielle", "Merci d'avoir joué ✔"]
+      .map((l) => "<span>" + l + "</span>").join("") + "</div></div>" : "";
+  document.getElementById("overlay-text").innerHTML = introText + statsHtml + creditsHtml;
 
   const buttons = document.getElementById("overlay-buttons");
   buttons.innerHTML = "";
