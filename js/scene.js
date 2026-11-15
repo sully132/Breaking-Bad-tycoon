@@ -1035,6 +1035,9 @@ const scene = (() => {
 
   function loop() {
     if (!ctx) return;
+    // v53 : auto-réparation — l'onglet Labo est caché au chargement (taille 0×0),
+    // on retente le dimensionnement tant que le canevas est vide
+    if (W === 0 || H === 0) { try { resize(); } catch (e) {} }
     const t = performance.now();
     const f = realDayFactor(); // v52 : temps réel
 
@@ -1069,7 +1072,7 @@ const scene = (() => {
     requestAnimationFrame(loop);
   }
 
-  return { init, FX, spawnGolden };
+  return { init, FX, spawnGolden, resize }; // v53 : resize exporté pour l'ouverture d'onglet
 })();
 
 if (typeof document !== "undefined") {

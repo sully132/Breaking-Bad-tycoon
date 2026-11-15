@@ -230,3 +230,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Badge « ! » doré pulsant au-dessus du labo quand un événement RV/superlab est en attente — tap = ouvre directement la scène *(livré en v52)*
 - [x] Lucioles la nuit dans le labo *(livré en v52)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
+## Phase 33 — Fix « labo vert » (v53) ✅ LIVRÉE (v53)
+- [x] Le canevas du labo restait vide (fond vert) : l'onglet Labo est caché au chargement donc le canevas mesurait 0×0, et `resize` n'était jamais rappelé *(livré en v53)*
+- [x] `resize` exporté de scene.js et appelé à l'ouverture de l'onglet Labo *(livré en v53)*
+- [x] Auto-réparation dans la boucle de rendu : tant que le canevas est vide, le dimensionnement est retenté *(livré en v53)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur

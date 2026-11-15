@@ -182,6 +182,10 @@
       haptic(10);
       window.scrollTo({ top: 0, behavior: "smooth" });
       if (id === "map" && typeof heismapOnShow === "function") heismapOnShow();
+      // v53 : le canevas du labo est dans un onglet caché — on le redimensionne à l'ouverture
+      if (id === "base" && typeof scene !== "undefined" && scene && typeof scene.resize === "function") {
+        try { scene.resize(); } catch (e) {}
+      }
     }
 
     buttons.forEach((btn) => {
