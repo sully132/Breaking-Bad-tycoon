@@ -1045,6 +1045,7 @@
   let evQuote = null;
   // v28 : animation d'entrée, bannière, braises, flash
   let lastEvId = null, evEnterAt = 0, evParts = [], evFlash = 0, evBanner = null;
+  let cineShake = 0; // v46 : secousse dramatique en cours
   let evCine = null; // v31 : cinématique d'événement
   let charMood = null, charMoodUntil = 0; // v32 : humeur temporaire
   let lookTargetX = null; // v39 : les persos suivent du regard
@@ -1236,6 +1237,7 @@
     if (typeof playSfx === "function") playSfx("event");
     const snd = (typeof EV_SOUNDS !== "undefined" && EV_SOUNDS[ev.id]) || null;
     if (snd && typeof playSfx === "function") playSfx(snd); // v35
+    if (snd === "shot" || snd === "alarm") cineShake = 1; // v46 : secousse sur son dramatique
     if (typeof haptic === "function") haptic(15);
     // v31 : cinématique — cinémascope + sous-titres au typewriter
     const quotes = (typeof EVENT_QUOTES !== "undefined" && EVENT_QUOTES[ev.id]) || [];
@@ -1305,6 +1307,32 @@
       ctx.fillStyle = "rgba(5, 6, 10, " + ((1 - lFade) * 0.75).toFixed(3) + ")";
       ctx.fillRect(0, 0, w, h);
     }
+    // v46 : spotlight théâtral au centre de la scène
+    {
+      const sg = ctx.createRadialGradient(w / 2, h * 0.42, 10, w / 2, h * 0.42, h * 0.58);
+      sg.addColorStop(0, "rgba(255, 240, 200, " + (0.10 * kIn).toFixed(3) + ")");
+      sg.addColorStop(1, "rgba(255, 240, 200, 0)");
+      ctx.fillStyle = sg;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // v46 : grain de film animé
+    {
+      const gseed = Math.floor(anim / 80);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.045)";
+      for (let i = 0; i < 46; i++) {
+        const gx = ((i * 137 + gseed * 61) % 97) / 97 * w;
+        const gy = ((i * 89 + gseed * 43) % 89) / 89 * h;
+        ctx.fillRect(gx, gy, 1.4, 1.4);
+      }
+    }
+    // v46 : vignette renforcée pendant la cinématique
+    {
+      const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.34, w / 2, h / 2, h * 0.78);
+      vg.addColorStop(0, "rgba(0, 0, 0, 0)");
+      vg.addColorStop(1, "rgba(0, 0, 0, " + (0.26 * kIn).toFixed(3) + ")");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, w, h);
+    }
     const line = evCine.lines[evCine.idx];
     if (!line) { cineFinish(); return; }
     const shown = evCine.reveal ? line.text.length : Math.min(line.text.length, Math.floor((anim - evCine.lineStart) / 26));
@@ -1340,13 +1368,31 @@
     }
     const subLines = wrapText(txt, bw - (portLook ? 72 : 24));
     const bh = 16 + (line.who ? 14 : 0) + subLines.length * 16 + 10;
-    const by = h - barH - bh - 16;
+    // v46 : la boîte de sous-titres glisse vers le haut à chaque réplique
+    const lSlide = 1 - Math.pow(1 - Math.min(1, (anim - evCine.lineStart) / 190), 3);
+    const by = h - barH - bh - 16 + (1 - lSlide) * 16;
     let textX = bx + 12;
+    // v46 : la boîte est dessinée AVANT le médaillon (fix calque v35)
+    ctx.save();
+    ctx.globalAlpha = lSlide;
+    ctx.fillStyle = "rgba(8, 10, 6, 0.85)";
+    rr(bx, by, bw, bh, 10);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 210, 120, 0.35)";
+    ctx.lineWidth = 1.5;
+    rr(bx, by, bw, bh, 10);
+    ctx.stroke();
+    ctx.restore();
     if (portLook) {
-      const pr = 20;
-      const pcx = bx + 10 + pr;
+      // v46 : le médaillon pop à l'entrée de la réplique puis respire doucement
+      const pAge = anim - evCine.lineStart;
+      const pk = Math.min(1, pAge / 260);
+      const eb = 1 + 2.70158 * Math.pow(pk - 1, 3) + 1.70158 * Math.pow(pk - 1, 2); // easeOutBack
+      const pr = Math.max(0.01, 20 * eb * (1 + 0.02 * Math.sin(t * 2.2)));
+      const pcx = bx + 10 + 20;
       const pcy = by + bh / 2 + 2;
       ctx.save();
+      ctx.globalAlpha = Math.min(1, lSlide * 1.4);
       ctx.beginPath();
       ctx.arc(pcx, pcy, pr, 0, Math.PI * 2);
       ctx.fillStyle = "rgba(8, 10, 6, 0.92)";
@@ -1363,21 +1409,18 @@
       ctx.beginPath();
       ctx.arc(pcx, pcy, pr, 0, Math.PI * 2);
       ctx.stroke();
-      textX = bx + 12 + pr * 2 + 8;
+      textX = bx + 12 + 40 + 8;
     }
-    ctx.fillStyle = "rgba(8, 10, 6, 0.85)";
-    rr(bx, by, bw, bh, 10);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255, 210, 120, 0.35)";
-    ctx.lineWidth = 1.5;
-    rr(bx, by, bw, bh, 10);
-    ctx.stroke();
     let ty = by + 12;
     if (line.who) {
       ctx.font = "bold 11px sans-serif";
       ctx.fillStyle = "#e8c84a";
       ctx.textAlign = "left";
       ctx.fillText(line.who.toUpperCase(), textX, ty + 8);
+      // v46 : soulignement doré qui se déploie sous le nom
+      const uw = Math.min(1, (anim - evCine.lineStart) / 300) * (bw - (textX - bx) - 26);
+      ctx.fillStyle = "rgba(232, 200, 74, 0.7)";
+      ctx.fillRect(textX, ty + 11, Math.max(0, uw), 1.5);
       ty += 14;
     }
     ctx.font = "bold 12.5px sans-serif";
@@ -1392,6 +1435,18 @@
       : "rgba(255, 255, 255, 0.4)";
     ctx.textAlign = "right";
     ctx.fillText(shown >= line.text.length ? "▼" : "...", bx + bw - 10, by + bh - 8);
+    // v46 : points de progression des répliques au-dessus de la boîte
+    if (evCine.lines.length > 1) {
+      for (let i = 0; i < evCine.lines.length; i++) {
+        const dx = bx + bw - 10 - (evCine.lines.length - 1 - i) * 11;
+        ctx.beginPath();
+        ctx.arc(dx, by - 11, i === evCine.idx ? 3 : 2, 0, Math.PI * 2);
+        ctx.fillStyle = i === evCine.idx
+          ? "rgba(232, 200, 74, " + (0.65 + 0.3 * Math.sin(t * 5)).toFixed(2) + ")"
+          : "rgba(255, 255, 255, 0.28)";
+        ctx.fill();
+      }
+    }
     ctx.textAlign = "left";
   }
 
@@ -2855,6 +2910,11 @@
     ctx.translate(w / 2, camY);
     ctx.scale(camK, camK);
     ctx.translate(-camX, -camY);
+    if (cineShake > 0) { // v46 : secousse dramatique
+      const sh = cineShake * 6;
+      ctx.translate(Math.sin(anim * 0.09) * sh, Math.cos(anim * 0.113) * sh * 0.6);
+      cineShake = Math.max(0, cineShake - 0.025);
+    }
 
     drawSky(w, h, night, t);
     if (!night) {

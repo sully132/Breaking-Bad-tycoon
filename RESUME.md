@@ -157,4 +157,4 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v39 : détails & vie de fond — props par décor, pupilles qui suivent l'événement, récompenses d'album (+3/6/10/15% revenus).
 - v40 : trophées & faune — 3 succès d'album, corbeaux/chien/pigeons, ombres dynamiques selon l'heure.
 - v41 : traces & interactions — oiseaux qui s'envolent au tap, chien qui aboie, flaques après la pluie.
-- **v45 (courante) : approfondissement des événements de scène — chaîne « L'Empire » en 4 étapes (plan de Saul → investissement industriel → réseau de rue → conseil de l'empire), 3 nouveaux événements aléatoires (contrat de flotte, panne du fourgon, prêche surprise), indicateur d'étape 🔗 dans le banner des scènes, succès « Maître des chaînes ».**
+- **v46 (courante) : cinématiques de niveau cinéma — spotlight théâtral, grain de film animé, vignette renforcée, secousse d'écran sur les sons dramatiques (coup de feu, alarme), médaillon qui pop et respire, soulignement doré animé sous le nom du locuteur, sous-titres qui glissent, points de progression des répliques, fix du calque médaillon.**

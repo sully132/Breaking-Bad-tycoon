@@ -182,3 +182,11 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] 3 nouveaux événements aléatoires : contrat de flotte au carwash, panne du fourgon (bricolage 50/50), prêche surprise sur la plaza *(livré en v45)*
 - [x] Succès « Maître des chaînes » : mener les 3 chaînes à leur terme (+50 000$, +15 respect) *(livré en v45)*
 - [ ] Prochaines pistes : contrats express à durée limitée, chaîne de prestige post-reset, événements qui modifient les décors de façon persistante
+
+## Phase 26 — Cinématiques de niveau cinéma (v46) ✅ LIVRÉE (v46)
+- [x] Ambiance : spotlight théâtral au centre, grain de film animé, vignette renforcée pendant les cinématiques *(livré en v46)*
+- [x] Secousse d'écran au déclenchement des événements dramatiques (coup de feu, alarme) *(livré en v46)*
+- [x] Médaillon du locuteur : pop d'entrée (easeOutBack) + respiration douce *(livré en v46)*
+- [x] Sous-titres vivants : boîte qui glisse à chaque réplique, soulignement doré animé sous le nom, points de progression des répliques *(livré en v46)*
+- [x] Fix : le médaillon était recouvert par la boîte de sous-titres (calque inversé depuis v35) *(livré en v46)*
+- [ ] Prochaines pistes : plan large/plan poitrine alternés (zoom variable par réplique), flou d'arrière-plan, réactions des passants pendant la cinématique
