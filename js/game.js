@@ -156,6 +156,33 @@ function bizSynergyMult(id) {
   return m;
 }
 
+// v39 : bonus permanent de collection d'album
+function albumMult() {
+  let m = 1;
+  for (let i = 0; i < (state.albumTier || 0) && i < ALBUM_TIERS.length; i++) m += ALBUM_TIERS[i].bonus;
+  return m;
+}
+function albumTierNow() {
+  const seen = state.evSeen || {};
+  const r = EVENTS.length ? EVENTS.filter((e) => seen[e.id]).length / EVENTS.length : 0;
+  let tier = 0;
+  for (let i = 0; i < ALBUM_TIERS.length; i++) { if (r >= ALBUM_TIERS[i].n) tier = i + 1; }
+  return tier;
+}
+function checkAlbumTiers() {
+  const t = albumTierNow();
+  if ((state.albumTier || 0) < t) {
+    state.albumTier = t;
+    const pct = Math.round(ALBUM_TIERS[t - 1].n * 100);
+    const bonus = Math.round(ALBUM_TIERS[t - 1].bonus * 100);
+    toast("📕 Album à " + pct + "%", "Revenus +" + bonus + "% permanent !");
+    log("📕 Collection : " + pct + "% de l'album complété — revenus +" + bonus + "% (permanent).", "good");
+    playSfx("golden");
+    render();
+    save();
+  }
+}
+
 function bizRevPerSec(id) {
   const b = bizDef(id);
   if (!b || bizLevel(id) <= 0) return 0;
@@ -164,6 +191,7 @@ function bizRevPerSec(id) {
   rev *= 0.9 + purityNow() / 400;
   rev *= state.market;
   rev *= legendMult();
+  rev *= albumMult(); // v39 : collection
   rev *= 1 + state.respect / 250;
   rev *= relicBizMult();
   rev *= 1 + 0.10 * (state.labFloors || 0);
@@ -1883,6 +1911,7 @@ function renderLog() {
     .join("");
   renderEventPolaroids(); // v37
   renderAlbum(); // v38
+  if (typeof checkAlbumTiers === "function") { try { checkAlbumTiers(); } catch (e) {} } // v39
 }
 
 // v37 : polaroïds des événements passés — toucher pour rejouer la cinématique
@@ -2092,6 +2121,7 @@ function load() {
     if (!Array.isArray(state.evLog)) state.evLog = []; // v37 : souvenirs d'événements
     if (typeof state.introPending !== "boolean") state.introPending = false; // v38 : pas d'intro sur les vieilles sauvegardes
     if (typeof state.evSeen !== "object" || !state.evSeen) state.evSeen = {}; // v38 : album
+    if (typeof state.albumTier !== "number") state.albumTier = 0; // v39 : palier de collection atteint
     if (typeof state.mgCookDay !== "number") state.mgCookDay = 0; // v28
     if (typeof state.mgTucoDay !== "number") state.mgTucoDay = 0; // v28
     if (typeof state.mgSellDay !== "number") state.mgSellDay = 0; // v29

@@ -2799,6 +2799,17 @@ const EV_SOUNDS = {
   wkStorm: "lose", health: "lose", junkie: "lose",
 };
 
+// ============================================================
+// v39 — ALBUM : récompenses de collection (bonus permanents)
+// ============================================================
+
+const ALBUM_TIERS = [
+  { n: 0.25, bonus: 0.03 },
+  { n: 0.5, bonus: 0.06 },
+  { n: 0.75, bonus: 0.10 },
+  { n: 1, bonus: 0.15 },
+];
+
 const STORY_ARCS = [
   {
     id: "rise", icon: "⚗️", name: "L'Ascension",

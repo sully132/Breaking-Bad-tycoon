@@ -139,3 +139,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Cinématique d'intro jouée une seule fois au lancement de la première partie *(livré en v38)*
 - [x] Album complet des événements : grille X/N dans le journal, inconnus en ???, rejouables une fois découverts *(livré en v38)*
 - [ ] Prochaines pistes : récompenses de collection (bonus par palier d'événements découverts), cinématique de fin de semaine, succès liés à l'album
+
+## Phase 19 — Détails & vie de fond (v39) ✅ LIVRÉE (v39)
+- [x] Props par décor : poteaux télégraphiques (fil qui vibre), clôtures + poubelles, aspirateurs de carwash, voiture garée + panneau, benne + barrière, feu tricolore + borne à incendie, banc + horloge de gare, château d'eau *(livré en v39)*
+- [x] Persos vivants : pupilles qui suivent le visiteur pendant les cinématiques, léger penché de curiosité *(livré en v39)*
+- [x] Récompenses d'album : paliers 25/50/75/100% → +3/6/10/15% de revenus permanents, toast + son doré à chaque palier *(livré en v39)*
+- [ ] Prochaines pistes : succès liés à l'album, ombres portées dynamiques selon l'heure, animaux de fond (chiens, corbeaux)

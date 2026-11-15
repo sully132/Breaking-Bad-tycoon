@@ -578,16 +578,19 @@
     ctx.fill();
 
     const blink = Math.sin(t * 1.1 + x * 0.31) > 0.96 ? 0.12 : 1;
+    // v39 : les pupilles se tournent vers l'événement
+    const exo = (typeof lookTargetX !== "undefined" && lookTargetX !== null)
+      ? Math.max(-0.9, Math.min(0.9, (lookTargetX - x) * 0.012)) : 0;
     ctx.fillStyle = "#2a221a";
     ctx.beginPath();
-    ctx.ellipse(-3.2, -44.5, 1.1, 1.1 * blink, 0, 0, Math.PI * 2);
-    ctx.ellipse(3.2, -44.5, 1.1, 1.1 * blink, 0, 0, Math.PI * 2);
+    ctx.ellipse(-3.2 + exo, -44.5, 1.1, 1.1 * blink, 0, 0, Math.PI * 2);
+    ctx.ellipse(3.2 + exo, -44.5, 1.1, 1.1 * blink, 0, 0, Math.PI * 2);
     ctx.fill();
     if (blink > 0.5) {
       ctx.fillStyle = "rgba(255,255,255,0.9)";
       ctx.beginPath();
-      ctx.arc(-2.8, -45.2, 0.45, 0, Math.PI * 2);
-      ctx.arc(3.6, -45.2, 0.45, 0, Math.PI * 2);
+      ctx.arc(-2.8 + exo, -45.2, 0.45, 0, Math.PI * 2);
+      ctx.arc(3.6 + exo, -45.2, 0.45, 0, Math.PI * 2);
       ctx.fill();
     }
     // v32 : expressions — sourcils + bouche selon l'humeur
@@ -697,6 +700,72 @@
     ctx.restore();
   }
 
+
+  // v39 : détails de décor — petits éléments propres à chaque lieu
+  function drawProps(w, h, t, night) {
+    const kind = sceneDef().kind;
+    const gy = h * 0.78;
+    const ink = night ? "rgba(16, 20, 30, 0.85)" : "rgba(38, 30, 20, 0.55)";
+    ctx.fillStyle = ink;
+    if (kind === "desert" || kind === "desert2") {
+      // poteaux télégraphiques + fil qui vibre
+      for (let i = 0; i < 3; i++) {
+        const px = w * (0.16 + i * 0.3);
+        ctx.fillRect(px, h * 0.42, 3, h * 0.36);
+        ctx.fillRect(px - 8, h * 0.44, 19, 2.5);
+      }
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.16, h * 0.45);
+      ctx.quadraticCurveTo(w * 0.31, h * 0.49 + Math.sin(t * 2) * 2, w * 0.46, h * 0.45);
+      ctx.quadraticCurveTo(w * 0.61, h * 0.49 + Math.cos(t * 2) * 2, w * 0.76, h * 0.45);
+      ctx.stroke();
+      ctx.fillStyle = ink;
+    } else if (kind === "suburb" || kind === "backyard") {
+      for (let i = 0; i < 9; i++) ctx.fillRect(w * 0.60 + i * 9, h * 0.60, 5, h * 0.18);
+      ctx.fillRect(w * 0.60, h * 0.63, 86, 3);
+      ctx.fillRect(w * 0.30, gy - 26, 12, 26);
+      ctx.fillRect(w * 0.34, gy - 24, 12, 24);
+    } else if (kind === "carwash") {
+      for (let i = 0; i < 2; i++) {
+        const px = w * (0.14 + i * 0.1);
+        ctx.fillRect(px, h * 0.52, 5, h * 0.26);
+        ctx.beginPath(); ctx.arc(px + 2.5, h * 0.52, 7, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillRect(w * 0.82, h * 0.46, 4, h * 0.32);
+      ctx.fillRect(w * 0.82 - 14, h * 0.46, 32, 14);
+    } else if (kind === "restaurant") {
+      rr(w * 0.08, gy - 22, w * 0.14, 16, 6); ctx.fill();
+      ctx.beginPath(); ctx.arc(w * 0.11, gy - 4, 5, 0, Math.PI * 2); ctx.arc(w * 0.19, gy - 4, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(w * 0.88, h * 0.50, 3, h * 0.28);
+      ctx.fillRect(w * 0.88 - 12, h * 0.50, 27, 18);
+    } else if (kind === "industrial" || kind === "junkyard") {
+      rr(w * 0.06, gy - 20, w * 0.10, 20, 2); ctx.fill();
+      ctx.fillRect(w * 0.90, h * 0.55, 3, h * 0.23);
+      ctx.fillRect(w * 0.90 - 16, h * 0.55, 3, h * 0.23);
+      ctx.fillRect(w * 0.90 - 16, h * 0.57, 19, 3);
+    } else if (kind === "street" || kind === "plaza") {
+      ctx.fillRect(w * 0.08, h * 0.40, 3.5, h * 0.38);
+      ctx.fillRect(w * 0.08 - 5, h * 0.40, 13, 22);
+      ctx.fillStyle = "#e84a3a"; ctx.beginPath(); ctx.arc(w * 0.08 + 1.7, h * 0.44, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#e8c84a"; ctx.beginPath(); ctx.arc(w * 0.08 + 1.7, h * 0.475, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#4ac86a"; ctx.beginPath(); ctx.arc(w * 0.08 + 1.7, h * 0.51, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = ink;
+      ctx.fillRect(w * 0.93, gy - 14, 7, 14);
+      ctx.fillRect(w * 0.93 - 2, gy - 17, 11, 4);
+    } else if (kind === "station") {
+      ctx.fillRect(w * 0.12, gy - 12, w * 0.09, 4);
+      ctx.fillRect(w * 0.13, gy - 8, 3, 8);
+      ctx.fillRect(w * 0.19, gy - 8, 3, 8);
+      ctx.beginPath(); ctx.arc(w * 0.5, h * 0.34, 9, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === "ranch") {
+      ctx.fillRect(w * 0.86, h * 0.34, 2.5, h * 0.44);
+      ctx.fillRect(w * 0.90, h * 0.34, 2.5, h * 0.44);
+      rr(w * 0.845, h * 0.26, 22, 16, 4); ctx.fill();
+    }
+  }
+
   function drawCharRow(w, h, chars, positions) {
     const looks = (typeof CHAR_LOOKS !== "undefined") ? CHAR_LOOKS : {};
     const ground = h * 0.78;
@@ -712,7 +781,18 @@
       const sc = 1.5 * (pos[1] || 1);
       const cm = (charMood && charMood.id === list[i] && anim < charMoodUntil) ? charMood.mood
         : (cineOn ? ((typeof EV_MOODS !== "undefined" && evCine.ev && EV_MOODS[evCine.ev.id]) || "worried") : "neutral");
-      drawPerson(x, ground, sc, looks[list[i]], cm);
+      lookTargetX = cineOn && eventVisitor ? eventVisitor.x : null; // v39
+      if (cineOn && eventVisitor) {
+        // v39 : léger penché de curiosité vers le visiteur
+        const lean = Math.max(-0.05, Math.min(0.05, (eventVisitor.x - x) * 0.0004));
+        ctx.save();
+        ctx.translate(x, ground);
+        ctx.rotate(lean);
+        drawPerson(0, 0, sc, looks[list[i]], cm);
+        ctx.restore();
+      } else {
+        drawPerson(x, ground, sc, looks[list[i]], cm);
+      }
       charScreens.push({ id: list[i], x, y: ground, s: sc });
     }
   }
@@ -735,6 +815,7 @@
   let lastEvId = null, evEnterAt = 0, evParts = [], evFlash = 0, evBanner = null;
   let evCine = null; // v31 : cinématique d'événement
   let charMood = null, charMoodUntil = 0; // v32 : humeur temporaire
+  let lookTargetX = null; // v39 : les persos suivent du regard
   function drawEventVisitor(w, h, t, def) {
     const ev = sceneEventFor(currentLocId);
     if (!ev) { eventVisitor = null; evQuote = null; evBanner = null; lastEvId = null; return; }
@@ -951,6 +1032,7 @@
         }
         if (typeof state.evSeen !== "object" || !state.evSeen) state.evSeen = {};
         state.evSeen[ev.id] = state.day; // v38 : album — événement découvert
+        if (typeof checkAlbumTiers === "function") { try { checkAlbumTiers(); } catch (e) {} } // v39 : palier ?
       }
     } catch (err) {}
     state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);
@@ -2555,6 +2637,7 @@
     const extra = EXTRAS[def.kind];
     if (extra) extra(w, h, t, night);
     drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
+    drawProps(w, h, t, night); // v39 : détails de décor
     drawLighting(w, h, t, night);
 
     if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);

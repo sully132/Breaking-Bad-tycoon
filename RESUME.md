@@ -153,4 +153,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v35 : montage final — portrait du locuteur en médaillon doré, fondu entre les lignes, bruitages signature par événement.
 - v36 : grand écran — raids DEA en mode cinéma, moteur de cinématique DOM générique, générique de fin animé.
 - v37 : souvenirs & renaissance — polaroïds d'événements rejouables dans le journal, cinématique de prestige (le barbier).
-- **v38 (courante) : ouverture & collection — cinématique d'intro à la première partie (Albuquerque, le RV, « La chimie est l'étude de la transformation »), album complet des événements dans le journal (collection X/N à compléter, événements inconnus en ???, rejouables une fois découverts).**
+- v38 : ouverture & collection — cinématique d'intro, album complet des événements (X/N, ??? à découvrir, rejouables).
+- **v39 (courante) : détails & vie de fond — props par décor (poteaux télégraphiques, clôtures, aspirateurs, voitures garées, bennes, feux tricolores, château d'eau), persos qui suivent l'événement du regard et se penchent vers le visiteur pendant les cinématiques, récompenses d'album (25/50/75/100% = +3/6/10/15% de revenus permanents).**
