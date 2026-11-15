@@ -157,3 +157,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Chien interactif : sprint + « Ouaf ! » quand on le touche *(livré en v41)*
 - [x] Flaques après la pluie : formées au retour du beau temps, reflet du ciel, séchage progressif (~45 s) *(livré en v41)*
 - [ ] Prochaines pistes : traces de pas dans les flaques, herbe qui pousse selon les jours, ombres des nuages qui glissent au sol
+
+## Phase 22 — Ciel & saisons (v42) ✅ LIVRÉE (v42)
+- [x] Saisons réelles : hiver (neige + teinte froide), automne (feuilles mortes + teinte chaude), printemps (teinte verte), été (neutre) *(livré en v42)*
+- [x] Ombres de nuages qui glissent lentement au sol dans les scènes extérieures *(livré en v42)*
+- [ ] Prochaines pistes : neige qui s'accumule sur les toits, événements de saison (tempête de neige, récolte), décor de carte teinté par saison

@@ -925,6 +925,79 @@
     return false;
   }
 
+  // v42 : saisons réelles — neige en hiver, feuilles en automne, teintes
+  function season() {
+    const m = new Date().getMonth();
+    return (m <= 1 || m === 11) ? "winter" : (m <= 4) ? "spring" : (m <= 7) ? "summer" : "autumn";
+  }
+  let snow = [], leaves = [];
+  function ensureWeatherParticles() {
+    const sd = season();
+    if (sd === "winter" && !snow.length) {
+      for (let i = 0; i < 60; i++) snow.push({ x: Math.random(), y: Math.random(), sp: 0.03 + Math.random() * 0.05, sw: Math.random() * 6.28, sz: 1 + Math.random() * 2 });
+    }
+    if (sd === "autumn" && !leaves.length) {
+      for (let i = 0; i < 24; i++) leaves.push({ x: Math.random(), y: Math.random(), sp: 0.04 + Math.random() * 0.06, sw: Math.random() * 6.28, rot: Math.random() * 6.28, c: Math.random() < 0.5 ? "#c87a2a" : "#a85a20" });
+    }
+  }
+  function updateSnow() {
+    for (const f of snow) {
+      f.y += f.sp * 0.012;
+      f.sw += 0.02;
+      if (f.y > 1.02) { f.y = -0.02; f.x = Math.random(); }
+    }
+  }
+  function drawSnow(w, h) {
+    ctx.fillStyle = "rgba(240, 246, 255, 0.85)";
+    for (const f of snow) {
+      const x = (f.x + Math.sin(f.sw) * 0.01) * w;
+      ctx.beginPath();
+      ctx.arc(x, f.y * h, f.sz, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function updateLeaves() {
+    for (const f of leaves) {
+      f.y += f.sp * 0.008;
+      f.sw += 0.015;
+      f.x += Math.sin(f.sw) * 0.0012;
+      f.rot += 0.03;
+      if (f.y > 1.02) { f.y = -0.02; f.x = Math.random(); }
+    }
+  }
+  function drawLeaves(w, h) {
+    for (const f of leaves) {
+      ctx.save();
+      ctx.translate(f.x * w, f.y * h);
+      ctx.rotate(f.rot);
+      ctx.fillStyle = f.c;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 4, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+  function drawSeasonTint(w, h) {
+    const sd = season();
+    if (sd === "winter") { ctx.fillStyle = "rgba(170, 195, 255, 0.06)"; ctx.fillRect(0, 0, w, h); }
+    else if (sd === "autumn") { ctx.fillStyle = "rgba(255, 150, 50, 0.05)"; ctx.fillRect(0, 0, w, h); }
+    else if (sd === "spring") { ctx.fillStyle = "rgba(140, 220, 120, 0.04)"; ctx.fillRect(0, 0, w, h); }
+  }
+
+  // v42 : ombres de nuages qui glissent lentement au sol
+  function drawCloudShadows(w, h, t) {
+    ctx.fillStyle = "rgba(18, 24, 12, 0.09)";
+    for (let i = 0; i < 3; i++) {
+      const cx = (((i * 0.37 + t * 0.006 * (1 + i * 0.3)) % 1.4) - 0.2) * w;
+      const cy = h * (0.74 + (i % 2) * 0.08);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, w * 0.2, h * 0.05, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   function drawCharRow(w, h, chars, positions) {
     const looks = (typeof CHAR_LOOKS !== "undefined") ? CHAR_LOOKS : {};
     const ground = h * 0.78;
@@ -2796,6 +2869,7 @@
     const extra = EXTRAS[def.kind];
     if (extra) extra(w, h, t, night);
     drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
+    if (!night && OUTDOOR_KINDS.has(def.kind)) drawCloudShadows(w, h, t); // v42 : ombres de nuages
     drawPuddles(w, h, t); // v41 : flaques
     drawProps(w, h, t, night); // v39 : détails de décor
     drawFauna(w, h, t, night); // v40 : faune de fond
@@ -2824,11 +2898,18 @@
     if (wet) { updateRain(w, h); drawRain(w, h); }
     updateStorm(w, h);
     if (night && OUTDOOR_KINDS.has(def.kind)) drawFireflies(w, h, t);
+    if (OUTDOOR_KINDS.has(def.kind)) { // v42 : saisons
+      ensureWeatherParticles();
+      const sd = season();
+      if (sd === "winter") { updateSnow(); drawSnow(w, h); }
+      else if (sd === "autumn") { updateLeaves(); drawLeaves(w, h); }
+    }
     if (!night && OUTDOOR_KINDS.has(def.kind)) drawDust(w, h, t);
     updateShootingStar(w, h, night);
     drawShootingStar();
     if (phase === "dawn") drawMist(w, h, t);
     if (!def.night) applyPhaseTint(w, h, phase);
+    if (OUTDOOR_KINDS.has(def.kind)) drawSeasonTint(w, h); // v42 : teinte de saison
     drawFlash(w, h);
     drawEventAura(w, h, t);
     drawEventBanner(w, h, t);

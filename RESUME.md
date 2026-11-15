@@ -156,4 +156,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v38 : ouverture & collection — cinématique d'intro, album complet des événements (X/N, ??? à découvrir, rejouables).
 - v39 : détails & vie de fond — props par décor, pupilles qui suivent l'événement, récompenses d'album (+3/6/10/15% revenus).
 - v40 : trophées & faune — 3 succès d'album, corbeaux/chien/pigeons, ombres dynamiques selon l'heure.
-- **v41 (courante) : traces & interactions — les oiseaux s'envolent quand on les touche (ailes qui battent), le chien sprinte et aboie « Ouaf ! » au tap, flaques qui se forment après la pluie et sèchent lentement en reflétant le ciel.**
+- v41 : traces & interactions — oiseaux qui s'envolent au tap, chien qui aboie, flaques après la pluie.
+- **v42 (courante) : ciel & saisons — saisons réelles selon le calendrier (neige qui tombe en hiver, feuilles mortes en automne, teinte de saison sur les scènes extérieures), ombres de nuages qui glissent lentement au sol.**
