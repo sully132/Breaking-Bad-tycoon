@@ -1071,6 +1071,7 @@
   let lastEvId = null, evEnterAt = 0, evParts = [], evFlash = 0, evBanner = null;
   let cineShake = 0; // v46 : secousse dramatique en cours
   let camKCur = 1, camXCur = null; // v47 : plans de caméra alternés (valeurs lissées)
+  let dofCur = 0; // v51 : intensité lissée du voile de profondeur de champ
   let evCine = null; // v31 : cinématique d'événement
   let charMood = null, charMoodUntil = 0; // v32 : humeur temporaire
   let lookTargetX = null; // v39 : les persos suivent du regard
@@ -2941,6 +2942,22 @@
     ctx.restore();
   }
 
+  // v51 : profondeur de champ simulée sur les plans poitrine — voile radial doux
+  // derrière les persos (zéro blur : perf mobile préservée), intensité lissée 8%/frame
+  function drawDofVeil(w, h) {
+    if (!evCine || !evCine.shots) { dofCur += (0 - dofCur) * 0.08; return; }
+    const shot = evCine.shots[evCine.idx] || 0;
+    dofCur += ((shot === 2 ? 1 : 0) - dofCur) * 0.08;
+    if (dofCur < 0.01) return;
+    const fx = eventVisitor ? eventVisitor.x : w / 2;
+    const fy = eventVisitor ? eventVisitor.y : h * 0.62;
+    const g = ctx.createRadialGradient(fx, fy, Math.min(w, h) * 0.16, fx, fy, Math.max(w, h) * 0.62);
+    g.addColorStop(0, "rgba(8, 10, 6, 0)");
+    g.addColorStop(1, "rgba(8, 10, 6, " + (0.34 * dofCur).toFixed(3) + ")");
+    ctx.fillStyle = g;
+    ctx.fillRect(-w * 0.25, -h * 0.25, w * 1.5, h * 1.5);
+  }
+
   function draw() {
     if (!canvas || !ctx || !currentLocId) return;
     const w = canvas.clientWidth;
@@ -3008,6 +3025,7 @@
     drawProps(w, h, t, night); // v39 : détails de décor
     drawFauna(w, h, t, night); // v40 : faune de fond
     drawLighting(w, h, t, night);
+    drawDofVeil(w, h); // v51 : profondeur de champ sur les plans poitrine
 
     if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);
 

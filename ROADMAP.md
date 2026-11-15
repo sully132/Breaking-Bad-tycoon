@@ -216,3 +216,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Bulle du locuteur effacée proprement à la fin de chaque cinématique *(livré en v50)*
 - [x] Badge ⚡ sur l'onglet Empire quand un contrat express chronométré est en cours — impossible de rater une livraison en cours *(livré en v50)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, fondu d'arrière-plan des plans poitrine, passe équilibrage selon retours réels
+## Phase 31 — Profondeur de champ cinéma (v51) ✅ LIVRÉE (v51)
+- [x] Voile radial doux derrière le locuteur sur les plans poitrine : l'arrière-plan s'assombrit, le regard se concentre sur le perso qui parle *(livré en v51)*
+- [x] Profondeur de champ simulée sans blur — zéro coût pour la perf mobile *(livré en v51)*
+- [x] Intensité du voile lissée (8 %/frame) : apparition/disparition en fondu synchronisée avec les transitions de plans *(livré en v51)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
