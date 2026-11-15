@@ -450,13 +450,76 @@
     ctx.fill();
     ctx.fillStyle = shade(look.shirt || "#4a6a8a", -25);
     ctx.fillRect(-9, -19, 18, 4);
+    // v31 : accessoires de torse
+    if (look.apron) {
+      ctx.fillStyle = look.apron;
+      ctx.beginPath();
+      ctx.moveTo(-6, -34);
+      ctx.lineTo(6, -34);
+      ctx.lineTo(7, -16);
+      ctx.lineTo(-7, -16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(15, 12, 8, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillRect(-2.5, -36, 5, 3);
+    }
+    if (look.jacket) {
+      ctx.fillStyle = look.jacket;
+      ctx.beginPath();
+      ctx.moveTo(-9, -36);
+      ctx.lineTo(-3, -36);
+      ctx.lineTo(-4.5, -15);
+      ctx.lineTo(-9, -15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(9, -36);
+      ctx.lineTo(3, -36);
+      ctx.lineTo(4.5, -15);
+      ctx.lineTo(9, -15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(15, 12, 8, 0.45)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    if (look.lapel) {
+      ctx.strokeStyle = "rgba(15, 12, 8, 0.5)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-3, -36); ctx.lineTo(-6, -26); ctx.lineTo(-2, -18);
+      ctx.moveTo(3, -36); ctx.lineTo(6, -26); ctx.lineTo(2, -18);
+      ctx.stroke();
+    }
+    if (look.badge) {
+      ctx.fillStyle = "#e8c84a";
+      ctx.beginPath();
+      ctx.arc(5, -29, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#8a7a2a";
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+    if (look.necklace) {
+      ctx.strokeStyle = "#e8c84a";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(0, -34, 4.5, 0.35, Math.PI - 0.35);
+      ctx.stroke();
+      ctx.fillStyle = "#e8c84a";
+      ctx.beginPath();
+      ctx.arc(0, -30, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
     const armSw = Math.sin(t * 5 + x * 0.13 + Math.PI) * 0.13;
     ctx.save();
     ctx.translate(-11, -33);
     ctx.rotate(armSw);
     ctx.fillStyle = look.shirt || "#4a6a8a";
     ctx.fillRect(-2, 0, 4, 13);
-    ctx.fillStyle = "#e8b58a";
+    ctx.fillStyle = look.skin || "#e8b58a";
     ctx.fillRect(-2, 13, 4, 3.2);
     ctx.restore();
     ctx.save();
@@ -464,12 +527,12 @@
     ctx.rotate(-armSw);
     ctx.fillStyle = look.shirt || "#4a6a8a";
     ctx.fillRect(-2, 0, 4, 13);
-    ctx.fillStyle = "#e8b58a";
+    ctx.fillStyle = look.skin || "#e8b58a";
     ctx.fillRect(-2, 13, 4, 3.2);
     ctx.restore();
 
     if (look.tie) {
-      ctx.fillStyle = "#a02a2a";
+      ctx.fillStyle = typeof look.tie === "string" ? look.tie : "#a02a2a";
       ctx.beginPath();
       ctx.moveTo(0, -35);
       ctx.lineTo(3, -30);
@@ -486,7 +549,7 @@
       ctx.stroke();
     }
 
-    ctx.fillStyle = "#e8b58a";
+    ctx.fillStyle = look.skin || "#e8b58a";
     ctx.beginPath();
     ctx.arc(0, -44, 8.5, 0, Math.PI * 2);
     ctx.fill();
@@ -516,6 +579,12 @@
       ctx.fillStyle = look.beard;
       ctx.beginPath();
       ctx.arc(0, -40, 7, 0, Math.PI);
+      ctx.fill();
+    }
+    if (look.mustache) {
+      ctx.fillStyle = look.mustache;
+      ctx.beginPath();
+      ctx.ellipse(0, -41, 4.5, 1.6, 0, 0, Math.PI * 2);
       ctx.fill();
     }
     if (look.hair && !look.bald && !look.hat && !look.cap && !look.flatCap && !look.beanie) {
@@ -610,6 +679,7 @@
   let evQuote = null;
   // v28 : animation d'entrée, bannière, braises, flash
   let lastEvId = null, evEnterAt = 0, evParts = [], evFlash = 0, evBanner = null;
+  let evCine = null; // v31 : cinématique d'événement
   function drawEventVisitor(w, h, t, def) {
     const ev = sceneEventFor(currentLocId);
     if (!ev) { eventVisitor = null; evQuote = null; evBanner = null; lastEvId = null; return; }
@@ -636,11 +706,15 @@
     }
     const ground = h * 0.78;
     const spots = CHAR_SPOTS[def.kind] || [];
+    const inCine = !!(evCine && evCine.ev.id === ev.id);
     let px = 0.5;
-    for (const cand of [0.5, 0.26, 0.74]) {
-      if (!spots.some((p) => Math.abs(p[0] - cand) < 0.1)) { px = cand; break; }
+    if (!inCine) {
+      for (const cand of [0.5, 0.26, 0.74]) {
+        if (!spots.some((p) => Math.abs(p[0] - cand) < 0.1)) { px = cand; break; }
+      }
     }
-    const kIn = Math.min(1, (anim - evEnterAt) / 900);
+    const enterRef = inCine ? evCine.start : evEnterAt;
+    const kIn = Math.min(1, (anim - enterRef) / 900);
     const ease = 1 - Math.pow(1 - kIn, 3);
     const startX = -0.18;
     const x = w * (startX + (px - startX) * ease);
@@ -666,6 +740,7 @@
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+    if (!inCine) {
     const pulse = 0.7 + 0.3 * Math.sin(t * 4);
     const by = ground - 96 * sc - Math.abs(Math.sin(t * 5)) * 5;
     const ringK = (anim % 1200) / 1200;
@@ -725,6 +800,7 @@
     });
     ctx.restore();
     ctx.textBaseline = "alphabetic";
+    }
   }
 
   function drawEventAura(w, h, t) {
@@ -782,10 +858,23 @@
     const ev = sceneEventFor(currentLocId);
     if (!ev) return;
     evFlash = 1;
-    state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);
-    eventVisitor = null;
+    evBanner = null;
     if (typeof playSfx === "function") playSfx("event");
     if (typeof haptic === "function") haptic(15);
+    // v31 : cinématique — cinémascope + sous-titres au typewriter
+    const quotes = (typeof EVENT_QUOTES !== "undefined" && EVENT_QUOTES[ev.id]) || [];
+    const who = (typeof CHAR_NAMES !== "undefined" && CHAR_NAMES[ev.id]) || "";
+    const lines = [{ who: "", text: ev.text || ev.title }];
+    if (quotes.length) lines.push({ who, text: quotes[0] });
+    if (quotes.length > 1) lines.push({ who, text: quotes[1] });
+    evCine = { ev, lines, idx: 0, start: anim, lineStart: anim, reveal: false };
+  }
+
+  function cineFinish() {
+    const ev = evCine.ev;
+    evCine = null;
+    state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);
+    eventVisitor = null;
     if (ev.type === "choice" && typeof showEventModal === "function") {
       showEventModal(ev);
     } else {
@@ -794,6 +883,114 @@
       if (typeof render === "function") render();
     }
     if (typeof save === "function") save();
+  }
+
+  // v31 : rendu de la cinématique (bandes noires, sous-titres, tap pour avancer)
+  function drawCine(w, h, t) {
+    if (!evCine) return;
+    const age = anim - evCine.start;
+    const kIn = 1 - Math.pow(1 - Math.min(1, age / 400), 3);
+    const barH = h * 0.13 * kIn;
+    ctx.fillStyle = "rgba(5, 6, 10, " + (0.30 * kIn).toFixed(3) + ")";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#05060a";
+    ctx.fillRect(0, 0, w, barH);
+    ctx.fillRect(0, h - barH, w, barH);
+    const line = evCine.lines[evCine.idx];
+    if (!line) { cineFinish(); return; }
+    const shown = evCine.reveal ? line.text.length : Math.min(line.text.length, Math.floor((anim - evCine.lineStart) / 26));
+    const txt = line.text.slice(0, shown);
+    if (shown >= line.text.length && anim - evCine.lineStart > 2400 + line.text.length * 24) {
+      evCine.idx += 1;
+      evCine.lineStart = anim;
+      evCine.reveal = false;
+      if (evCine.idx >= evCine.lines.length) { cineFinish(); return; }
+      return;
+    }
+    const bw = Math.min(w * 0.86, 340);
+    const bx = (w - bw) / 2;
+    const subLines = wrapText(txt, bw - 24);
+    const bh = 16 + (line.who ? 14 : 0) + subLines.length * 16 + 10;
+    const by = h - barH - bh - 16;
+    ctx.fillStyle = "rgba(8, 10, 6, 0.85)";
+    rr(bx, by, bw, bh, 10);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 210, 120, 0.35)";
+    ctx.lineWidth = 1.5;
+    rr(bx, by, bw, bh, 10);
+    ctx.stroke();
+    let ty = by + 12;
+    if (line.who) {
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillStyle = "#e8c84a";
+      ctx.textAlign = "left";
+      ctx.fillText(line.who.toUpperCase(), bx + 12, ty + 8);
+      ty += 14;
+    }
+    ctx.font = "bold 12.5px sans-serif";
+    ctx.fillStyle = "#fff3d6";
+    ctx.textAlign = "left";
+    subLines.forEach((l, i) => {
+      ctx.fillText(l, bx + 12, ty + 14 + i * 16);
+    });
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = shown >= line.text.length
+      ? "rgba(255, 220, 140, " + (0.5 + 0.4 * Math.sin(t * 5)).toFixed(2) + ")"
+      : "rgba(255, 255, 255, 0.4)";
+    ctx.textAlign = "right";
+    ctx.fillText(shown >= line.text.length ? "▼" : "...", bx + bw - 10, by + bh - 8);
+    ctx.textAlign = "left";
+  }
+
+  // v31 : silhouettes de premier plan par décor (profondeur)
+  function drawForeground(w, h, kind, night) {
+    const col = night ? "rgba(10, 12, 18, 0.90)" : "rgba(24, 18, 10, 0.82)";
+    ctx.fillStyle = col;
+    if (kind === "desert" || kind === "desert2") {
+      rr(w * 0.03, h * 0.70, w * 0.045, h * 0.30, w * 0.02);
+      ctx.fill();
+      rr(w * 0.015, h * 0.76, w * 0.02, h * 0.10, w * 0.01);
+      ctx.fill();
+      rr(w * 0.075, h * 0.80, w * 0.02, h * 0.09, w * 0.01);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(w * 0.94, h * 0.97, w * 0.07, h * 0.035, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === "suburb" || kind === "backyard") {
+      ctx.fillRect(w * 0.06, h * 0.80, 4, h * 0.19);
+      rr(w * 0.045, h * 0.76, w * 0.05, h * 0.045, 4);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(w * 0.93, h * 0.98, w * 0.08, h * 0.05, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === "industrial") {
+      rr(w * 0.03, h * 0.82, w * 0.05, h * 0.17, 5);
+      ctx.fill();
+      rr(w * 0.085, h * 0.84, w * 0.045, h * 0.15, 5);
+      ctx.fill();
+    } else if (kind === "street") {
+      ctx.fillRect(w * 0.055, h * 0.30, 5, h * 0.69);
+      ctx.fillRect(w * 0.055, h * 0.30, w * 0.045, 4);
+      ctx.fillStyle = night ? "rgba(255, 220, 130, 0.95)" : "rgba(255, 240, 190, 0.75)";
+      ctx.beginPath();
+      ctx.ellipse(w * 0.10, h * 0.315, 6, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = col;
+    } else if (kind === "junkyard") {
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(w * 0.05, h * (0.95 - i * 0.05), w * 0.045, h * 0.022, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (kind === "ranch" || kind === "station") {
+      ctx.fillRect(0, h * 0.86, w * 0.10, 4);
+      ctx.fillRect(w * 0.02, h * 0.80, 4, h * 0.19);
+      ctx.fillRect(w * 0.07, h * 0.80, 4, h * 0.19);
+    } else {
+      ctx.beginPath();
+      ctx.ellipse(w * 0.05, h * 0.98, w * 0.06, h * 0.04, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   function updateBubble(t, chars) {
@@ -2213,6 +2410,7 @@
     drawEventVisitor(w, h, t, def);
     updateBubble(t, def.chars);
     drawBubble();
+    drawForeground(w, h, def.kind, night);
 
     const biz = bizForLoc(currentLocId);
     if (biz && levelOf(biz.id) > 0) {
@@ -2243,6 +2441,7 @@
       ctx.fillRect(0, 0, w, h);
       evFlash *= 0.88;
     }
+    drawCine(w, h, t);
 
     anim += 16;
     // v27 : DPR adaptatif — si le fps chute, on réduit la résolution
@@ -2445,6 +2644,7 @@
   }
 
   function closeLocScene() {
+    evCine = null;
     try { if (typeof sfx !== "undefined" && sfx && sfx.ambient) sfx.ambient.stop(); } catch (e) {}
     currentLocId = null;
     const overlay = document.getElementById("locscene");
@@ -2461,6 +2661,22 @@
     const r = canvas.getBoundingClientRect();
     const mx = e.clientX - r.left;
     const my = e.clientY - r.top;
+
+    // v31 : cinématique — révéler la ligne ou avancer
+    if (evCine) {
+      const line = evCine.lines[evCine.idx];
+      const shown = (!line || evCine.reveal) ? (line ? line.text.length : 0) : Math.min(line.text.length, Math.floor((anim - evCine.lineStart) / 26));
+      if (line && shown < line.text.length) {
+        evCine.reveal = true;
+      } else {
+        evCine.idx += 1;
+        evCine.lineStart = anim;
+        evCine.reveal = false;
+        if (evCine.idx >= evCine.lines.length) { cineFinish(); return; }
+      }
+      if (typeof haptic === "function") haptic(8);
+      return;
+    }
 
     if (eventVisitor && Math.hypot(eventVisitor.x - mx, eventVisitor.y - 44 * eventVisitor.s - my) < 38 * eventVisitor.s) {
       triggerSceneEvent();

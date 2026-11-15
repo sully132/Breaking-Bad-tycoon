@@ -91,3 +91,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Ambiance : poussières dans la lumière le jour, brume d'aube, grain de film dans les scènes *(livré en v30)*
 - [x] Carte : ciel selon l'heure réelle (nuit étoilée, aube, crépuscule), routes avec accotements, vignette *(livré en v30)*
 - [x] UI : fondu d'ouverture des scènes, poignée du bottom-sheet, boutons de scène affinés, mini-jeux dorés *(livré en v30)*
+
+## Phase 11 — Cinéma & personnages (v31) ✅ LIVRÉE (v31)
+- [x] Cinématique d'événement : bandes cinémascope, assombrissement, sous-titres au typewriter avec nom du locuteur, tap pour révéler/avancer, ré-entrée du visiteur au centre *(livré en v31)*
+- [x] Personnages plus distinctifs : carnations variées, moustaches, badge de flic, colliers, tabliers, vestes ouvertes, revers de costume, cravates colorées *(livré en v31)*
+- [x] 18 apparences retravaillées : chaque perso a sa signature (Walter tablier + moustache, Heisenberg veste noire, Hank badge, Gus moustache, Mike barbe grise + veste, Tuco moustache + chaîne…) *(livré en v31)*
+- [x] Premiers plans en silhouette par décor (cactus, lampadaire allumé, barils, pneus, barrières, buissons) *(livré en v31)*
