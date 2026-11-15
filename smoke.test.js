@@ -125,7 +125,7 @@ const gjs3 = fs.readFileSync("js/game.js", "utf8");
 console.log("combo dans tapBoost:", gjs3.includes("comboMult") && gjs3.includes("comboUntil = now + 2500") ? "OK" : "FAIL");
 console.log("ROADMAP:", fs.existsSync("ROADMAP.md") && fs.readFileSync("ROADMAP.md", "utf8").includes("Phase 6") ? "OK" : "FAIL");
 const sw3 = fs.readFileSync("sw.js", "utf8");
-console.log("SW cache v37:", sw3.includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", sw3.includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v23 : étages du Superlab + reliques + prestige
 console.log("labFloors migration:", typeof G.state.labFloors === "number" ? "OK" : "FAIL");
@@ -146,7 +146,7 @@ console.log("succes v23:", djs4.includes("floors3") && djs4.includes("relic4") ?
 console.log("bouton reliques:", fs.readFileSync("index.html", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("wiring reliques:", fs.readFileSync("js/app.js", "utf8").includes("btn-menu-relics") ? "OK" : "FAIL");
 console.log("scene superlab v23:", fs.readFileSync("js/locscene.js", "utf8").includes("drawFloorsPanel") ? "OK" : "FAIL");
-console.log("SW cache v37 (finale):", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38 (finale):", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v24 : monde vivant
 const mjs5 = fs.readFileSync("js/map.js", "utf8");
@@ -215,7 +215,7 @@ console.log("banniere evenement:", ljs8.includes("drawEventBanner") ? "OK" : "FA
 console.log("braises evenement:", ljs8.includes("evParts") ? "OK" : "FAIL");
 console.log("boutons minijeu:", ljs8.includes("openMinigame(\"cook\")") && ljs8.includes("openMinigame(\"tuco\")") ? "OK" : "FAIL");
 console.log("migrations minijeu:", fs.readFileSync("js/game.js", "utf8").includes("mgCookDay") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v29 : maîtrise & récompenses
 const djs9 = fs.readFileSync("js/data.js", "utf8");
@@ -226,7 +226,7 @@ console.log("minijeu vente:", mgjs9.includes("newSell") && mgjs9.includes("Vente
 console.log("stats minijeu:", mgjs9.includes("mgPlayed") && mgjs9.includes("mgBest") && mgjs9.includes("mgTucoBest") && mgjs9.includes("mgSellBest") ? "OK" : "FAIL");
 console.log("bouton vente:", fs.readFileSync("js/locscene.js", "utf8").includes('openMinigame("sell")') ? "OK" : "FAIL");
 console.log("migration stats v29:", fs.readFileSync("js/game.js", "utf8").includes("mgSellBest") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v30 : passe graphisme
 const ljs10 = fs.readFileSync("js/locscene.js", "utf8");
@@ -241,7 +241,7 @@ console.log("ciel carte dynamique:", mjs10.includes("#0a1024") && mjs10.includes
 console.log("routes accotements:", mjs10.includes("accotements") ? "OK" : "FAIL");
 console.log("vignette carte:", mjs10.includes("vignette carte") ? "OK" : "FAIL");
 console.log("css v30:", fs.readFileSync("css/style.css", "utf8").includes("scene-fade") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v31 : personnages + cinématiques + premiers plans
 const djs11 = fs.readFileSync("js/data.js", "utf8");
@@ -251,7 +251,7 @@ console.log("cinematique ev:", ljs11.includes("evCine") && ljs11.includes("drawC
 console.log("carnations:", ljs11.includes("look.skin") ? "OK" : "FAIL");
 console.log("accessoires torse:", ljs11.includes("look.apron") && ljs11.includes("look.jacket") && ljs11.includes("look.badge") && ljs11.includes("look.necklace") && ljs11.includes("look.mustache") ? "OK" : "FAIL");
 console.log("premiers plans:", ljs11.includes("drawForeground") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v32 : expressions + jambes articulées + story cinéma
 const djs12 = fs.readFileSync("js/data.js", "utf8");
@@ -263,7 +263,7 @@ console.log("jambes genou:", ljs12.includes("jambes articulées") && ljs12.inclu
 const gjs12 = fs.readFileSync("js/game.js", "utf8");
 console.log("story typewriter:", gjs12.includes("typeTimer") && gjs12.includes("story-who") ? "OK" : "FAIL");
 console.log("css v32:", fs.readFileSync("css/style.css", "utf8").includes("story-who") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v33 : cinématiques vivantes
 const sjs13 = fs.readFileSync("js/sfx.js", "utf8");
@@ -274,7 +274,7 @@ console.log("réaction persos:", ljs13.includes("cineOn") ? "OK" : "FAIL");
 console.log("bips cine:", ljs13.includes("bipAt") ? "OK" : "FAIL");
 console.log("bulles coupées cine:", ljs13.includes("!bubble && !evCine") ? "OK" : "FAIL");
 console.log("story bips:", fs.readFileSync("js/game.js", "utf8").includes('playSfx("bip")') ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v34 : caméra + deux voix + nappe musicale
 const djs14 = fs.readFileSync("js/data.js", "utf8");
@@ -284,7 +284,7 @@ console.log("caméra cine:", ljs14.includes("camK") && ljs14.includes("camX") ? 
 console.log("nappe cine:", ljs14.includes("sfx.cine") ? "OK" : "FAIL");
 console.log("story nappe:", fs.readFileSync("js/game.js", "utf8").includes("cine.start") ? "OK" : "FAIL");
 console.log("sfx cine:", fs.readFileSync("js/sfx.js", "utf8").includes("startCine") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v35 : montage final — portrait, fondu, sons d'événement
 const djs15 = fs.readFileSync("js/data.js", "utf8");
@@ -294,7 +294,7 @@ console.log("portrait cine:", ljs15.includes("LOOK_BY_NAME") && ljs15.includes("
 console.log("fondu ligne:", ljs15.includes("lFade") ? "OK" : "FAIL");
 const sjs15 = fs.readFileSync("js/sfx.js", "utf8");
 console.log("sfx shot/horn:", sjs15.includes("shot()") && sjs15.includes("horn()") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v36 : grand écran — raids cinéma + générique de fin
 const gjs16 = fs.readFileSync("js/game.js", "utf8");
@@ -303,7 +303,7 @@ console.log("raid cinéma:", gjs16.includes('playRaidCinematic(() =>') ? "OK" : 
 console.log("générique fin:", gjs16.includes("end-credits") ? "OK" : "FAIL");
 const cjs16 = fs.readFileSync("css/style.css", "utf8");
 console.log("css v36:", cjs16.includes("credits-roll") && cjs16.includes("story-overlay.raid") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 // v37 : souvenirs & renaissance
 const gjs17 = fs.readFileSync("js/game.js", "utf8");
@@ -314,7 +314,18 @@ const ljs17 = fs.readFileSync("js/locscene.js", "utf8");
 console.log("polaroïd capture:", ljs17.includes("state.evLog") ? "OK" : "FAIL");
 console.log("html polaroids:", fs.readFileSync("index.html", "utf8").includes('id="polaroids"') ? "OK" : "FAIL");
 console.log("css v37:", fs.readFileSync("css/style.css", "utf8").includes(".polaroid") ? "OK" : "FAIL");
-console.log("SW cache v37:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v37") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
+
+// v38 : ouverture & collection
+const gjs18 = fs.readFileSync("js/game.js", "utf8");
+console.log("cinématique intro:", gjs18.includes("introPending") && gjs18.includes("un avenir mort") ? "OK" : "FAIL");
+console.log("album:", gjs18.includes("renderAlbum") && gjs18.includes("événements découverts") ? "OK" : "FAIL");
+console.log("migration evSeen:", gjs18.includes("state.evSeen") ? "OK" : "FAIL");
+const ljs18 = fs.readFileSync("js/locscene.js", "utf8");
+console.log("capture evSeen:", ljs18.includes("evSeen") ? "OK" : "FAIL");
+console.log("html album:", fs.readFileSync("index.html", "utf8").includes('id="album"') ? "OK" : "FAIL");
+console.log("css v38:", fs.readFileSync("css/style.css", "utf8").includes("album-grid") ? "OK" : "FAIL");
+console.log("SW cache v38:", fs.readFileSync("sw.js", "utf8").includes("heisenberg-v38") ? "OK" : "FAIL");
 
 console.log("SMOKE TEST PASSE");
 process.exit(0);

@@ -134,3 +134,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Polaroïds d'événements : les 24 derniers événements archivés dans le journal, toucher un polaroïd rejoue toute la cinématique (sous-titres, portraits, musique) *(livré en v37)*
 - [x] Cinématique de prestige : le salon de barbier avant chaque nouvelle identité *(livré en v37)*
 - [ ] Prochaines pistes : album photo complet (tous les événements découverts), cinématique de début de partie, doublage musical des arcs
+
+## Phase 18 — Ouverture & collection (v38) ✅ LIVRÉE (v38)
+- [x] Cinématique d'intro jouée une seule fois au lancement de la première partie *(livré en v38)*
+- [x] Album complet des événements : grille X/N dans le journal, inconnus en ???, rejouables une fois découverts *(livré en v38)*
+- [ ] Prochaines pistes : récompenses de collection (bonus par palier d'événements découverts), cinématique de fin de semaine, succès liés à l'album

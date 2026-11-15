@@ -949,6 +949,8 @@
           state.evLog.unshift({ id: ev.id, day: state.day });
           state.evLog = state.evLog.slice(0, 24);
         }
+        if (typeof state.evSeen !== "object" || !state.evSeen) state.evSeen = {};
+        state.evSeen[ev.id] = state.day; // v38 : album — événement découvert
       }
     } catch (err) {}
     state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);

@@ -152,4 +152,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v34 : plan de réalisateur — caméra de cinématique (zoom + pan vers le visiteur), répliques à deux voix, nappe musicale de tension.
 - v35 : montage final — portrait du locuteur en médaillon doré, fondu entre les lignes, bruitages signature par événement.
 - v36 : grand écran — raids DEA en mode cinéma, moteur de cinématique DOM générique, générique de fin animé.
-- **v37 (courante) : souvenirs & renaissance — polaroïds des événements passés dans le journal (24 derniers, toucher pour rejouer la cinématique complète avec voix/musique), cinématique de prestige (le barbier, « Rasez tout », renaissance sous le chapeau).**
+- v37 : souvenirs & renaissance — polaroïds d'événements rejouables dans le journal, cinématique de prestige (le barbier).
+- **v38 (courante) : ouverture & collection — cinématique d'intro à la première partie (Albuquerque, le RV, « La chimie est l'étude de la transformation »), album complet des événements dans le journal (collection X/N à compléter, événements inconnus en ???, rejouables une fois découverts).**

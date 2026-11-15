@@ -37,6 +37,7 @@ function newGame() {
     story: {},
     storyCine: [],
     evLog: [], // v37 : souvenirs d'événements
+    introPending: true, // v38 : cinématique d'intro à jouer
     loginStreak: 0,
     lastLogin: "",
     tutoDone: false,
@@ -1405,6 +1406,7 @@ function doPrestige() {
           ], () => {
             if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
             state = Object.assign(newGame(), keep);
+            state.introPending = false; // v38 : la renaissance a déjà sa cinématique
             playSfx("prestige");
             log(`🎭 Nouvelle identité ! +${pts} point(s) de légende (bonus permanent ×${legendMult().toFixed(2)}).`, "event");
             toast("🎭 Nouvelle identité", `Bonus permanent : +${Math.round(state.legendPoints * PRESTIGE_POINT_BONUS * 100)}% !`);
@@ -1880,6 +1882,7 @@ function renderLog() {
     .map((e) => `<div class="log-entry ${e.kind}"><span class="d">J${e.day}</span>${e.msg}</div>`)
     .join("");
   renderEventPolaroids(); // v37
+  renderAlbum(); // v38
 }
 
 // v37 : polaroïds des événements passés — toucher pour rejouer la cinématique
@@ -1914,6 +1917,24 @@ function replayEventCine(evId) {
   if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
   runCineBeats(lines, () => {
     if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
+  });
+}
+
+// v38 : album complet — tous les événements, découverts ou non
+function renderAlbum() {
+  const box = document.getElementById("album");
+  if (!box) return;
+  const seen = state.evSeen || {};
+  const found = EVENTS.filter((e) => seen[e.id]).length;
+  box.innerHTML = '<div class="pol-title">📕 Album — ' + found + '/' + EVENTS.length + ' événements découverts</div><div class="album-grid">' +
+    EVENTS.map((ev) => {
+      if (seen[ev.id]) {
+        return '<button class="album-chip seen" data-ev="' + ev.id + '"><span>' + (ev.emoji || "❕") + '</span><b>' + (ev.title || ev.id) + '</b></button>';
+      }
+      return '<span class="album-chip"><span>❓</span><b>???</b></span>';
+    }).join("") + "</div>";
+  box.querySelectorAll("button.album-chip").forEach((b) => {
+    b.addEventListener("click", () => replayEventCine(b.getAttribute("data-ev")));
   });
 }
 
@@ -2069,6 +2090,8 @@ function load() {
     if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
     if (state.goal === 10_000_000) state.goal = VICTORY_CASH; // v27 : anciennes parties passees au nouvel objectif
     if (!Array.isArray(state.evLog)) state.evLog = []; // v37 : souvenirs d'événements
+    if (typeof state.introPending !== "boolean") state.introPending = false; // v38 : pas d'intro sur les vieilles sauvegardes
+    if (typeof state.evSeen !== "object" || !state.evSeen) state.evSeen = {}; // v38 : album
     if (typeof state.mgCookDay !== "number") state.mgCookDay = 0; // v28
     if (typeof state.mgTucoDay !== "number") state.mgTucoDay = 0; // v28
     if (typeof state.mgSellDay !== "number") state.mgSellDay = 0; // v29
@@ -2166,3 +2189,25 @@ if (!load()) {
 render();
 if (offlineReport) setTimeout(() => showOfflineModal(offlineReport), 700);
 checkLoginStreak();
+
+// v38 : cinématique d'intro — jouée une seule fois, à la première partie
+(function () {
+  const play = document.getElementById("btn-play");
+  if (!play) return;
+  play.addEventListener("click", () => {
+    if (typeof state === "undefined" || !state || !state.introPending) return;
+    state.introPending = false;
+    setTimeout(() => {
+      if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
+      runCineBeats([
+        { icon: "🚌", who: "", line: "Albuquerque, Nouveau-Mexique. 50 ans, un chimiste brillant, un avenir mort." },
+        { icon: "🚐", who: "", line: "Un RV gris, un tablier vert, une balance de laboratoire." },
+        { icon: "⚗️", who: "Walter", line: "« La chimie est l'étude de la transformation. »" },
+        { icon: "🎩", who: "", line: "Objectif : 150 000 000$ d'argent propre. Et ne jamais se faire prendre." },
+      ], () => {
+        if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
+        if (typeof save === "function") save();
+      });
+    }, 400);
+  });
+})();
