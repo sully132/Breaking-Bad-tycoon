@@ -178,6 +178,7 @@ function checkAlbumTiers() {
     toast("📕 Album à " + pct + "%", "Revenus +" + bonus + "% permanent !");
     log("📕 Collection : " + pct + "% de l'album complété — revenus +" + bonus + "% (permanent).", "good");
     playSfx("golden");
+    checkAchievements(); // v40 : succès d'album
     render();
     save();
   }

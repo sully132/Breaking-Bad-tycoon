@@ -380,9 +380,21 @@
     ctx.scale(s, s);
 
     if (!noShadow) {
+      // v40 : ombre portée selon l'heure réelle (soleil bas = ombre longue et décalée)
+      let sdx = 0, srx = 13, sry = 4;
+      try {
+        const dt = new Date();
+        const hr = dt.getHours() + dt.getMinutes() / 60;
+        const th = ((hr - 6) / 12) * Math.PI; // 0 rad à 6h, π à 18h
+        if (hr >= 5.5 && hr <= 18.5) {
+          sdx = -Math.cos(th) * 7;
+          srx = 13 - Math.abs(Math.cos(th)) * 3;
+          sry = 4 + Math.abs(Math.cos(th)) * 2.5;
+        }
+      } catch (e) {}
       ctx.fillStyle = "rgba(20, 14, 8, 0.3)";
       ctx.beginPath();
-      ctx.ellipse(0, 1, 13, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(sdx, 1, srx, sry, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -763,6 +775,62 @@
       ctx.fillRect(w * 0.86, h * 0.34, 2.5, h * 0.44);
       ctx.fillRect(w * 0.90, h * 0.34, 2.5, h * 0.44);
       rr(w * 0.845, h * 0.26, 22, 16, 4); ctx.fill();
+    }
+  }
+
+
+  // v40 : faune de fond — corbeaux sur les fils, chien qui traverse, pigeons
+  let dogX = null, dogDir = 1, dogNext = 9000;
+  function drawFauna(w, h, t, night) {
+    const kind = sceneDef().kind;
+    if (night) return;
+    const gy = h * 0.78;
+    if (kind === "desert" || kind === "desert2") {
+      // corbeaux posés sur les fils télégraphiques
+      for (let i = 0; i < 2; i++) {
+        const cx = w * (0.28 + i * 0.33) + Math.sin(t * 0.7 + i * 3) * 3;
+        const cy = h * 0.452 + Math.sin(t * 2 + i) * 1.5;
+        ctx.fillStyle = "#14161c";
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 4.5, 2.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 3.5, cy - 2.5, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(cx - 5.5, cy - 1, 4, 1.6);
+      }
+    } else if (kind === "suburb" || kind === "backyard") {
+      // un chien traverse de temps en temps
+      if (dogX === null && anim > dogNext) { dogX = -0.05; dogDir = Math.random() < 0.5 ? 1 : -1; }
+      if (dogX !== null) {
+        dogX += dogDir * 0.0009;
+        const dx = w * dogX;
+        const hop = Math.abs(Math.sin(anim * 0.012)) * 3;
+        ctx.fillStyle = "#8a6a4a";
+        ctx.beginPath();
+        ctx.ellipse(dx, gy - 6 - hop, 8, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(dx + dogDir * 7, gy - 10 - hop, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(dx + dogDir * 8.5, gy - 12 - hop, 1.5, 2.5);
+        ctx.fillRect(dx - 6, gy - 4, 1.8, 5);
+        ctx.fillRect(dx + 4, gy - 4, 1.8, 5);
+        if (dogX < -0.1 || dogX > 1.1) { dogX = null; dogNext = anim + 20000 + Math.random() * 25000; }
+      }
+    } else if (kind === "plaza" || kind === "street") {
+      // pigeons qui picorent
+      for (let i = 0; i < 3; i++) {
+        const px = w * (0.55 + i * 0.05);
+        const py = gy + 6 + Math.sin(t * 3 + i * 2) * 1.5;
+        ctx.fillStyle = "#5a6270";
+        ctx.beginPath();
+        ctx.ellipse(px, py, 3.2, 2.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px + 2.4, py - 1.8, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -2638,6 +2706,7 @@
     if (extra) extra(w, h, t, night);
     drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
     drawProps(w, h, t, night); // v39 : détails de décor
+    drawFauna(w, h, t, night); // v40 : faune de fond
     drawLighting(w, h, t, night);
 
     if (def.kind === "desert" || def.kind === "desert2") drawTumbleweed(w, h, t);

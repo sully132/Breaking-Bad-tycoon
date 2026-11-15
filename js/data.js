@@ -2488,6 +2488,15 @@ ACHIEVEMENTS.push(
 );
 
 // ------------------------------------------------------------
+// v40 — SUCCÈS ALBUM (collection d'événements)
+// ------------------------------------------------------------
+ACHIEVEMENTS.push(
+  { id: "album25", icon: "📕", name: "Collectionneur", desc: "Découvrir 25% de l'album", check: (s) => (s.albumTier || 0) >= 1, reward: { cash: 10_000 } },
+  { id: "album50", icon: "📗", name: "Archiviste d'Albuquerque", desc: "Découvrir 50% de l'album", check: (s) => (s.albumTier || 0) >= 2, reward: { respect: 8 } },
+  { id: "album100", icon: "📚", name: "Mémoire vivante", desc: "Compléter tout l'album", check: (s) => (s.albumTier || 0) >= 4, reward: { cash: 250_000 } },
+);
+
+// ------------------------------------------------------------
 // v29 — ÉVÉNEMENTS SUPPLÉMENTAIRES
 // ------------------------------------------------------------
 EVENTS.push(

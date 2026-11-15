@@ -154,4 +154,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v36 : grand écran — raids DEA en mode cinéma, moteur de cinématique DOM générique, générique de fin animé.
 - v37 : souvenirs & renaissance — polaroïds d'événements rejouables dans le journal, cinématique de prestige (le barbier).
 - v38 : ouverture & collection — cinématique d'intro, album complet des événements (X/N, ??? à découvrir, rejouables).
-- **v39 (courante) : détails & vie de fond — props par décor (poteaux télégraphiques, clôtures, aspirateurs, voitures garées, bennes, feux tricolores, château d'eau), persos qui suivent l'événement du regard et se penchent vers le visiteur pendant les cinématiques, récompenses d'album (25/50/75/100% = +3/6/10/15% de revenus permanents).**
+- v39 : détails & vie de fond — props par décor, pupilles qui suivent l'événement, récompenses d'album (+3/6/10/15% revenus).
+- **v40 (courante) : trophées & faune — 3 succès d'album (Collectionneur 25%, Archiviste 50%, Mémoire vivante 100% avec 250 000$), faune de fond (corbeaux sur les fils du désert, chien qui traverse en banlieue, pigeons en ville), ombres portées dynamiques selon l'heure réelle (longues et décalées matin/soir).**

@@ -145,3 +145,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Persos vivants : pupilles qui suivent le visiteur pendant les cinématiques, léger penché de curiosité *(livré en v39)*
 - [x] Récompenses d'album : paliers 25/50/75/100% → +3/6/10/15% de revenus permanents, toast + son doré à chaque palier *(livré en v39)*
 - [ ] Prochaines pistes : succès liés à l'album, ombres portées dynamiques selon l'heure, animaux de fond (chiens, corbeaux)
+
+## Phase 20 — Trophées & faune (v40) ✅ LIVRÉE (v40)
+- [x] Succès d'album : Collectionneur (25%), Archiviste d'Albuquerque (50%), Mémoire vivante (100%, 250 000$) *(livré en v40)*
+- [x] Faune de fond : corbeaux sur les fils (désert), chien qui traverse (banlieue), pigeons qui picorent (ville) *(livré en v40)*
+- [x] Ombres portées dynamiques : direction et longueur selon l'heure réelle du soleil *(livré en v40)*
+- [ ] Prochaines pistes : saison des pluies visible sur plusieurs jours, événements qui modifient les décors de façon persistante, oiseaux qui s'envolent au tap
