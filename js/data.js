@@ -1040,7 +1040,7 @@ ACHIEVEMENTS.push(
 const MAP_LOCATIONS = [
   {
     id: "rv", name: "RV dans le désert", emoji: "🚙", x: 0.13, y: 0.3, color: "#d8c79b",
-    desc: "Le RV grise, cloquamant sous le soleil. Ça sent le chou-fleur et la dangerosité.",
+    desc: "Le RV grise, cloquamant sous le soleil. Ça sent le chou-fleur et la dangerosité. Ton labo mobile — ouvre-le depuis ici.",
     interactions: [
       {
         id: "cookwild", icon: "🍳", label: "Cuisson sauvage", apCost: 1,

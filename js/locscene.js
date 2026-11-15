@@ -1107,13 +1107,28 @@
         if (!spots.some((p) => Math.abs(p[0] - cand) < 0.1)) { px = cand; break; }
       }
     }
+    // v49 : cohérence des persos — si le visiteur est déjà un personnage de la
+    // scène (même apparence), pas de doublon : le perso de la scène porte
+    // l'événement (badge, bulle, caméra, tap)
+    let dupScreen = null;
+    if (typeof CHAR_LOOKS !== "undefined" && typeof SCENES !== "undefined") {
+      const sdef = SCENES[def.kind];
+      if (sdef && sdef.chars) {
+        for (const k of Object.keys(CHAR_LOOKS)) {
+          if (CHAR_LOOKS[k] === look && sdef.chars.includes(k)) {
+            dupScreen = charScreens.find((c) => c.id === k) || null;
+            break;
+          }
+        }
+      }
+    }
     const enterRef = inCine ? evCine.start : evEnterAt;
     const kIn = Math.min(1, (anim - enterRef) / 900);
     const ease = 1 - Math.pow(1 - kIn, 3);
     const startX = -0.18;
-    const x = w * (startX + (px - startX) * ease);
-    const sc = 1.65;
-    const walking = kIn < 1;
+    const x = dupScreen ? dupScreen.x : w * (startX + (px - startX) * ease);
+    const sc = dupScreen ? dupScreen.s : 1.65;
+    const walking = !dupScreen && kIn < 1;
     const bob = walking ? Math.abs(Math.sin(anim * 0.02)) * 6 : 0;
     // v28 : faisceau de lumière sur le visiteur
     const sa = 0.10 + 0.05 * Math.sin(anim * 0.005);
@@ -1127,8 +1142,8 @@
       const base = (typeof EV_MOODS !== "undefined" && EV_MOODS[ev.id]) || "neutral";
       vMood = evCine.idx > 0 ? (base === "angry" ? "shout" : base) : "neutral";
     }
-    drawPerson(x, ground - bob, sc, look, vMood, inCine ? "crossed" : null);
-    eventVisitor = { x, y: ground, s: sc };
+    if (!dupScreen) drawPerson(x, ground - bob, sc, look, vMood, inCine ? "crossed" : null); // v49 : pas de doublon
+    eventVisitor = dupScreen ? { x: dupScreen.x, y: dupScreen.y, s: dupScreen.s } : { x, y: ground, s: sc }; // v49
     for (const p of evParts) {
       p.x += p.vx * 0.016; p.y += p.vy * 0.016; p.life -= 0.006;
       if (p.life <= 0 || p.y < 0.3) { p.x = Math.random(); p.y = 0.9; p.life = 1; }
@@ -3106,6 +3121,17 @@
         disabled: active || cd > 0,
         apply: () => { activatePubBoost(); buildSheet(); },
       });
+    }
+
+    // v49 : accès direct au labo depuis les lieux de cuisson (RV = camping car)
+    if ((loc.id === "rv" || loc.id === "superlab") && typeof closeLocScene === "function") {
+      const labTab = document.querySelector('#bottom-nav button[data-tab="base"]');
+      if (labTab) {
+        buttons.push({
+          label: "🔬 Ouvrir le labo — production, équipement, améliorations",
+          apply: () => { closeLocScene(); labTab.click(); },
+        });
+      }
     }
 
     // v28 : mini-jeux par lieu

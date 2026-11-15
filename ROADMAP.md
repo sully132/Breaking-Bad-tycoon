@@ -204,3 +204,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Contrats express : petites livraisons chronométrées en TEMPS RÉEL (10 minutes), paiement ×2,2 immédiat, apparition quotidienne aléatoire *(livré en v48)*
 - [x] Succès « Livreur express » : 5 contrats express réussis (+30 000$, +5 respect) *(livré en v48)*
 - [ ] Prochaines pistes : contrats express visibles sur la carte, chaîne de prestige post-reset, flou d'arrière-plan sur les plans poitrine
+
+## Phase 29 — Cohérence des persos & labo sur la carte (v49) ✅ LIVRÉE (v49)
+- [x] Déduplication des personnages : si le visiteur d'événement est déjà dans la scène (Tuco au désert, Hank à la DEA…), c'est le perso de la scène qui porte l'événement — plus de doublons *(livré en v49)*
+- [x] Caméra et tap redirigés vers le vrai perso de la scène quand il porte l'événement *(livré en v49)*
+- [x] Bouton « 🔬 Ouvrir le labo » dans le bottom-sheet du RV et du superlab — accès direct à la production depuis la carte *(livré en v49)*
+- [x] Description du RV mise à jour : le camping car est ton labo mobile *(livré en v49)*
+- [ ] Prochaines pistes : contrats express visibles sur la carte, chaîne de prestige post-reset, flou d'arrière-plan sur les plans poitrine
