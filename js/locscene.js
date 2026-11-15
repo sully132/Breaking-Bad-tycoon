@@ -99,13 +99,24 @@
   let rain = [];
   let flash = 0;
   let nextBolt = 4000;
+  let puddles = [], puddleUntil = 0; // v41 : flaques
 
   function rollWeather() {
+    const prev = weather;
     const r = Math.random();
     weather = r < 0.62 ? "clear" : r < 0.88 ? "rain" : "storm";
     rain = [];
     flash = 0;
     nextBolt = 2500 + Math.random() * 6000;
+    // v41 : la pluie laisse des flaques qui sèchent lentement
+    if (weather === "clear" && prev !== "clear") {
+      puddles = [];
+      const n = 4 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) {
+        puddles.push({ x: 0.1 + Math.random() * 0.8, y: 0.80 + Math.random() * 0.14, rx: 14 + Math.random() * 22, ry: 3 + Math.random() * 3 });
+      }
+      puddleUntil = anim + 45000;
+    }
     if (weather !== "clear") {
       const n = weather === "storm" ? 130 : 80;
       for (let i = 0; i < n; i++) {
@@ -714,6 +725,22 @@
 
 
   // v39 : détails de décor — petits éléments propres à chaque lieu
+  // v41 : flaques qui reflètent le ciel et sèchent
+  function drawPuddles(w, h, t) {
+    if (anim >= puddleUntil || !puddles.length) return;
+    const k = Math.min(1, (puddleUntil - anim) / 15000);
+    for (const p of puddles) {
+      ctx.fillStyle = "rgba(130, 170, 210, " + (0.22 * k).toFixed(3) + ")";
+      ctx.beginPath();
+      ctx.ellipse(p.x * w, p.y * h, p.rx, p.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(220, 240, 255, " + (0.18 * k * (0.5 + 0.5 * Math.sin(t * 2 + p.x * 9))).toFixed(3) + ")";
+      ctx.beginPath();
+      ctx.ellipse(p.x * w - p.rx * 0.2, p.y * h - 1, p.rx * 0.4, p.ry * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   function drawProps(w, h, t, night) {
     const kind = sceneDef().kind;
     const gy = h * 0.78;
@@ -781,15 +808,19 @@
 
   // v40 : faune de fond — corbeaux sur les fils, chien qui traverse, pigeons
   let dogX = null, dogDir = 1, dogNext = 9000;
+  let birdScare = -99999, dogBoost = -99999; // v41 : interactions
   function drawFauna(w, h, t, night) {
     const kind = sceneDef().kind;
     if (night) return;
     const gy = h * 0.78;
     if (kind === "desert" || kind === "desert2") {
-      // corbeaux posés sur les fils télégraphiques
+      // corbeaux posés sur les fils — ils s'envolent si on les approche (v41)
+      const sAge = anim - birdScare;
+      const fly = sAge >= 0 && sAge < 1600 ? sAge / 1600 : 0;
       for (let i = 0; i < 2; i++) {
-        const cx = w * (0.28 + i * 0.33) + Math.sin(t * 0.7 + i * 3) * 3;
-        const cy = h * 0.452 + Math.sin(t * 2 + i) * 1.5;
+        const cx = w * (0.28 + i * 0.33) + Math.sin(t * 0.7 + i * 3) * 3 + (fly > 0 ? Math.sin(i * 2.1) * 46 * fly : 0);
+        const cy = h * 0.452 + Math.sin(t * 2 + i) * 1.5 - fly * h * 0.25;
+        ctx.globalAlpha = 1 - fly * 0.9;
         ctx.fillStyle = "#14161c";
         ctx.beginPath();
         ctx.ellipse(cx, cy, 4.5, 2.6, 0, 0, Math.PI * 2);
@@ -798,12 +829,20 @@
         ctx.arc(cx + 3.5, cy - 2.5, 1.8, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillRect(cx - 5.5, cy - 1, 4, 1.6);
+        if (fly > 0 && fly < 1) {
+          const wf = Math.sin(anim * 0.04) * 4;
+          ctx.beginPath();
+          ctx.moveTo(cx - 2, cy - 1); ctx.lineTo(cx - 7, cy - 3 - wf); ctx.lineTo(cx - 1, cy + 1);
+          ctx.moveTo(cx + 2, cy - 1); ctx.lineTo(cx + 7, cy - 3 - wf); ctx.lineTo(cx + 1, cy + 1);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
       }
     } else if (kind === "suburb" || kind === "backyard") {
       // un chien traverse de temps en temps
       if (dogX === null && anim > dogNext) { dogX = -0.05; dogDir = Math.random() < 0.5 ? 1 : -1; }
       if (dogX !== null) {
-        dogX += dogDir * 0.0009;
+        dogX += dogDir * 0.0009 * ((anim - dogBoost < 2000) ? 3 : 1); // v41 : tap = il sprinte
         const dx = w * dogX;
         const hop = Math.abs(Math.sin(anim * 0.012)) * 3;
         ctx.fillStyle = "#8a6a4a";
@@ -816,13 +855,22 @@
         ctx.fillRect(dx + dogDir * 8.5, gy - 12 - hop, 1.5, 2.5);
         ctx.fillRect(dx - 6, gy - 4, 1.8, 5);
         ctx.fillRect(dx + 4, gy - 4, 1.8, 5);
+        if (anim - dogBoost < 1500) {
+          ctx.font = "bold 11px sans-serif";
+          ctx.fillStyle = "#fff6e0";
+          ctx.textAlign = "center";
+          ctx.fillText("Ouaf !", dx, gy - 22 - hop);
+        }
         if (dogX < -0.1 || dogX > 1.1) { dogX = null; dogNext = anim + 20000 + Math.random() * 25000; }
       }
     } else if (kind === "plaza" || kind === "street") {
       // pigeons qui picorent
+      const sAgeP = anim - birdScare;
+      const flyP = sAgeP >= 0 && sAgeP < 1400 ? sAgeP / 1400 : 0;
       for (let i = 0; i < 3; i++) {
-        const px = w * (0.55 + i * 0.05);
-        const py = gy + 6 + Math.sin(t * 3 + i * 2) * 1.5;
+        const px = w * (0.55 + i * 0.05) + (flyP > 0 ? (i - 1) * 40 * flyP : 0);
+        const py = gy + 6 + Math.sin(t * 3 + i * 2) * 1.5 - flyP * h * 0.2;
+        ctx.globalAlpha = 1 - flyP * 0.9;
         ctx.fillStyle = "#5a6270";
         ctx.beginPath();
         ctx.ellipse(px, py, 3.2, 2.2, 0, 0, Math.PI * 2);
@@ -830,8 +878,51 @@
         ctx.beginPath();
         ctx.arc(px + 2.4, py - 1.8, 1.2, 0, Math.PI * 2);
         ctx.fill();
+        if (flyP > 0 && flyP < 1) {
+          const wf = Math.sin(anim * 0.045 + i) * 3;
+          ctx.beginPath();
+          ctx.moveTo(px - 1, py - 1); ctx.lineTo(px - 5, py - 2.5 - wf); ctx.lineTo(px, py + 0.5);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
       }
     }
+  }
+
+  // v41 : tap près de la faune → les oiseaux s'envolent, le chien aboie
+  function tryScareFauna(mx, my, w, h) {
+    if (anim - birdScare < 1600 && anim - dogBoost < 1600) return false;
+    const kind = sceneDef().kind;
+    if (kind === "desert" || kind === "desert2") {
+      for (let i = 0; i < 2; i++) {
+        const cx = w * (0.28 + i * 0.33);
+        const cy = h * 0.452;
+        if (Math.hypot(mx - cx, my - cy) < 34) {
+          birdScare = anim;
+          if (typeof playSfx === "function") playSfx("tap");
+          return true;
+        }
+      }
+    } else if (kind === "plaza" || kind === "street") {
+      for (let i = 0; i < 3; i++) {
+        const px = w * (0.55 + i * 0.05);
+        const py = h * 0.78 + 6;
+        if (Math.hypot(mx - px, my - py) < 30) {
+          birdScare = anim;
+          if (typeof playSfx === "function") playSfx("tap");
+          return true;
+        }
+      }
+    } else if (kind === "suburb" || kind === "backyard" && dogX !== null) {
+      const dx = w * dogX;
+      const dy = h * 0.78 - 10;
+      if (Math.hypot(mx - dx, my - dy) < 34) {
+        dogBoost = anim;
+        if (typeof playSfx === "function") playSfx("tap");
+        return true;
+      }
+    }
+    return false;
   }
 
   function drawCharRow(w, h, chars, positions) {
@@ -2705,6 +2796,7 @@
     const extra = EXTRAS[def.kind];
     if (extra) extra(w, h, t, night);
     drawGroundTexture(w, h, h * 0.64, night ? "rgba(255,255,255,0.05)" : "rgba(40, 26, 10, 0.1)");
+    drawPuddles(w, h, t); // v41 : flaques
     drawProps(w, h, t, night); // v39 : détails de décor
     drawFauna(w, h, t, night); // v40 : faune de fond
     drawLighting(w, h, t, night);
@@ -2999,6 +3091,12 @@
       for (let i = 0; i < 5; i++) {
         sparks.push({ x: mx, y: my, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 80, life: 0.4 });
       }
+      return;
+    }
+
+    // v41 : effrayer la faune au tap
+    if (tryScareFauna(mx, my, canvas.clientWidth, canvas.clientHeight)) {
+      if (typeof haptic === "function") haptic(8);
       return;
     }
 

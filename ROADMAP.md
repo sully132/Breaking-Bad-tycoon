@@ -151,3 +151,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Faune de fond : corbeaux sur les fils (désert), chien qui traverse (banlieue), pigeons qui picorent (ville) *(livré en v40)*
 - [x] Ombres portées dynamiques : direction et longueur selon l'heure réelle du soleil *(livré en v40)*
 - [ ] Prochaines pistes : saison des pluies visible sur plusieurs jours, événements qui modifient les décors de façon persistante, oiseaux qui s'envolent au tap
+
+## Phase 21 — Traces & interactions (v41) ✅ LIVRÉE (v41)
+- [x] Oiseaux interactifs : corbeaux et pigeons s'envolent au tap (ailes battantes, dispersion) *(livré en v41)*
+- [x] Chien interactif : sprint + « Ouaf ! » quand on le touche *(livré en v41)*
+- [x] Flaques après la pluie : formées au retour du beau temps, reflet du ciel, séchage progressif (~45 s) *(livré en v41)*
+- [ ] Prochaines pistes : traces de pas dans les flaques, herbe qui pousse selon les jours, ombres des nuages qui glissent au sol
