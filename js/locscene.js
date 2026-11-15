@@ -1004,10 +1004,13 @@
     const list = chars || [];
     charScreens = [];
     const tw = anim / 1000;
+    // v55 : fix — cineOn était déclaré DANS la boucle for mais utilisé APRÈS la boucle
+    // (marque de réaction v48) → ReferenceError à CHAQUE frame de CHAQUE scène :
+    // la boucle draw() mourait net (décor figé, aucun perso, aucun événement)
+    const cineOn = !!evCine;
     for (let i = 0; i < list.length; i++) {
       const pos = (positions && positions[i]) || [0.42 + i * 0.14, 1];
       // v33 : pendant une cinématique, les persos s'arrêtent et regardent
-      const cineOn = !!evCine;
       const range = cineOn ? w * 0.004 : w * 0.022;
       let x = w * pos[0] + Math.sin(tw * 0.4 + i * 2.3) * range;
       const sc = 1.5 * (pos[1] || 1);
@@ -3105,7 +3108,10 @@
   // ---------- bottom-sheet ----------
 
   function buildSheet() {
-    const loc = loc();
+    // v55 : fix TDZ — le const loc masquait la fonction helper loc() et s'appelait
+    // lui-même dans son initialiseur (ReferenceError) : le bottom-sheet était mort
+    // depuis la v49 (plus de bouton d'événement, d'actions ni de labo)
+    const loc = (!currentLocId || typeof MAP_LOCATIONS === "undefined") ? null : (MAP_LOCATIONS.find((l) => l.id === currentLocId) || null);
     if (!loc) return;
     const emojiEl = document.getElementById("locsheet-emoji");
     const titleEl = document.getElementById("locsheet-title");

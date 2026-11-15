@@ -242,3 +242,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Le badge « ! » pulsant au-dessus du visiteur est maintenant tappable (avant : le tap à côté du perso était raté) *(livré en v54)*
 - [x] L'événement se déclenche automatiquement ~1 s après l'entrée dans la scène — plus besoin de savoir qu'il faut taper le visiteur *(livré en v54)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
+## Phase 35 — Fix majeur : bottom-sheet mort depuis la v49 (v55) ✅ LIVRÉE (v55)
+- [x] Cause trouvée avec le nouveau harnais runtime : `const loc = loc()` dans buildSheet — la variable locale masquait la fonction helper et s'appelait elle-même (ReferenceError TDZ), le bottom-sheet ne se construisait plus depuis la v49 *(livré en v55)*
+- [x] Conséquences corrigées : bouton d'événement, interactions, coup de pub, mini-jeux, labo — toutes les actions de scène fonctionnent à nouveau *(livré en v55)*
+- [x] Nouveau filet permanent `runtime.test.js` : charge les 8 scripts dans l'ordre du jeu, pumppe les vraies boucles de rendu (labo, carte, 17 scènes), joue une cinématique complète au clavier/souris simulés *(livré en v55)*
+- [x] Deuxième bombe trouvée par le harnais : `cineOn` déclarée DANS la boucle for de drawCharRow mais utilisée après — ReferenceError à chaque frame de chaque scène, la boucle draw() mourait net (décor figé, aucun perso, aucun événement visible) *(livré en v55)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
