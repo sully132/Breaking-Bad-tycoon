@@ -237,6 +237,33 @@ check("ouverture + 90 frames de chaque lieu (" + (typeof MAP_LOCATIONS !== "unde
     if (pumpError) { const e = pumpError; pumpError = null; throw new Error(e.message + " @ " + (e.stack || "").split("\n")[1]); }
   });
 
+  // événement à CHOIX : cine → modale VISIBLE au-dessus de la scène → clic sur un choix
+  check("événement à choix : modale visible + choix cliquable (fix z-index v56)", async () => {
+    XG.state.sceneEvents = ["rats"]; // choice, superlab
+    window.openLocScene("superlab");
+    pumpSafe(20);
+    await new Promise((r) => setTimeout(r, 1400)); // auto-déclenchement v54
+    pumpSafe(40);
+    const cv = registry["locscene-canvas"];
+    for (let i = 0; i < 14; i++) {
+      cv.dispatch("pointerdown", { clientX: 195, clientY: 140, pointerId: 1 });
+      pumpSafe(6);
+    }
+    pumpSafe(30);
+    if (pumpError) { const e = pumpError; pumpError = null; throw new Error("cine → " + e.message); }
+    const modal = registry["modal"];
+    if (!modal || modal.classList.contains("hidden")) throw new Error("la modale de choix est restée invisible (z-index ou autre)");
+    const mc = registry["modal-choices"];
+    const btn = mc && mc.children && mc.children[0];
+    if (!btn) throw new Error("aucun bouton de choix dans la modale");
+    const cashBefore = XG.state.cash;
+    (btn._listeners.click || []).forEach((fn) => fn({}));
+    if (!modal.classList.contains("hidden")) throw new Error("la modale ne se ferme pas après le choix");
+    XG.state.sceneEvents = [];
+    window.closeLocScene();
+    pumpSafe(5);
+  });
+
   // endDay complet ×3 avec événements en file
   check("3 × endDay avec événements de scène en file", () => {
     XG.state.sceneEvents = ["hank", "tuco"];

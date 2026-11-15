@@ -247,7 +247,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  /* v56 : au-dessus de la scène plein écran (z-index 90) — avant, les modales
+     d'événements à choix s'ouvraient DERRIÈRE la scène : impossibles à voir
+     et donc à résoudre quand l'événement se jouait dans une scène */
+  z-index: 120;
 }
 .hidden { display: none; }
 

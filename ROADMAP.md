@@ -248,3 +248,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Nouveau filet permanent `runtime.test.js` : charge les 8 scripts dans l'ordre du jeu, pumppe les vraies boucles de rendu (labo, carte, 17 scènes), joue une cinématique complète au clavier/souris simulés *(livré en v55)*
 - [x] Deuxième bombe trouvée par le harnais : `cineOn` déclarée DANS la boucle for de drawCharRow mais utilisée après — ReferenceError à chaque frame de chaque scène, la boucle draw() mourait net (décor figé, aucun perso, aucun événement visible) *(livré en v55)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
+## Phase 36 — Événements à choix jouables dans les scènes (v56) ✅ LIVRÉE (v56)
+- [x] Cause trouvée par le harnais runtime : la modale de choix s'ouvrait DERRIÈRE la scène plein écran (z-index 50 contre 90 pour #locscene) — invisible, impossible de choisir *(livré en v56)*
+- [x] La modale (et l'overlay de fin) passe au-dessus de la scène et des mini-jeux (z-index 120) *(livré en v56)*
+- [x] Nouveau test runtime complet : événement à choix « rats » au superlab — cinématique auto, modale visible, clic sur un choix, effets appliqués, modale fermée *(livré en v56)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
