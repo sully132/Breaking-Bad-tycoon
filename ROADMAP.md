@@ -190,3 +190,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Sous-titres vivants : boîte qui glisse à chaque réplique, soulignement doré animé sous le nom, points de progression des répliques *(livré en v46)*
 - [x] Fix : le médaillon était recouvert par la boîte de sous-titres (calque inversé depuis v35) *(livré en v46)*
 - [ ] Prochaines pistes : plan large/plan poitrine alternés (zoom variable par réplique), flou d'arrière-plan, réactions des passants pendant la cinématique
+
+## Phase 27 — Montage cinéma (v47) ✅ LIVRÉE (v47)
+- [x] Plans de caméra alternés par réplique : plan d'établissement (large), plan moyen sur la narration, plan poitrine sur les dialogues (zoom ×1,16 + pan renforcé vers le locuteur) *(livré en v47)*
+- [x] Transitions douces entre les plans (lissage 8%/frame) au lieu de coupures sèches de zoom *(livré en v47)*
+- [x] Retour progressif au cadre neutre quand la cinématique se termine *(livré en v47)*
+- [x] Roulis de caméra (légère rotation) pendant la secousse dramatique *(livré en v47)*
+- [ ] Prochaines pistes : flou d'arrière-plan sur les plans poitrine, réactions des passants pendant la cinématique, contrats express à durée limitée

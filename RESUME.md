@@ -157,4 +157,4 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v39 : détails & vie de fond — props par décor, pupilles qui suivent l'événement, récompenses d'album (+3/6/10/15% revenus).
 - v40 : trophées & faune — 3 succès d'album, corbeaux/chien/pigeons, ombres dynamiques selon l'heure.
 - v41 : traces & interactions — oiseaux qui s'envolent au tap, chien qui aboie, flaques après la pluie.
-- **v46 (courante) : cinématiques de niveau cinéma — spotlight théâtral, grain de film animé, vignette renforcée, secousse d'écran sur les sons dramatiques (coup de feu, alarme), médaillon qui pop et respire, soulignement doré animé sous le nom du locuteur, sous-titres qui glissent, points de progression des répliques, fix du calque médaillon.**
+- **v47 (courante) : montage cinéma — plans de caméra alternés par réplique (plan d'établissement, plan moyen, plan poitrine avec zoom ×1,16 et pan renforcé), transitions douces entre les plans, retour progressif au cadre neutre après la cinématique, roulis de caméra sur la secousse dramatique.**

@@ -1046,6 +1046,7 @@
   // v28 : animation d'entrée, bannière, braises, flash
   let lastEvId = null, evEnterAt = 0, evParts = [], evFlash = 0, evBanner = null;
   let cineShake = 0; // v46 : secousse dramatique en cours
+  let camKCur = 1, camXCur = null; // v47 : plans de caméra alternés (valeurs lissées)
   let evCine = null; // v31 : cinématique d'événement
   let charMood = null, charMoodUntil = 0; // v32 : humeur temporaire
   let lookTargetX = null; // v39 : les persos suivent du regard
@@ -1248,7 +1249,13 @@
     // v34 : réplique à deux voix — un perso de la scène répond
     const reply = (typeof EVENT_REPLIES !== "undefined" && EVENT_REPLIES[ev.id]) || null;
     if (reply) lines.push({ who: reply.who, text: reply.text });
-    evCine = { ev, lines, who, idx: 0, start: anim, lineStart: anim, reveal: false, bipAt: 0 };
+    // v47 : plans de caméra alternés — plan d'établissement, puis alternance
+    const shots = lines.map((ln, i) => {
+      if (i === 0) return 0; // plan large d'établissement
+      if (!ln.who) return 1; // plan moyen sur la narration
+      return (i % 2 === 0) ? 1 : 2; // alterne plan moyen / plan poitrine
+    });
+    evCine = { ev, lines, who, idx: 0, start: anim, lineStart: anim, reveal: false, bipAt: 0, shots };
     if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
   }
 
@@ -2899,12 +2906,26 @@
     // v34 : caméra de cinématique — léger zoom + pan vers le visiteur
     let camK = 1, camX = w / 2, camY = h * 0.55;
     if (evCine) {
+      // v47 : plans de caméra alternés — zoom et pan dépendent de la réplique
       const cAge = anim - evCine.start;
       const cK = 1 - Math.pow(1 - Math.min(1, cAge / 900), 3);
-      camK = 1 + 0.07 * cK;
-      const target = eventVisitor ? eventVisitor.x : w / 2;
-      camX = w / 2 + (target - w / 2) * 0.35 * cK;
-      camY = h * 0.55 - h * 0.03 * cK;
+      const shot = evCine.shots ? (evCine.shots[evCine.idx] || 0) : 1;
+      const zk = shot === 2 ? 0.16 : shot === 1 ? 0.07 : 0.01;
+      const pk = shot === 2 ? 0.55 : 0.35;
+      const ty = h * 0.55 - h * (shot === 2 ? 0.06 : 0.03) * cK;
+      if (camXCur === null) camXCur = w / 2;
+      camKCur += (1 + zk * cK - camKCur) * 0.08; // transition douce entre les plans
+      camXCur += ((w / 2 + ((eventVisitor ? eventVisitor.x : w / 2) - w / 2) * pk * cK) - camXCur) * 0.08;
+      camK = camKCur;
+      camX = camXCur;
+      camY = camY + (ty - camY) * 0.08;
+    } else if (camKCur !== 1 || (camXCur !== null && Math.abs(camXCur - w / 2) > 0.5)) {
+      // v47 : retour doux au cadre neutre après la cinématique
+      camKCur += (1 - camKCur) * 0.08;
+      if (camXCur === null) camXCur = w / 2;
+      camXCur += (w / 2 - camXCur) * 0.08;
+      camK = camKCur;
+      camX = camXCur;
     }
     ctx.save();
     ctx.translate(w / 2, camY);
@@ -2913,6 +2934,7 @@
     if (cineShake > 0) { // v46 : secousse dramatique
       const sh = cineShake * 6;
       ctx.translate(Math.sin(anim * 0.09) * sh, Math.cos(anim * 0.113) * sh * 0.6);
+      ctx.rotate(Math.sin(anim * 0.09) * 0.004 * cineShake); // v47 : roulis
       cineShake = Math.max(0, cineShake - 0.025);
     }
 
