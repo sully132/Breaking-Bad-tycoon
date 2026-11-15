@@ -151,4 +151,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v33 : cinématiques vivantes — bips de dialogue pendant les sous-titres, visiteur en pose bras croisés, persos qui s'arrêtent et regardent l'événement, bulles auto coupées, furieux qui crient.
 - v34 : plan de réalisateur — caméra de cinématique (zoom + pan vers le visiteur), répliques à deux voix, nappe musicale de tension.
 - v35 : montage final — portrait du locuteur en médaillon doré, fondu entre les lignes, bruitages signature par événement.
-- **v36 (courante) : grand écran — raids DEA en mode cinéma (cinématique rouge « ENCLEVEZ TOUT ! » avant la résolution), moteur de cinématique DOM générique (story + raids), générique de fin animé qui défile à la victoire (crédits style série avec le casting de l'empire).**
+- v36 : grand écran — raids DEA en mode cinéma, moteur de cinématique DOM générique, générique de fin animé.
+- **v37 (courante) : souvenirs & renaissance — polaroïds des événements passés dans le journal (24 derniers, toucher pour rejouer la cinématique complète avec voix/musique), cinématique de prestige (le barbier, « Rasez tout », renaissance sous le chapeau).**

@@ -941,6 +941,16 @@
     const ev = evCine.ev;
     evCine = null;
     if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
+    // v37 : polaroïd — on garde le souvenir de l'événement
+    try {
+      if (typeof state !== "undefined") {
+        if (!Array.isArray(state.evLog)) state.evLog = [];
+        if (!state.evLog.some((r) => r.id === ev.id && r.day === state.day)) {
+          state.evLog.unshift({ id: ev.id, day: state.day });
+          state.evLog = state.evLog.slice(0, 24);
+        }
+      }
+    } catch (err) {}
     state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);
     eventVisitor = null;
     if (ev.type === "choice" && typeof showEventModal === "function") {

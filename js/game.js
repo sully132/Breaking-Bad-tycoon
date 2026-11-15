@@ -36,6 +36,7 @@ function newGame() {
     relics: [],
     story: {},
     storyCine: [],
+    evLog: [], // v37 : souvenirs d'événements
     loginStreak: 0,
     lastLogin: "",
     tutoDone: false,
@@ -1395,13 +1396,22 @@ function doPrestige() {
             legendCoins: (s.legendCoins || 0) + pts,
             legendUpgrades: s.legendUpgrades || {},
           };
-          state = Object.assign(newGame(), keep);
-          playSfx("prestige");
-          log(`🎭 Nouvelle identité ! +${pts} point(s) de légende (bonus permanent ×${legendMult().toFixed(2)}).`, "event");
-          toast("🎭 Nouvelle identité", `Bonus permanent : +${Math.round(state.legendPoints * PRESTIGE_POINT_BONUS * 100)}% !`);
-          checkAchievements();
-          render();
-          save();
+          // v37 : cinématique de renaissance avant le grand saut
+          if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
+          runCineBeats([
+            { icon: "💈", who: "", line: "Un salon de barbier, quelque part hors de l'État." },
+            { icon: "💈", who: "Walter", line: "Rasez tout. Je dois devenir quelqu'un d'autre." },
+            { icon: "🎩", who: "", line: "L'homme qui ressort n'a plus le même visage. L'empire, lui, attend." },
+          ], () => {
+            if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
+            state = Object.assign(newGame(), keep);
+            playSfx("prestige");
+            log(`🎭 Nouvelle identité ! +${pts} point(s) de légende (bonus permanent ×${legendMult().toFixed(2)}).`, "event");
+            toast("🎭 Nouvelle identité", `Bonus permanent : +${Math.round(state.legendPoints * PRESTIGE_POINT_BONUS * 100)}% !`);
+            checkAchievements();
+            render();
+            save();
+          });
         },
       },
       { label: "Pas encore", apply() {} },
@@ -1869,6 +1879,42 @@ function renderLog() {
   document.getElementById("log").innerHTML = state.log
     .map((e) => `<div class="log-entry ${e.kind}"><span class="d">J${e.day}</span>${e.msg}</div>`)
     .join("");
+  renderEventPolaroids(); // v37
+}
+
+// v37 : polaroïds des événements passés — toucher pour rejouer la cinématique
+function renderEventPolaroids() {
+  const box = document.getElementById("polaroids");
+  if (!box) return;
+  const list = state.evLog || [];
+  if (!list.length) { box.innerHTML = ""; box.style.display = "none"; return; }
+  box.style.display = "";
+  box.innerHTML = '<div class="pol-title">📸 Souvenirs (toucher pour rejouer)</div><div class="pol-row">' +
+    list.map((r) => {
+      const ev = EVENTS.find((e) => e.id === r.id);
+      if (!ev) return "";
+      return '<button class="polaroid" data-ev="' + ev.id + '"><span class="pol-emoji">' + (ev.emoji || "❕") +
+        '</span><span class="pol-name">' + (ev.title || ev.id) + '</span><span class="pol-day">J' + r.day + '</span></button>';
+    }).join("") + "</div>";
+  box.querySelectorAll(".polaroid").forEach((b) => {
+    b.addEventListener("click", () => replayEventCine(b.getAttribute("data-ev")));
+  });
+}
+
+function replayEventCine(evId) {
+  const ev = EVENTS.find((e) => e.id === evId);
+  if (!ev) return;
+  const quotes = (typeof EVENT_QUOTES !== "undefined" && EVENT_QUOTES[ev.id]) || [];
+  const who = (typeof CHAR_NAMES !== "undefined" && CHAR_NAMES[ev.id]) || "";
+  const lines = [{ who: "", text: ev.text || ev.title }];
+  quotes.slice(0, 2).forEach((q) => lines.push({ who, text: q }));
+  const reply = (typeof EVENT_REPLIES !== "undefined" && EVENT_REPLIES[ev.id]) || null;
+  if (reply) lines.push({ who: reply.who, text: reply.text });
+  playSfx("event");
+  if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
+  runCineBeats(lines, () => {
+    if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
+  });
 }
 
 // ---------- Modales ----------
@@ -2022,6 +2068,7 @@ function load() {
     state.pendingEvents = Array.isArray(data.pendingEvents) ? data.pendingEvents : [];
     if (!Array.isArray(state.sceneEvents)) state.sceneEvents = [];
     if (state.goal === 10_000_000) state.goal = VICTORY_CASH; // v27 : anciennes parties passees au nouvel objectif
+    if (!Array.isArray(state.evLog)) state.evLog = []; // v37 : souvenirs d'événements
     if (typeof state.mgCookDay !== "number") state.mgCookDay = 0; // v28
     if (typeof state.mgTucoDay !== "number") state.mgTucoDay = 0; // v28
     if (typeof state.mgSellDay !== "number") state.mgSellDay = 0; // v29

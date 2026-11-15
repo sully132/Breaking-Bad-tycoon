@@ -129,3 +129,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Moteur de cinématique DOM générique (runCineBeats) partagé par les arcs story et les raids *(livré en v36)*
 - [x] Générique de fin animé à la victoire : crédits qui défilent avec le casting de l'empire *(livré en v36)*
 - [ ] Prochaines pistes : cinématique de prestige (nouvelle identité), photos polaroïd des événements dans le journal, statistiques de fin enrichies
+
+## Phase 17 — Souvenirs & renaissance (v37) ✅ LIVRÉE (v37)
+- [x] Polaroïds d'événements : les 24 derniers événements archivés dans le journal, toucher un polaroïd rejoue toute la cinématique (sous-titres, portraits, musique) *(livré en v37)*
+- [x] Cinématique de prestige : le salon de barbier avant chaque nouvelle identité *(livré en v37)*
+- [ ] Prochaines pistes : album photo complet (tous les événements découverts), cinématique de début de partie, doublage musical des arcs
