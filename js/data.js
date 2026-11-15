@@ -3591,3 +3591,34 @@ EV_MOODS.cartelShake = "angry";
 EV_MOODS.cartelPeace = "happy";
 EV_MOODS.landlordSnoop = "worried";
 EV_MOODS.studentRecruit = "happy";
+
+
+// ============================================================
+// v58 — OBJECTIFS DE LÉGENDE : la partie continue après la victoire
+// ============================================================
+const LEGEND_GOALS = [
+  { id: "empire500", icon: "🏰", name: "Empire de verre", desc: "Atteindre 500 000 000$ en caisse.", prog: (s) => s.cash || 0, target: () => 500_000_000, coins: 3 },
+  { id: "respect100", icon: "👑", name: "Respect total", desc: "Atteindre 100 de respect.", prog: (s) => s.respect || 0, target: () => 100, coins: 3 },
+  { id: "purete100", icon: "💎", name: "Pureté absolue", desc: "Atteindre 100 de pureté.", prog: (s) => s.purity || 0, target: () => 100, coins: 3 },
+  { id: "relics6", icon: "🗄️", name: "Collectionneur", desc: "Posséder 6 reliques.", prog: (s) => (s.relics || []).length, target: () => 6, coins: 2 },
+  { id: "days100", icon: "🗓️", name: "Cent jours", desc: "Survivre 100 jours.", prog: (s) => s.day || 0, target: () => 100, coins: 3 },
+  { id: "floors5", icon: "🏗️", name: "Tour de cristal", desc: "Construire 5 étages de superlab.", prog: (s) => s.labFloors || 0, target: () => 5, coins: 2 },
+];
+
+STORY_ARCS.push({
+  id: "era", icon: "👑", name: "L'Ère Légende",
+  desc: "L'empire est bâti. Que reste-t-il à conquérir ?",
+  unlock: (s) => s.day >= 25 || (s.prestiges || 0) >= 1,
+  chapters: [
+    { title: "L'argent ne dort plus", cond: (s) => (s.cash || 0) >= 50_000_000, reward: { respect: 5 },
+      text: "Cinquante millions. Les banques vous appellent « Monsieur ». Elles se trompent de nom — mais elles appellent." },
+    { title: "Le nom qui traverse les frontières", cond: (s) => (s.respect || 0) >= 70, reward: { cash: 250_000 },
+      text: "Phoenix, Tucson, El Paso : le bleu circule. On ne dit plus « la méthode ». On dit son nom." },
+    { title: "L'héritage", cond: (s) => (s.prestiges || 0) >= 1, reward: { respect: 10 }, cinematic: true,
+      text: "Un empire repris à zéro, une identité de plus, et toujours le même homme derrière. La légende, elle, ne se réinitialise pas." },
+  ],
+  finale: [
+    { who: "Walter", icon: "👑", line: "J'ai tout bâti deux fois. La deuxième, mieux." },
+    { icon: "👑", line: "La légende ne se vend pas. Elle se transmet." },
+  ],
+});

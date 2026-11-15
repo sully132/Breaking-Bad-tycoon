@@ -57,6 +57,7 @@ function newGame() {
     opps: [],
     legendCoins: 0,
     legendUpgrades: {},
+    legendGoals: {}, // v58 : objectifs de Légende
     dailyMissions: { day: 0, list: [] },
     businesses: { carwash: { level: 1, manager: false, pooled: 0 } },
     buyAmount: "1",
@@ -198,6 +199,7 @@ function bizRevPerSec(id) {
   rev *= relicBizMult();
   rev *= 1 + 0.10 * (state.labFloors || 0);
   rev *= 1 + 0.08 * legendLevel("biz");
+  rev *= goalLegendMult(); // v58 : objectifs de Légende
   if (frenzyActive()) rev *= 2;
   if (pubBoostActive()) rev *= 4;
   if (isWeekend()) rev *= 1.15;
@@ -271,6 +273,33 @@ function legendMult() {
 
 function legendLevel(id) {
   return (state.legendUpgrades && state.legendUpgrades[id]) || 0;
+}
+
+// ---------- v58 : objectifs de Légende — la partie continue après la victoire ----------
+function legendGoalsDone() {
+  return state.legendGoals ? Object.keys(state.legendGoals).length : 0;
+}
+function goalLegendMult() {
+  return 1 + 0.03 * legendGoalsDone(); // +3% de revenus permanents par objectif
+}
+function checkLegendGoals() {
+  if (typeof LEGEND_GOALS === "undefined") return;
+  let hit = false;
+  for (const g of LEGEND_GOALS) {
+    if (state.legendGoals && state.legendGoals[g.id]) continue;
+    let ok = false;
+    try { ok = g.prog(state) >= g.target(state); } catch (e) { ok = false; }
+    if (ok) {
+      if (!state.legendGoals || typeof state.legendGoals !== "object") state.legendGoals = {};
+      state.legendGoals[g.id] = state.day;
+      state.legendCoins = (state.legendCoins || 0) + g.coins;
+      hit = true;
+      playSfx("golden");
+      log(`🎯 Objectif de Légende : ${g.name} (+${g.coins} 🪙, +3% de revenus permanents)`, "event");
+      if (typeof spawnPopup === "function") { try { spawnPopup(`🎯 ${g.icon} ${g.name} — objectif de Légende !`, "good"); } catch (e) {} }
+    }
+  }
+  if (hit) { render(); save(); }
 }
 
 function frenzyActive() {
@@ -819,6 +848,7 @@ function idleTick() {
     if (expireExpress()) { render(); save(); }
     else renderContracts();
   }
+  checkLegendGoals(); // v58 : objectifs vérifiés en continu
   const kg = lab().cook * cookMult() * 0.04;
   if (kg <= 0 || state.stock >= stockCap()) return;
   const space = stockCap() - state.stock;
@@ -1314,6 +1344,7 @@ function endDay() {
   rollSceneEvents();
   spawnExpress(); // v48 : contrat express possible chaque jour
   rollRelic();
+  checkLegendGoals(); // v58 : objectifs de Légende
   checkStoryProgress();
   if (isWeekend()) rollWeekendEvent();
   if (Array.isArray(state.sceneEvents) && state.sceneEvents.length) {
@@ -2012,6 +2043,26 @@ function renderLegend() {
   });
 }
 
+// v58 : objectifs de Légende — progression visible dans l'onglet Empire
+function renderLegendGoals() {
+  const box = document.getElementById("legend-goals");
+  if (!box || typeof LEGEND_GOALS === "undefined") return;
+  box.innerHTML = LEGEND_GOALS.map((g) => {
+    const done = !!(state.legendGoals && state.legendGoals[g.id]);
+    let prog = 0;
+    try { prog = Math.min(g.target(state), g.prog(state)); } catch (e) { prog = 0; }
+    const pct = Math.min(100, Math.round((prog / g.target(state)) * 100));
+    return `<div class="goal-row ${done ? "done" : ""}">
+      <div class="g-icon">${g.icon}</div>
+      <div class="g-body">
+        <div class="g-name">${g.name} ${done ? "✔" : `<span class="meta">🪙 +${g.coins}</span>`}</div>
+        <div class="g-desc">${g.desc}</div>
+        <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
 function renderLog() {
   document.getElementById("log").innerHTML = state.log
     .map((e) => `<div class="log-entry ${e.kind}"><span class="d">J${e.day}</span>${e.msg}</div>`)
@@ -2077,6 +2128,8 @@ function renderAlbum() {
 // ---------- Modales ----------
 function showModal(title, text, choices) {
   const modal = document.getElementById("modal");
+  const av0 = document.getElementById("modal-avatar");
+  if (av0) av0.style.display = "none"; // v58 : avatar réservé aux événements
   document.getElementById("modal-title").textContent = title;
   document.getElementById("modal-text").textContent = text;
   const box = document.getElementById("modal-choices");
@@ -2100,6 +2153,8 @@ function showModal(title, text, choices) {
 
 function showEventModal(event) {
   log(`${event.emoji} ${event.title}`, "event");
+  const av = document.getElementById("modal-avatar"); // v58 : le visiteur en avatar
+  if (av) { av.textContent = event.emoji || "❗"; av.style.display = "flex"; }
   showModal(`${event.emoji} ${event.title}`, event.text, event.choices);
 }
 
@@ -2229,6 +2284,7 @@ function load() {
     if (typeof state.introPending !== "boolean") state.introPending = false; // v38 : pas d'intro sur les vieilles sauvegardes
     if (typeof state.evSeen !== "object" || !state.evSeen) state.evSeen = {}; // v38 : album
     if (typeof state.albumTier !== "number") state.albumTier = 0; // v39 : palier de collection atteint
+    if (!state.legendGoals || typeof state.legendGoals !== "object") state.legendGoals = {}; // v58 : objectifs de Légende
     if (typeof state.express === "undefined") state.express = null; // v48 : contrats express
     if (typeof state.mgCookDay !== "number") state.mgCookDay = 0; // v28
     if (typeof state.mgTucoDay !== "number") state.mgTucoDay = 0; // v28

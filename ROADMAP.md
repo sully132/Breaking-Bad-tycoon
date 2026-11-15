@@ -258,3 +258,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Les conséquences différées sont ANNONCÉES : scheduleEvent accepte une note, affichée « ⏳ … » dans le journal quand l'événement se programme *(livré en v57)*
 - [x] Test runtime complet : refus du tribut → riposte du cartel programmée avec sa note *(livré en v57)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
+## Phase 38 — L'Ère Légende (v58) ✅ LIVRÉE (v58)
+- [x] 6 objectifs de Légende post-victoire : empire 500M$, respect 100, pureté 100, 6 reliques, 100 jours, 5 étages de superlab *(livré en v58)*
+- [x] Barres de progression dans l'onglet Empire, récompense : pièces 🪙 de légende + 3% de revenus permanents par objectif *(livré en v58)*
+- [x] Vérification des objectifs en continu (endDay + tick temps réel) *(livré en v58)*
+- [x] Nouvel arc d'histoire « L'Ère Légende » : 3 chapitres + cinématique finale, débloqué au jour 25 ou après un prestige *(livré en v58)*
+- [x] Interface des choix refaite : cartes pleine largeur en dégradé, visiteur affiché en avatar dans la modale d'événement *(livré en v58)*
+- [ ] Prochaines pistes : passe équilibrage selon retours réels du joueur, chaînes d'événements utilisant les nouveaux choix

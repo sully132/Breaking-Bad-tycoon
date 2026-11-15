@@ -136,7 +136,7 @@ globalThis.webkitAudioContext = FakeAC;
 // ---------- chargement de TOUS les scripts dans l'ordre du jeu ----------
 const files = ["js/data.js", "js/sfx.js", "js/scene.js", "js/game.js", "js/map.js", "js/locscene.js", "js/minigame.js", "js/app.js"];
 const src = files.map((f) => fs.readFileSync(f, "utf8")).join("\n;\n") +
-  "\n;globalThis.XG = { get state() { return state; }, newGame, endDay, save, load, render, bizRevPerSec, queueChainEvent, showEventModal: (typeof showEventModal === 'function' ? showEventModal : null), __locs: MAP_LOCATIONS.map((l) => l.id) };";
+  "\n;globalThis.XG = { get state() { return state; }, newGame, endDay, save, load, render, checkLegendGoals, bizRevPerSec, queueChainEvent, showEventModal: (typeof showEventModal === 'function' ? showEventModal : null), __locs: MAP_LOCATIONS.map((l) => l.id) };";
 
 check("chargement de tous les scripts", () => {
   (0, eval)(src);
@@ -290,6 +290,17 @@ check("ouverture + 90 frames de chaque lieu (" + (typeof MAP_LOCATIONS !== "unde
     XG.state.pendingEvents = [];
     window.closeLocScene();
     pumpSafe(5);
+  });
+
+  // objectifs de Légende v58 : complétion → pièces + état
+  check("objectifs de Légende : complétion + récompense", () => {
+    const before = XG.state.legendCoins || 0;
+    XG.state.cash = 600_000_000;
+    XG.checkLegendGoals();
+    if (!XG.state.legendGoals || !XG.state.legendGoals.empire500) throw new Error("objectif empire500 non complété");
+    if ((XG.state.legendCoins || 0) <= before) throw new Error("aucune pièce de légende gagnée");
+    XG.state.cash = 1_000_000;
+    delete XG.state.legendGoals.empire500;
   });
 
   // endDay complet ×3 avec événements en file
