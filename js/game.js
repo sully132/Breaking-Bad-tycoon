@@ -1034,11 +1034,12 @@ function showOfflineModal(report) {
 }
 
 // ---------- Événements planifiés (chaînes) ----------
-function scheduleEvent(id, days) {
-  state.pendingEvents.push({ id, days });
+function scheduleEvent(id, days, note) {
+  state.pendingEvents.push({ id, days, note }); // v57 : note optionnelle annoncée au déclenchement
 }
 
-function fireScheduled(ev) {
+function fireScheduled(ev, note) {
+  if (note) log("⏳ " + note, "event"); // v57 : annoncer la conséquence différée
   if (dispatchSceneEvent(ev)) return;
   playSfx("event");
   log(`${ev.emoji} ${ev.title}`, "event");
@@ -1137,7 +1138,7 @@ function processPendingEvents() {
     p.days -= 1;
     if (p.days <= 0) {
       const ev = EVENTS.find((e) => e.id === p.id);
-      if (ev) fireScheduled(ev);
+      if (ev) fireScheduled(ev, p.note); // v57 : la note voyage avec l'événement
     } else {
       stillPending.push(p);
     }

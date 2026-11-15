@@ -264,6 +264,34 @@ check("ouverture + 90 frames de chaque lieu (" + (typeof MAP_LOCATIONS !== "unde
     pumpSafe(5);
   });
 
+  // choix v57 : tribut du cartel refusé → riposte différée programmée
+  check("choix v57 : refus du tribut → riposte différée programmée", async () => {
+    XG.state.sceneEvents = ["cartelShake"];
+    XG.state.pendingEvents = [];
+    window.openLocScene("hq");
+    pumpSafe(20);
+    await new Promise((r) => setTimeout(r, 1400));
+    pumpSafe(40);
+    const cv = registry["locscene-canvas"];
+    for (let i = 0; i < 14; i++) {
+      cv.dispatch("pointerdown", { clientX: 195, clientY: 140, pointerId: 1 });
+      pumpSafe(6);
+    }
+    pumpSafe(30);
+    if (pumpError) { const e = pumpError; pumpError = null; throw new Error("cine → " + e.message); }
+    const mc = registry["modal-choices"];
+    const btn = mc && mc.children && mc.children[1]; // « Refuser frontalement »
+    if (!btn) throw new Error("choix « refuser » introuvable");
+    (btn._listeners.click || []).forEach((fn) => fn({}));
+    const pend = XG.state.pendingEvents || [];
+    if (!pend.some((p) => p.id === "cartelRetaliation")) throw new Error("la riposte différée n'a pas été programmée");
+    if (!pend.some((p) => p.note)) throw new Error("la note ⏳ de conséquence différée est absente");
+    XG.state.sceneEvents = [];
+    XG.state.pendingEvents = [];
+    window.closeLocScene();
+    pumpSafe(5);
+  });
+
   // endDay complet ×3 avec événements en file
   check("3 × endDay avec événements de scène en file", () => {
     XG.state.sceneEvents = ["hank", "tuco"];

@@ -3487,3 +3487,107 @@ const WEEKEND_EVENTS = [
       { label: "Les ignorer", apply(s) { addHeat(12); log("🧢 Les photos circulent déjà. Chaleur +12.", "bad"); } },
     ] },
 ];
+
+
+// ============================================================
+// v57 — DES CHOIX QUI PÈSENT : événements à conséquences réelles
+// ============================================================
+EVENTS.push(
+  {
+    id: "deaMole", loc: "dea", emoji: "🕵️", weight: 4, type: "choice",
+    cond: (s) => s.day >= 10,
+    title: "Un indicateur propose ses services",
+    text: "Un employé de la DEA vous aborde en cachette. Il peut vous passer les infos sur les enquêtes... contre de l'argent.",
+    choices: [
+      { label: "Le payer 60 000$ (chaleur −12)", can: (s) => s.cash >= 60_000,
+        apply(s) { s.cash -= 60_000; s.heat = cap(s.heat - 12, 0, 100); log("🕵️ Indicateur acheté. Les dossiers vous concernant s'amincissent. Chaleur −12.", "good"); scheduleEvent("moleBurn", 4 + Math.floor(Math.random() * 3), "Ton indicateur va être grillé — prépare-toi à réagir."); } },
+      { label: "Le faire chanter (respect +4, chaleur +6)",
+        apply(s) { s.respect = cap(s.respect + 4, 0, 100); addHeat(6); log("🕵️ Tu tiens un indicateur de la DEA par la gorge. Respect +4, chaleur +6.", "event"); scheduleEvent("moleBurn", 2 + Math.floor(Math.random() * 3), "L'indicateur que tu fais chanter va être découvert."); } },
+      { label: "Refuser et partir", apply(s) { s.respect = cap(s.respect - 1, 0, 100); log("🕵️ Tu l'as éconduit. Prudent, mais aucun gain. Respect −1.", "bad"); } },
+    ],
+  },
+  {
+    id: "moleBurn", loc: "dea", emoji: "🔥", weight: 0, type: "choice",
+    title: "Ton indicateur est grillé",
+    text: "La sécurité interne de la DEA a flairé la fuite. Ton contact supplie d'être extrait avant l'interrogatoire.",
+    choices: [
+      { label: "L'extraire en catastrophe (−25 000$)", can: (s) => s.cash >= 25_000,
+        apply(s) { s.cash -= 25_000; s.heat = cap(s.heat - 8, 0, 100); s.respect = cap(s.respect + 2, 0, 100); log("🔥 Indicateur exfiltré. Il te devra tout. Chaleur −8, respect +2.", "good"); } },
+      { label: "L'abandonner", apply(s) { addHeat(10); s.respect = cap(s.respect - 2, 0, 100); log("🔥 Il a parlé sous l'interrogatoire. Chaleur +10, respect −2.", "bad"); } },
+    ],
+  },
+  {
+    id: "cartelShake", loc: "hq", emoji: "💰", weight: 4, type: "choice",
+    cond: (s) => s.day >= 12,
+    title: "Le cartel passe à la caisse",
+    text: "Un envoyé d'Eladio frappe à la porte du QG. Le cartel « protège » ton empire désormais — et veut sa part.",
+    choices: [
+      { label: "Payer le tribut (−5% du cash, respect +2)", can: (s) => s.cash > 0,
+        apply(s) { const t = Math.min(Math.floor(s.cash * 0.05), 200_000); s.cash -= t; s.respect = cap(s.respect + 2, 0, 100); log("💰 Tribut payé : " + fmt(t) + "$. Le cartel est apaisé. Respect +2.", "good"); scheduleEvent("cartelPeace", 5 + Math.floor(Math.random() * 4), "La paix avec le cartel porterait ses fruits."); } },
+      { label: "Refuser frontalement (respect +5, chaleur +8)",
+        apply(s) { s.respect = cap(s.respect + 5, 0, 100); addHeat(8); log("💰 Tu as repoussé l'envoyé du cartel. Ils n'oublieront pas. Respect +5, chaleur +8.", "event"); scheduleEvent("cartelRetaliation", 2 + Math.floor(Math.random() * 2), "Le cartel prépare sa riposte."); } },
+      { label: "Saisir sa marchandise (respect ≥ 40)", can: (s) => s.respect >= 40,
+        apply(s) { s.cash += 100_000; s.respect = cap(s.respect + 8, 0, 100); addHeat(12); log("💰 Marchandise de l'envoyé saisie : +100 000$. Respect +8, chaleur +12.", "event"); scheduleEvent("cartelRetaliation", 2 + Math.floor(Math.random() * 2), "Le cartel prépare sa riposte."); } },
+    ],
+  },
+  {
+    id: "cartelPeace", loc: "hq", emoji: "🕊️", weight: 0, type: "auto",
+    title: "Paix avec le cartel",
+    text: "Le tribut a apaisé Eladio. Des portes s'ouvrent dans tout le sud-ouest.",
+    apply(s) { s.heat = cap(s.heat - 5, 0, 100); s.respect = cap(s.respect + 3, 0, 100); log("🕊️ Paix avec le cartel. Chaleur −5, respect +3.", "good"); },
+  },
+  {
+    id: "landlordSnoop", loc: "house", emoji: "🏠", weight: 4, type: "choice",
+    title: "Le propriétaire fouine",
+    text: "Ton propriétaire rôde autour de la maison et pose des questions sur les allées et venues nocturnes.",
+    choices: [
+      { label: "Acheter la maison (−80 000$)", can: (s) => s.cash >= 80_000,
+        apply(s) { s.cash -= 80_000; s.heat = cap(s.heat - 4, 0, 100); s.respect = cap(s.respect + 3, 0, 100); log("🏠 La maison est à toi. Plus de propriétaire, plus de questions. Chaleur −4, respect +3.", "good"); } },
+      { label: "Le soudoyer (−15 000$)", can: (s) => s.cash >= 15_000,
+        apply(s) { s.cash -= 15_000; s.heat = cap(s.heat - 3, 0, 100); log("🏠 Enveloppe discrète. Il ne verra plus rien. Chaleur −3.", "good"); } },
+      { label: "L'intimider", apply(s) { s.respect = cap(s.respect + 2, 0, 100); addHeat(5); log("🏠 Il est reparti tout pâle. Mais il en parlera. Respect +2, chaleur +5.", "event"); } },
+    ],
+  },
+  {
+    id: "studentRecruit", loc: "superlab", emoji: "🎓", weight: 4, type: "choice",
+    cond: (s) => s.day >= 8,
+    title: "Une étudiante surdouée",
+    text: "Une étudiante en chimie tient des calculs de pureté dignes d'un professionnel. Elle veut travailler pour toi.",
+    choices: [
+      { label: "L'embaucher (−30 000$, pureté +5)", can: (s) => s.cash >= 30_000,
+        apply(s) { s.cash -= 30_000; s.purity = cap(s.purity + 5, 0, 100); log("🎓 Elle cuisine déjà mieux que la moitié de l'équipe. Pureté +5.", "good"); } },
+      { label: "Prendre juste une astuce (pureté +1)", apply(s) { s.purity = cap(s.purity + 1, 0, 100); log("🎓 Un conseil de synthèse ingénieux. Pureté +1.", "good"); } },
+      { label: "La présenter à Gus (Gus dans l'équipe)", can: (s) => s.staff.includes("gus"),
+        apply(s) { s.cash += 20_000; s.respect = cap(s.respect + 3, 0, 100); log("🎓 Gus la recrute pour le labo officiel. Prime : +20 000$, respect +3.", "good"); } },
+    ],
+  },
+);
+
+// v57 : visiteurs, répliques, noms, humeurs
+EVENT_VISITORS.deaMole = { shirt: "#3a4a5a", pants: "#2a2a34", hair: "#2a2a2a", glasses: true, skin: "#e8b58a" };
+EVENT_VISITORS.moleBurn = { shirt: "#4a4252", pants: "#2a2a34", hair: "#3a2a1a", beard: "#3a2a1a", skin: "#dfb08e" };
+EVENT_VISITORS.cartelShake = CHAR_LOOKS.eladio;
+EVENT_VISITORS.cartelPeace = CHAR_LOOKS.eladio;
+EVENT_VISITORS.landlordSnoop = { shirt: "#8a7a5a", pants: "#4a4438", hair: "#8a8a8a", flatCap: "#5a5248", skin: "#eec09a" };
+EVENT_VISITORS.studentRecruit = { shirt: "#c8d8e8", pants: "#3a4a5a", hair: "#e8c86a", hairLong: true, necklace: true, skin: "#eec09a" };
+
+EVENT_QUOTES.deaMole = ["Je peux faire disparaître des dossiers. Le prix : soixante mille.", "Votre nom revient chaque semaine dans les comptes rendus.", "Je risque ma carrière en étant ici. Soyez rapide."];
+EVENT_QUOTES.moleBurn = ["Ils savent. Ils SAVENT ! Sors-moi d'ici !", "Deux jours et je passe à l'interrogatoire.", "Tout ce que tu veux — mais sors-moi de là !"];
+EVENT_QUOTES.cartelShake = ["Eladio considère ton empire comme... un franchisé.", "Le cartel protège. Le cartel prélève.", "C'est une formalité. Une très chère formalité."];
+EVENT_QUOTES.cartelPeace = ["Eladio est satisfait. Pour l'instant.", "Les routes du sud sont ouvertes à tes camions.", "La paix a un prix. Tu l'as payé."];
+EVENT_QUOTES.landlordSnoop = ["Il y a des allées et venues la nuit. Beaucoup.", "J'ai juste quelques questions... routine.", "Je pose des questions, c'est mon droit."];
+EVENT_QUOTES.studentRecruit = ["Votre rendement théorique est sous-optimal. Je peux faire mieux.", "J'ai recalculé votre synthèse sur trois pages.", "J'ai besoin d'un vrai laboratoire. Le vôtre fera l'affaire."];
+
+CHAR_NAMES.deaMole = "Indicateur";
+CHAR_NAMES.moleBurn = "Indicateur";
+CHAR_NAMES.cartelShake = "Envoyé";
+CHAR_NAMES.cartelPeace = "Envoyé";
+CHAR_NAMES.landlordSnoop = "Propriétaire";
+CHAR_NAMES.studentRecruit = "Étudiante";
+
+EV_MOODS.deaMole = "worried";
+EV_MOODS.moleBurn = "angry";
+EV_MOODS.cartelShake = "angry";
+EV_MOODS.cartelPeace = "happy";
+EV_MOODS.landlordSnoop = "worried";
+EV_MOODS.studentRecruit = "happy";

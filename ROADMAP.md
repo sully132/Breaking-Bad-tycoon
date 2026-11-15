@@ -253,3 +253,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] La modale (et l'overlay de fin) passe au-dessus de la scène et des mini-jeux (z-index 120) *(livré en v56)*
 - [x] Nouveau test runtime complet : événement à choix « rats » au superlab — cinématique auto, modale visible, clic sur un choix, effets appliqués, modale fermée *(livré en v56)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
+## Phase 37 — Des choix qui pèsent (v57) ✅ LIVRÉE (v57)
+- [x] 6 nouveaux événements à choix à fort impact : indicateur DEA (payer / faire chanter / refuser → suivi « grillé »), tribut du cartel (payer / refuser / saisir → riposte ou paix différée), propriétaire fouineur (acheter la maison / soudoyer / intimider), étudiante surdouée (embaucher / astuce / présenter à Gus) *(livré en v57)*
+- [x] Les conséquences différées sont ANNONCÉES : scheduleEvent accepte une note, affichée « ⏳ … » dans le journal quand l'événement se programme *(livré en v57)*
+- [x] Test runtime complet : refus du tribut → riposte du cartel programmée avec sa note *(livré en v57)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
