@@ -2770,6 +2770,24 @@ const EV_MOODS = {
   wkKaraoke: "happy", wkGift: "happy",
 };
 
+// ============================================================
+// v34 — RÉPLIQUES À DEUX VOIX : un perso de la scène répond
+// au visiteur pendant la cinématique d'événement
+// ============================================================
+
+const EVENT_REPLIES = {
+  tuco: { who: "Walter", text: "Reste calme. On est en business, pas en guerre." },
+  turfwar: { who: "Jesse", text: "Yo, ils ont touché à nos coins, faut réagir !" },
+  junkie: { who: "Jesse", text: "Laisse, je m'en occupe. Ça va aller, yo." },
+  wire: { who: "Saul", text: "On ne dit PLUS rien au téléphone. Jamais. Compris ?" },
+  hankBBQ: { who: "Hank", text: "Sers-moi une de tes bières, et parle-moi d'autre chose." },
+  mikeprotection: { who: "Mike", text: "Le travail est fait. Personne ne vous cherchera." },
+  lydiaList: { who: "Lydia", text: "Ces chiffres sont inacceptables. Il faut structurer." },
+  carwashCrowd: { who: "Skyler", text: "Souris. On est un établissement familial, souviens-t'en." },
+  precursor: { who: "Jesse", text: "Yeah science ! On peut cuire combien de lots avec ça ?" },
+  wkGift: { who: "Jesse", text: "Allez, ouvre-le. Tu vas pas être déçu, yo." },
+};
+
 const STORY_ARCS = [
   {
     id: "rise", icon: "⚗️", name: "L'Ascension",

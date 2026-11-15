@@ -496,6 +496,7 @@ function playCinematic(arc) {
   }
   function end() {
     if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+    if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} } // v34
     overlay.classList.add("hidden");
     cine.classList.remove("visible");
     if (typeof document !== "undefined") document.removeEventListener("click", onTap);
@@ -519,6 +520,7 @@ function playCinematic(arc) {
     showBeat();
   }
   overlay.classList.remove("hidden");
+  if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} } // v34
   document.addEventListener("click", onTap);
   showBeat();
 }

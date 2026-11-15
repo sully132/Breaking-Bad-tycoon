@@ -926,12 +926,17 @@
     const lines = [{ who: "", text: ev.text || ev.title }];
     if (quotes.length) lines.push({ who, text: quotes[0] });
     if (quotes.length > 1) lines.push({ who, text: quotes[1] });
-    evCine = { ev, lines, idx: 0, start: anim, lineStart: anim, reveal: false };
+    // v34 : réplique à deux voix — un perso de la scène répond
+    const reply = (typeof EVENT_REPLIES !== "undefined" && EVENT_REPLIES[ev.id]) || null;
+    if (reply) lines.push({ who: reply.who, text: reply.text });
+    evCine = { ev, lines, idx: 0, start: anim, lineStart: anim, reveal: false, bipAt: 0 };
+    if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
   }
 
   function cineFinish() {
     const ev = evCine.ev;
     evCine = null;
+    if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
     state.sceneEvents = (state.sceneEvents || []).filter((id) => id !== ev.id);
     eventVisitor = null;
     if (ev.type === "choice" && typeof showEventModal === "function") {
@@ -2452,6 +2457,21 @@
     const phase = timePhase();
     const night = def.night || phase === "night";
 
+    // v34 : caméra de cinématique — léger zoom + pan vers le visiteur
+    let camK = 1, camX = w / 2, camY = h * 0.55;
+    if (evCine) {
+      const cAge = anim - evCine.start;
+      const cK = 1 - Math.pow(1 - Math.min(1, cAge / 900), 3);
+      camK = 1 + 0.07 * cK;
+      const target = eventVisitor ? eventVisitor.x : w / 2;
+      camX = w / 2 + (target - w / 2) * 0.35 * cK;
+      camY = h * 0.55 - h * 0.03 * cK;
+    }
+    ctx.save();
+    ctx.translate(w / 2, camY);
+    ctx.scale(camK, camK);
+    ctx.translate(-camX, -camY);
+
     drawSky(w, h, night, t);
     if (!night) {
       drawClouds(w, h, night);
@@ -2500,6 +2520,7 @@
     drawEventAura(w, h, t);
     drawEventBanner(w, h, t);
     drawVignette(w, h, night);
+    ctx.restore(); // v34 : fin de la caméra — l'UI reste en plein écran
     if (evFlash > 0.02) {
       ctx.fillStyle = "rgba(255, 235, 210, " + (evFlash * 0.45).toFixed(3) + ")";
       ctx.fillRect(0, 0, w, h);

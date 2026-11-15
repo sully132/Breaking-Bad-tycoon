@@ -136,9 +136,57 @@ const sfx = (() => {
     }
   }
 
+  // ---------- v34 : nappe musicale de tension (cinématiques) ----------
+  let cineNodes = [];
+  function stopCine() {
+    const nodes = cineNodes;
+    cineNodes = [];
+    for (const n of nodes) {
+      try { n.gain.gain.exponentialRampToValueAtTime(0.001, n.ctx.currentTime + 0.5); } catch (e) {}
+      setTimeout(() => { try { n.osc.stop(); if (n.lfo) n.lfo.stop(); } catch (e) {} }, 700);
+    }
+  }
+  function startCine() {
+    const c = ensureCtx();
+    if (!c) return;
+    stopCine();
+    // basse grave + quinte + pupitre, façon tension de série
+    const freqs = [55, 82.5, 110];
+    freqs.forEach((f, i) => {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = i === 2 ? "triangle" : "sawtooth";
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0.001, c.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.05 - i * 0.012, c.currentTime + 0.8);
+      const lp = c.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.value = 420;
+      osc.connect(lp).connect(gain).connect(c.destination);
+      osc.start();
+      cineNodes.push({ osc, gain, ctx: c });
+    });
+    // pouls lent par-dessus
+    const pulse = c.createOscillator();
+    const pGain = c.createGain();
+    const lfo = c.createOscillator();
+    const lfoGain = c.createGain();
+    pulse.type = "sine";
+    pulse.frequency.value = 110;
+    pGain.gain.value = 0.028;
+    lfo.frequency.value = 1.6;
+    lfoGain.gain.value = 0.028;
+    lfo.connect(lfoGain).connect(pGain.gain);
+    pulse.connect(pGain).connect(c.destination);
+    pulse.start();
+    lfo.start();
+    cineNodes.push({ osc: pulse, gain: pGain, ctx: c, lfo });
+  }
+
    return {
     get muted() { return muted; },
     ambient: { start: startAmbient, stop: stopAmbient },
+    cine: { start: startCine, stop: stopCine },
     unlock() {
       try {
         if (!ctx) ensureCtx();

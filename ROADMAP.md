@@ -111,3 +111,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Les persos de la scène s'arrêtent de marcher et regardent l'événement avec l'humeur adaptée *(livré en v33)*
 - [x] Bulles de dialogue auto coupées pendant les cinématiques *(livré en v33)*
 - [ ] Prochaines pistes : caméra (zoom/pan léger pendant les cinématiques), répliques à deux voix (visiteur + perso de la scène), nappes musicales de cinématique
+
+## Phase 14 — Plan de réalisateur (v34) ✅ LIVRÉE (v34)
+- [x] Caméra de cinématique : zoom + pan vers le visiteur, retour au cadre normal à la fin *(livré en v34)*
+- [x] Répliques à deux voix : un perso de la scène répond au visiteur (10 événements couverts) *(livré en v34)*
+- [x] Nappe musicale de tension synthétique pendant les cinématiques (événements + story) *(livré en v34)*
+- [ ] Prochaines pistes : cut/fondu entre lignes de cinématique, gros plan sur le locuteur (portrait dessiné), bruitages d'ambiance par événement
