@@ -1093,7 +1093,15 @@ function rollSceneEvents() {
 
 function flushSceneEvents() {
   if (!Array.isArray(state.sceneEvents) || state.sceneEvents.length === 0) return;
-  const id = state.sceneEvents.shift();
+  // v54 : les événements avec une scène dédiée ne sont JAMAIS consommés ici —
+  // ils attendent le joueur dans leur scène (avant : annoncés en modale puis
+  // retirés de la file, donc « annoncé mais rien sur la scène »)
+  const idx = state.sceneEvents.findIndex((id) => {
+    const e = EVENTS.find((x) => x.id === id);
+    return e && !hasSceneStage(e);
+  });
+  if (idx === -1) return;
+  const id = state.sceneEvents.splice(idx, 1)[0];
   const ev = EVENTS.find((e) => e.id === id);
   if (!ev) return;
   playSfx("event");
@@ -1308,7 +1316,13 @@ function endDay() {
   checkStoryProgress();
   if (isWeekend()) rollWeekendEvent();
   if (Array.isArray(state.sceneEvents) && state.sceneEvents.length) {
-    spawnPopup("\u2757 " + state.sceneEvents.length + " \u00e9v\u00e9nement(s) en attente sur la carte", "info");
+    // v54 : le popup dit OÙ l'événement attend le joueur
+    const names = state.sceneEvents.map((id) => {
+      const e = EVENTS.find((x) => x.id === id);
+      const l = e && typeof MAP_LOCATIONS !== "undefined" ? MAP_LOCATIONS.find((m) => m.id === e.loc) : null;
+      return l ? l.name : (e ? e.loc : id);
+    });
+    spawnPopup("❗ " + names.length + " événement(s) en attente : " + names.join(", "), "info");
   }
 
   if (state.contract) {

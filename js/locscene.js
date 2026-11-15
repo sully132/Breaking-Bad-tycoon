@@ -3276,6 +3276,12 @@
         buildSheet();
       });
       if (!rafId) rafId = requestAnimationFrame(draw);
+      // v54 : l'événement en attente se déclenche tout seul à l'entrée dans la scène
+      if (sceneEventFor(locId)) {
+        setTimeout(() => {
+          if (currentLocId === locId && !evCine && sceneEventFor(locId)) triggerSceneEvent();
+        }, 1100);
+      }
       if (typeof window !== "undefined") window.heisLocSceneOpen = true;
       return true;
     } catch (e) {
@@ -3320,7 +3326,9 @@
       return;
     }
 
-    if (eventVisitor && Math.hypot(eventVisitor.x - mx, eventVisitor.y - 44 * eventVisitor.s - my) < 38 * eventVisitor.s) {
+    // v54 : le tap marche sur le visiteur ET sur son badge « ! » (au-dessus de sa tête)
+    if (eventVisitor && (Math.hypot(eventVisitor.x - mx, eventVisitor.y - 44 * eventVisitor.s - my) < 38 * eventVisitor.s
+      || Math.hypot(eventVisitor.x - mx, eventVisitor.y - 100 * eventVisitor.s - my) < 34)) {
       triggerSceneEvent();
       return;
     }

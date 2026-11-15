@@ -235,3 +235,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] `resize` exporté de scene.js et appelé à l'ouverture de l'onglet Labo *(livré en v53)*
 - [x] Auto-réparation dans la boucle de rendu : tant que le canevas est vide, le dimensionnement est retenté *(livré en v53)*
 - [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
+## Phase 34 — Fix « événement annoncé mais rien sur la scène » (v54) ✅ LIVRÉE (v54)
+- [x] Cause trouvée : le flush de fin de journée consommait le premier événement de la file comme une modale instantanée HORS scène — l'événement était annoncé puis disparaissait avant la visite *(livré en v54)*
+- [x] Les événements avec une scène dédiée ne sont plus jamais consommés hors scène : ils attendent le joueur dans leur scène *(livré en v54)*
+- [x] Le popup de fin de journée liste les LIEUX où les événements attendent *(livré en v54)*
+- [x] Le badge « ! » pulsant au-dessus du visiteur est maintenant tappable (avant : le tap à côté du perso était raté) *(livré en v54)*
+- [x] L'événement se déclenche automatiquement ~1 s après l'entrée dans la scène — plus besoin de savoir qu'il faut taper le visiteur *(livré en v54)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, passe équilibrage selon retours réels du joueur
