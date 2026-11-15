@@ -2011,6 +2011,9 @@ const CHAR_LOOKS = {
 
 // v21 : noms affichés dans les bulles de dialogue
 const CHAR_NAMES = {
+  labInspector: "Inspecteur", copperScore: "Combo", nailsTip: "Cliente",
+  plazaConcert: "Roadie", villaParty: "Don Eladio", railStrike: "Aiguilleur",
+  snowstorm: "Voisin", heatwave: "Passant", harvest: "Contremaître",
   walter: "Walter White", heisenberg: "Heisenberg", jesse: "Jesse", skyler: "Skyler",
   gus: "Gus Fring", saul: "Saul", mike: "Mike", tuco: "Tuco", hank: "Hank",
   marie: "Marie", jane: "Jane", badger: "Badger", combo: "Combo", todd: "Todd",
@@ -2495,6 +2498,11 @@ ACHIEVEMENTS.push(
   { id: "album50", icon: "📗", name: "Archiviste d'Albuquerque", desc: "Découvrir 50% de l'album", check: (s) => (s.albumTier || 0) >= 2, reward: { respect: 8 } },
   { id: "album100", icon: "📚", name: "Mémoire vivante", desc: "Compléter tout l'album", check: (s) => (s.albumTier || 0) >= 4, reward: { cash: 250_000 } },
 );
+// v43 — succès d'événements
+ACHIEVEMENTS.push(
+  { id: "witness10", icon: "👀", name: "Témoin de tout", desc: "Assister à 10 événements de scène", check: (s) => ((s.stats && s.stats.sceneEventsSeen) || 0) >= 10, reward: { cash: 20_000 } },
+  { id: "witness40", icon: "🎬", name: "Toujours au courant", desc: "Assister à 40 événements de scène", check: (s) => ((s.stats && s.stats.sceneEventsSeen) || 0) >= 40, reward: { respect: 10 } },
+);
 
 // ------------------------------------------------------------
 // v29 — ÉVÉNEMENTS SUPPLÉMENTAIRES
@@ -2587,6 +2595,161 @@ EVENTS.push(
 );
 
 // ------------------------------------------------------------
+// v43 — GROS PLAN GAMEPLAY : 6 événements de scène + 3 événements de saison
+// ------------------------------------------------------------
+EVENTS.push(
+  {
+    id: "labInspector", loc: "superlab", emoji: "🧾", weight: 5, type: "choice",
+    cond: (s) => s.day >= 5,
+    title: "Inspection surprise",
+    text: "Un inspecteur des normes fouille le superlab, presse-papiers en main. Il lève un sourcil : « Cet équipement n'est pas homologué… »",
+    choices: [
+      {
+        label: "Soudoyer (−30 000$, Chaleur −6)",
+        can: (s) => s.cash >= 30_000,
+        apply(s) {
+          s.cash -= 30_000;
+          s.heat = cap(s.heat - 6, 0, 100);
+          log("🧾 L'inspecteur signe un rapport immaculé. Chaleur −6.", "good");
+        },
+      },
+      {
+        label: "Jouer la carte de la franchise",
+        apply(s) {
+          if (Math.random() < 0.5) {
+            s.respect = cap(s.respect + 2, 0, 100);
+            log("🧾 Il est impressionné par votre rigueur. Respect +2.", "good");
+          } else {
+            addHeat(6);
+            log("🧾 Rapport défavorable transmis à la DEA. Chaleur +6.", "bad");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "copperScore", loc: "junkyard", emoji: "🔧", weight: 6, type: "choice",
+    title: "Fil de cuivre en vrac",
+    text: "Old Joe a sorti des bobines de cuivre d'une épave. « Ça se vend bien, ou ça te sert. Choisis vite. »",
+    choices: [
+      {
+        label: "Vendre le cuivre (+15 000$ sale, Chaleur +4)",
+        apply(s) {
+          s.dirty += 15_000;
+          addHeat(4);
+          log("🔧 Cuivre revendu au noir. +15 000$ sale, chaleur +4.", "good");
+        },
+      },
+      {
+        label: "Garder pour le labo (Stock +3 kg)",
+        apply(s) {
+          s.stock = Math.min(stockCap(), s.stock + 3);
+          log("🔧 Les bobines alimentent le labo. Stock +3 kg.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "nailsTip", loc: "nails", emoji: "💅", weight: 5, type: "auto",
+    title: "On-dit au salon",
+    text: "Deux clientes papotent sous les sèche-ongles : une rumeur fait retomber la pression sur vous.",
+    apply(s) {
+      s.heat = cap(s.heat - 5, 0, 100);
+      log("💅 Rumeur apaisante au salon. Chaleur −5.", "good");
+    },
+  },
+  {
+    id: "plazaConcert", loc: "plaza", emoji: "🎸", weight: 5, type: "choice",
+    title: "Concert sur la place",
+    text: "Un groupe joue sur la plaza, la foule est dense. Un revendeur vous souffle : « Occasion en or, tout le monde est dehors ce soir. »",
+    choices: [
+      {
+        label: "Écouler dans la foule (+20 000$ sale, Respect +3, Chaleur +5)",
+        apply(s) {
+          s.dirty += 20_000;
+          s.respect = cap(s.respect + 3, 0, 100);
+          addHeat(5);
+          log("🎸 Vente flash pendant le concert. +20 000$ sale, respect +3, chaleur +5.", "good");
+        },
+      },
+      {
+        label: "Profiter du concert (Respect +2)",
+        apply(s) {
+          s.respect = cap(s.respect + 2, 0, 100);
+          log("🎸 Vous avez applaudi le set entier, légendaire. Respect +2.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "villaParty", loc: "villa", emoji: "🥂", weight: 4, type: "choice",
+    cond: (s) => s.respect >= 20,
+    title: "Fête au domaine",
+    text: "Votre réputation vous précède : vous êtes invité à la réception du domaine. Les convives veulent tous faire affaire avec vous.",
+    choices: [
+      {
+        label: "Négocier toute la nuit (Respect +6, Chaleur +7)",
+        apply(s) {
+          s.respect = cap(s.respect + 6, 0, 100);
+          addHeat(7);
+          log("🥂 Trois cartels sur votre liste d'attente. Respect +6, chaleur +7.", "good");
+        },
+      },
+      {
+        label: "Rester discret (Chaleur −3)",
+        apply(s) {
+          s.heat = cap(s.heat - 3, 0, 100);
+          log("🥂 Vous avez savouré en silence, sans laisser de traces. Chaleur −3.", "good");
+        },
+      },
+    ],
+  },
+  {
+    id: "railStrike", loc: "rail", emoji: "🚂", weight: 5, type: "auto",
+    title: "Grève des aiguilleurs",
+    text: "Les trains de fret sont bloqués sur toute la ligne : la marchandise se raréfie et les prix flambent.",
+    apply(s) {
+      s.market = cap(s.market + 0.08, 0.7, 1.6);
+      log("🚂 Grève : le marché grimpe à " + Math.round(s.market * 100) + "%.", "good");
+    },
+  },
+  // v43 — événements de SAISON (calendrier réel)
+  {
+    id: "snowstorm", loc: "corner", emoji: "❄️", weight: 7, type: "auto",
+    cond: (s) => { const m = new Date().getMonth(); return m <= 1 || m === 11; },
+    title: "Tempête de neige",
+    text: "Albuquerque est paralysée par la neige. Les patrouilles restent au garage, vos clients aussi.",
+    apply(s) {
+      s.heat = cap(s.heat - 10, 0, 100);
+      s.market = cap(s.market - 0.06, 0.7, 1.4);
+      log("❄️ Tempête : la DEA déneige ses bureaux. Chaleur −10, marché −6%.", "info");
+    },
+  },
+  {
+    id: "heatwave", loc: "villa", emoji: "🔥", weight: 6, type: "auto",
+    cond: (s) => { const m = new Date().getMonth(); return m >= 5 && m <= 7; },
+    title: "Canicule sur le désert",
+    text: "40°C à l'ombre. Le RV surchauffe, mais un laboratoire bien réglé tourne à la perfection.",
+    apply(s) {
+      s.purity = cap(s.purity + 4, 0, 100);
+      s.market = cap(s.market + 0.05, 0.7, 1.6);
+      log("🔥 Canicule : cuissons parfaites. Pureté +4, marché +5%.", "good");
+    },
+  },
+  {
+    id: "harvest", loc: "pollos", emoji: "🌾", weight: 6, type: "auto",
+    cond: (s) => { const m = new Date().getMonth(); return m >= 8 && m <= 10; },
+    title: "Récolte d'automne",
+    text: "Fin de saison pour les fournisseurs : les contrats se signent avant l'hiver.",
+    apply(s) {
+      s.cash += 25_000;
+      s.respect = cap(s.respect + 2, 0, 100);
+      log("🌾 Contrats de récolte signés. +25 000$ propre, respect +2.", "good");
+    },
+  },
+);
+
+// ------------------------------------------------------------
 // APPARENCES des visiteurs d'événements dans les scènes (v17)
 // ------------------------------------------------------------
 const EVENT_VISITORS = {
@@ -2623,10 +2786,29 @@ const EVENT_VISITORS = {
   lydiaDemand: CHAR_LOOKS.lydia,
   streetrace: { shirt: "#c84a3a", pants: "#2a2a34", cap: true },
   junkie: { shirt: "#6a6a5a", pants: "#4a4438", beanie: true },
+  // v43 — visiteurs des nouveaux événements
+  labInspector: { shirt: "#8a7a55", pants: "#3a3630", flatCap: true, glasses: true },
+  copperScore: CHAR_LOOKS.combo,
+  nailsTip: { shirt: "#c98fb0", pants: "#5a4a5a", hair: "#7a3a2a" },
+  plazaConcert: { shirt: "#3a3a4a", pants: "#26262e", cap: "#1a1a22", loud: true },
+  villaParty: CHAR_LOOKS.eladio,
+  railStrike: { shirt: "#4a6a8a", pants: "#2a2a34", cap: "#3a4a5a" },
+  snowstorm: { shirt: "#6a6a7a", pants: "#3a3a44", beanie: true },
+  heatwave: { shirt: "#d9c33c", pants: "#8a7a3a", bald: true },
+  harvest: CHAR_LOOKS.gus,
 };
 
 // v21 : répliques d'événements (bulles des visiteurs dans les scènes)
 const EVENT_QUOTES = {
+  labInspector: ["Cet équipement n'a pas d'homologation, monsieur.", "Un rapport propre, ça se rédige… ou ça se paie."],
+  copperScore: ["Le cuivre, ça pèse lourd en trésorerie.", "Ou alors tu t'en sers. Je te fais un prix d'ami."],
+  nailsTip: ["On dit que la police a perdu votre trace.", "Moi, je n'ai rien vu, hein. Rien entendu non plus."],
+  plazaConcert: ["Ce soir, tout le monde achète.", "La foule couvre tout. Même les sirènes."],
+  villaParty: ["Chez moi, les deals se font en smoking.", "Reste jusqu'à l'aube, c'est là que se signent les contrats."],
+  railStrike: ["Plus un wagon ne roule avant lundi.", "Ce qui n'arrive pas se vend plus cher."],
+  snowstorm: ["Même les flics ne sortent pas dans ça.", "La ville est à nous jusqu'au déneigement."],
+  heatwave: ["Cette chaleur, ça affine les cuissons.", "Buvez de l'eau. Ou pas."],
+  harvest: ["Les contrats d'automne sont les plus juteux.", "Bonnes récoltes à ceux qui ont semé."],
   carwashCrowd: ["On est pressés, vous pouvez accélérer ?", "Trois voitures, un abonnement, s'il vous plaît."],
   lydiaList: ["Je déteste les imprévus. Éliminons-les.", "La liste n'est pas négociable."],
   comboMessage: ["Yo, mon pote a un truc ÉNORME pour nous.", "On divise le prix d'achat par trois, je te jure."],
@@ -2770,6 +2952,9 @@ ACHIEVEMENTS.push(
 // ============================================================
 
 const EV_MOODS = {
+  labInspector: "worried", copperScore: "happy", nailsTip: "neutral",
+  plazaConcert: "happy", villaParty: "happy", railStrike: "angry",
+  snowstorm: "worried", heatwave: "happy", harvest: "happy",
   tuco: "angry", turfwar: "angry", rivalbuy: "angry", rats: "angry",
   scoutsPayback: "angry", cousin: "angry",
   junkie: "worried", blackout: "worried", wire: "worried", health: "worried",
@@ -2785,6 +2970,9 @@ const EV_MOODS = {
 // ============================================================
 
 const EVENT_REPLIES = {
+  villaParty: { who: "Mike", text: "Souriez. Parlez peu. Partez tôt." },
+  labInspector: { who: "Saul", text: "Laissez-moi lui parler. J'ai un cousin notaire." },
+  snowstorm: { who: "Jesse", text: "Yo, y a même plus d'école. On fait quoi ?" },
   tuco: { who: "Walter", text: "Reste calme. On est en business, pas en guerre." },
   turfwar: { who: "Jesse", text: "Yo, ils ont touché à nos coins, faut réagir !" },
   junkie: { who: "Jesse", text: "Laisse, je m'en occupe. Ça va aller, yo." },
@@ -2802,6 +2990,8 @@ const EVENT_REPLIES = {
 // ============================================================
 
 const EV_SOUNDS = {
+  railStrike: "alarm", villaParty: "golden", plazaConcert: "horn",
+  harvest: "cash", copperScore: "cash",
   turfwar: "shot", nightbreakin: "shot", cousin: "shot", scoutsPayback: "shot",
   streetrace: "horn", carwashCrowd: "cash", windfall: "cash", chickenrun: "cash",
   precursor: "crystal", rats: "alarm", wire: "alarm", blackout: "alarm",

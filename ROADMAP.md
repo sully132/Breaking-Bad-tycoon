@@ -162,3 +162,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Saisons réelles : hiver (neige + teinte froide), automne (feuilles mortes + teinte chaude), printemps (teinte verte), été (neutre) *(livré en v42)*
 - [x] Ombres de nuages qui glissent lentement au sol dans les scènes extérieures *(livré en v42)*
 - [ ] Prochaines pistes : neige qui s'accumule sur les toits, événements de saison (tempête de neige, récolte), décor de carte teinté par saison
+
+## Phase 23 — Gros plan gameplay (v43) ✅ LIVRÉE (v43)
+- [x] 6 nouveaux événements de scène : inspection du superlab (soudoyer ou tenter sa chance), cuivre à la casse (vendre ou stocker), info DEA au salon d'ongles, concert sur la plaza (vendre dans la foule ou profiter), fête au domaine (négocier ou rester discret), grève des aiguilleurs (marché en hausse) *(livré en v43)*
+- [x] 3 événements de saison liés au calendrier réel : tempête de neige en hiver (chaleur −10), canicule en été (pureté +4), récolte d'automne (+25 000$) *(livré en v43)*
+- [x] 2 succès d'événements : Témoin de tout (10 événements vus) et Toujours au courant (40 événements vus) *(livré en v43)*
+- [ ] Prochaines pistes : contrats express à durée limitée, événements en chaîne multi-lieux, difficulté adaptive selon la progression

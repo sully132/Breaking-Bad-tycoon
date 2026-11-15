@@ -157,4 +157,4 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v39 : détails & vie de fond — props par décor, pupilles qui suivent l'événement, récompenses d'album (+3/6/10/15% revenus).
 - v40 : trophées & faune — 3 succès d'album, corbeaux/chien/pigeons, ombres dynamiques selon l'heure.
 - v41 : traces & interactions — oiseaux qui s'envolent au tap, chien qui aboie, flaques après la pluie.
-- **v42 (courante) : ciel & saisons — saisons réelles selon le calendrier (neige qui tombe en hiver, feuilles mortes en automne, teinte de saison sur les scènes extérieures), ombres de nuages qui glissent lentement au sol.**
+- **v43 (courante) : gros plan gameplay — 6 nouveaux événements de scène (inspection du superlab, cuivre à la casse, info DEA au salon d'ongles, concert sur la plaza, fête au domaine, grève des aiguilleurs), 3 événements de saison liés au calendrier réel (tempête de neige, canicule, récolte d'automne), 2 succès d'événements (Témoin de tout, Toujours au courant).**
