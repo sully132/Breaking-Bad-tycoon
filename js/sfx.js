@@ -201,6 +201,8 @@ const sfx = (() => {
     },
     click()  { tone(600, 0.06, "square", 0.06); },
     bip()    { tone(440 + Math.random() * 320, 0.045, "square", 0.04); },
+    shot()   { noise(0.18, 0.22, 0, 900); tone(90, 0.2, "sawtooth", 0.12, 0, 40); }, // v35
+    horn()   { tone(310, 0.28, "sawtooth", 0.1); tone(415, 0.28, "sawtooth", 0.08, 0.02); }, // v35
     tap()    { tone(880, 0.08, "triangle", 0.1); tone(1320, 0.1, "triangle", 0.07, 0.03); },
     cash()   { tone(880, 0.09, "square", 0.1); tone(1174, 0.09, "square", 0.1, 0.07); tone(1568, 0.14, "square", 0.1, 0.14); },
     spend()  { tone(440, 0.1, "square", 0.08); tone(330, 0.12, "square", 0.08, 0.08); },

@@ -371,7 +371,7 @@
     ctx.strokeRect(x, y, w2, h2);
   }
 
-  function drawPerson(x, y, s, look, mood, pose) {
+  function drawPerson(x, y, s, look, mood, pose, noShadow) {
     if (!look) return;
     const t = anim / 1000;
     const bob = Math.sin(t * 2 + x * 0.05) * 1.5 * s;
@@ -379,10 +379,12 @@
     ctx.translate(x, y + bob);
     ctx.scale(s, s);
 
-    ctx.fillStyle = "rgba(20, 14, 8, 0.3)";
-    ctx.beginPath();
-    ctx.ellipse(0, 1, 13, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (!noShadow) {
+      ctx.fillStyle = "rgba(20, 14, 8, 0.3)";
+      ctx.beginPath();
+      ctx.ellipse(0, 1, 13, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     if (look.hazmat) {
       ctx.fillStyle = "#e8e8dc";
@@ -919,6 +921,8 @@
     evBanner = null;
     bubble = null; // v33 : place nette pour la cinématique
     if (typeof playSfx === "function") playSfx("event");
+    const snd = (typeof EV_SOUNDS !== "undefined" && EV_SOUNDS[ev.id]) || null;
+    if (snd && typeof playSfx === "function") playSfx(snd); // v35
     if (typeof haptic === "function") haptic(15);
     // v31 : cinématique — cinémascope + sous-titres au typewriter
     const quotes = (typeof EVENT_QUOTES !== "undefined" && EVENT_QUOTES[ev.id]) || [];
@@ -929,7 +933,7 @@
     // v34 : réplique à deux voix — un perso de la scène répond
     const reply = (typeof EVENT_REPLIES !== "undefined" && EVENT_REPLIES[ev.id]) || null;
     if (reply) lines.push({ who: reply.who, text: reply.text });
-    evCine = { ev, lines, idx: 0, start: anim, lineStart: anim, reveal: false, bipAt: 0 };
+    evCine = { ev, lines, who, idx: 0, start: anim, lineStart: anim, reveal: false, bipAt: 0 };
     if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.start(); } catch (e) {} }
   }
 
@@ -950,6 +954,14 @@
   }
 
   // v31 : rendu de la cinématique (bandes noires, sous-titres, tap pour avancer)
+  // v35 : nom affiché → id d'apparence (portraits de cinématique)
+  const LOOK_BY_NAME = {};
+  try {
+    if (typeof CHAR_NAMES !== "undefined") {
+      for (const k of Object.keys(CHAR_NAMES)) LOOK_BY_NAME[CHAR_NAMES[k]] = k;
+    }
+  } catch (e) {}
+
   function drawCine(w, h, t) {
     if (!evCine) return;
     const age = anim - evCine.start;
@@ -960,6 +972,12 @@
     ctx.fillStyle = "#05060a";
     ctx.fillRect(0, 0, w, barH);
     ctx.fillRect(0, h - barH, w, barH);
+    // v35 : fondu rapide au début de chaque ligne (cut au montage)
+    const lFade = Math.min(1, (anim - evCine.lineStart) / 220);
+    if (lFade < 1) {
+      ctx.fillStyle = "rgba(5, 6, 10, " + ((1 - lFade) * 0.75).toFixed(3) + ")";
+      ctx.fillRect(0, 0, w, h);
+    }
     const line = evCine.lines[evCine.idx];
     if (!line) { cineFinish(); return; }
     const shown = evCine.reveal ? line.text.length : Math.min(line.text.length, Math.floor((anim - evCine.lineStart) / 26));
@@ -978,9 +996,48 @@
     }
     const bw = Math.min(w * 0.86, 340);
     const bx = (w - bw) / 2;
-    const subLines = wrapText(txt, bw - 24);
+    // v35 : portrait du locuteur en médaillon
+    let portLook = null;
+    if (line.who) {
+      const looks = (typeof CHAR_LOOKS !== "undefined") ? CHAR_LOOKS : {};
+      const visitors = (typeof EVENT_VISITORS !== "undefined") ? EVENT_VISITORS : {};
+      if (line.who === evCine.who) {
+        portLook = looks[evCine.ev.id] || visitors[evCine.ev.id] || null;
+      } else {
+        const byName = (typeof LOOK_BY_NAME !== "undefined") ? LOOK_BY_NAME : {};
+        const pid = byName[line.who] || (typeof CHAR_NAMES !== "undefined"
+          ? Object.keys(CHAR_NAMES).find((k) => CHAR_NAMES[k] === line.who || CHAR_NAMES[k].split(" ")[0] === line.who)
+          : null);
+        portLook = pid ? looks[pid] : null;
+      }
+    }
+    const subLines = wrapText(txt, bw - (portLook ? 72 : 24));
     const bh = 16 + (line.who ? 14 : 0) + subLines.length * 16 + 10;
     const by = h - barH - bh - 16;
+    let textX = bx + 12;
+    if (portLook) {
+      const pr = 20;
+      const pcx = bx + 10 + pr;
+      const pcy = by + bh / 2 + 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pcx, pcy, pr, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(8, 10, 6, 0.92)";
+      ctx.fill();
+      ctx.clip();
+      ctx.translate(pcx, pcy);
+      const ps = pr / 15;
+      ctx.scale(ps, ps);
+      ctx.translate(0, 42);
+      drawPerson(0, 0, 1, portLook, "neutral", null, true);
+      ctx.restore();
+      ctx.strokeStyle = "rgba(232, 200, 74, 0.65)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pcx, pcy, pr, 0, Math.PI * 2);
+      ctx.stroke();
+      textX = bx + 12 + pr * 2 + 8;
+    }
     ctx.fillStyle = "rgba(8, 10, 6, 0.85)";
     rr(bx, by, bw, bh, 10);
     ctx.fill();
@@ -993,14 +1050,14 @@
       ctx.font = "bold 11px sans-serif";
       ctx.fillStyle = "#e8c84a";
       ctx.textAlign = "left";
-      ctx.fillText(line.who.toUpperCase(), bx + 12, ty + 8);
+      ctx.fillText(line.who.toUpperCase(), textX, ty + 8);
       ty += 14;
     }
     ctx.font = "bold 12.5px sans-serif";
     ctx.fillStyle = "#fff3d6";
     ctx.textAlign = "left";
     subLines.forEach((l, i) => {
-      ctx.fillText(l, bx + 12, ty + 14 + i * 16);
+      ctx.fillText(l, textX, ty + 14 + i * 16);
     });
     ctx.font = "bold 12px sans-serif";
     ctx.fillStyle = shown >= line.text.length

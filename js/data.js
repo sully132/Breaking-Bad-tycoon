@@ -2788,6 +2788,17 @@ const EVENT_REPLIES = {
   wkGift: { who: "Jesse", text: "Allez, ouvre-le. Tu vas pas être déçu, yo." },
 };
 
+// ============================================================
+// v35 — BRUITAGES D'ÉVÉNEMENT : son signature au déclenchement
+// ============================================================
+
+const EV_SOUNDS = {
+  turfwar: "shot", nightbreakin: "shot", cousin: "shot", scoutsPayback: "shot",
+  streetrace: "horn", carwashCrowd: "cash", windfall: "cash", chickenrun: "cash",
+  precursor: "crystal", rats: "alarm", wire: "alarm", blackout: "alarm",
+  wkStorm: "lose", health: "lose", junkie: "lose",
+};
+
 const STORY_ARCS = [
   {
     id: "rise", icon: "⚗️", name: "L'Ascension",

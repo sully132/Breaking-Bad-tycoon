@@ -117,3 +117,9 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Répliques à deux voix : un perso de la scène répond au visiteur (10 événements couverts) *(livré en v34)*
 - [x] Nappe musicale de tension synthétique pendant les cinématiques (événements + story) *(livré en v34)*
 - [ ] Prochaines pistes : cut/fondu entre lignes de cinématique, gros plan sur le locuteur (portrait dessiné), bruitages d'ambiance par événement
+
+## Phase 15 — Montage final (v35) ✅ LIVRÉE (v35)
+- [x] Portrait du locuteur en médaillon doré à côté des sous-titres (tête dessinée via drawPerson, clignements inclus) *(livré en v35)*
+- [x] Fondu rapide entre chaque ligne de cinématique (cut au montage) *(livré en v35)*
+- [x] Bruitages signature par événement : coups de feu (guerre de territoire, cambriolage), klaxon (course de rue), alarme (rats, filaire, blackout), cristal (précurseurs), caisse (ventes) *(livré en v35)*
+- [ ] Prochaines pistes : générique de fin animé à la victoire, photos « polaroid » des événements dans le journal, mode cinéma pour les raids DEA
