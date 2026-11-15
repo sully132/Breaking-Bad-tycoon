@@ -1301,6 +1301,7 @@
   function cineFinish() {
     const ev = evCine.ev;
     evCine = null;
+    bubble = null; // v50 : on efface la bulle du locuteur à la fin de la cinématique
     if (typeof sfx !== "undefined" && sfx.cine) { try { sfx.cine.stop(); } catch (e) {} }
     // v37 : polaroïd — on garde le souvenir de l'événement
     try {
@@ -1388,6 +1389,17 @@
       evCine.bipAt = shown;
     }
     const txt = line.text.slice(0, shown);
+    // v50 : le locuteur parle en bulle dans la scène (cohérence scène/cinématique)
+    const spByName = {};
+    if (typeof CHAR_NAMES !== "undefined") {
+      for (const sk of Object.keys(CHAR_NAMES)) {
+        spByName[CHAR_NAMES[sk]] = sk;
+        spByName[CHAR_NAMES[sk].split(" ")[0]] = sk;
+      }
+    }
+    const spId = line.who ? (spByName[line.who] || null) : null;
+    const spScreen = spId ? charScreens.find((cs) => cs.id === spId) : null;
+    bubble = spScreen ? { id: spId, text: txt, until: anim + 999999 } : null;
     if (shown >= line.text.length && anim - evCine.lineStart > 2400 + line.text.length * 24) {
       evCine.idx += 1;
       evCine.lineStart = anim;

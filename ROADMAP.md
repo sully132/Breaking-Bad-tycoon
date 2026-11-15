@@ -211,3 +211,8 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Bouton « 🔬 Ouvrir le labo » dans le bottom-sheet du RV et du superlab — accès direct à la production depuis la carte *(livré en v49)*
 - [x] Description du RV mise à jour : le camping car est ton labo mobile *(livré en v49)*
 - [ ] Prochaines pistes : contrats express visibles sur la carte, chaîne de prestige post-reset, flou d'arrière-plan sur les plans poitrine
+## Phase 30 — Revue cohérence & express visible (v50) ✅ LIVRÉE (v50)
+- [x] Le locuteur parle en bulle dans la scène pendant les cinématiques : si le perso du dialogue est présent à l'écran (Tuco au désert, Hank à la DEA, Saul au bureau…), c'est lui qui parle en bulle au-dessus de sa tête, en synchronisation avec le texte de la boîte de sous-titres *(livré en v50)*
+- [x] Bulle du locuteur effacée proprement à la fin de chaque cinématique *(livré en v50)*
+- [x] Badge ⚡ sur l'onglet Empire quand un contrat express chronométré est en cours — impossible de rater une livraison en cours *(livré en v50)*
+- [ ] Prochaines pistes : chaîne de prestige post-reset, fondu d'arrière-plan des plans poitrine, passe équilibrage selon retours réels

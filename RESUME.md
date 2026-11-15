@@ -157,4 +157,5 @@ Le jeu est jouable sur GitHub Pages (URL du repo). L'APK (Bubblewrap/TWA) charge
 - v39 : détails & vie de fond — props par décor, pupilles qui suivent l'événement, récompenses d'album (+3/6/10/15% revenus).
 - v40 : trophées & faune — 3 succès d'album, corbeaux/chien/pigeons, ombres dynamiques selon l'heure.
 - v41 : traces & interactions — oiseaux qui s'envolent au tap, chien qui aboie, flaques après la pluie.
-- **v49 (courante) : cohérence des persos & labo sur la carte — plus de personnages en double dans les cinématiques (le perso de la scène porte l'événement : badge, bulle, caméra, tap), bouton « Ouvrir le labo » dans le RV et le superlab pour rejoindre la production directement depuis la carte.**
+- v49 : cohérence des persos & labo sur la carte — plus de personnages en double dans les cinématiques (le perso de la scène porte l'événement : badge, bulle, caméra, tap), bouton « Ouvrir le labo » dans le RV et le superlab pour rejoindre la production directement depuis la carte.
+- **v50 (courante) : revue cohérence cinématiques & express visible — le locuteur parle maintenant en bulle directement dans la scène pendant les cinématiques (quand le perso est présent à l'écran : Tuco au désert, Hank à la DEA…), bulle effacée proprement en fin de cinématique, badge ⚡ sur l'onglet Empire quand un contrat express chronométré est actif.**

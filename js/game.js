@@ -1749,6 +1749,9 @@ function render() {
     prestigeBtn.textContent = `🎭 ${pts}`;
     prestigeBtn.disabled = state.gameOver;
   }
+  // v50 : badge express ⚡ sur l'onglet Empire quand un contrat express est actif
+  const eb = document.getElementById("badge-empire");
+  if (eb) { eb.textContent = "⚡"; eb.classList.toggle("hidden", !state.express); }
   const banner = document.getElementById("frenzy-banner");
   if (banner) banner.classList.toggle("hidden", !frenzyActive());
 }
