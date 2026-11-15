@@ -1057,7 +1057,7 @@
     if (ev.id !== lastEvId) {
       lastEvId = ev.id;
       evEnterAt = anim;
-      evBanner = { emoji: ev.emoji || "❗", title: ev.title || "", until: anim + 7000 };
+      evBanner = { emoji: (ev.chainStep ? "🔗" : (ev.emoji || "❗")), title: ev.title + (ev.chainStep ? " — étape " + ev.chainStep + "/" + ev.chainMax : ""), until: anim + 7000 }; // v45
       evParts = [];
       for (let i = 0; i < 14; i++) {
         evParts.push({

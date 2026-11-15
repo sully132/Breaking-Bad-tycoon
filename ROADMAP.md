@@ -175,3 +175,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Chaîne « Précurseur » : canicule → offre de méthylamine au superlab (stock +6 kg, pureté +2) *(livré en v44)*
 - [x] Chaîne « Guerre de territoire » : concert de la plaza → dealers intrus sur le coin → rendez-vous dans le désert (intimidation ou tribut) *(livré en v44)*
 - [ ] Prochaines pistes : contrats express à durée limitée, chaîne de prestige post-reset, difficulté adaptive selon la progression
+
+## Phase 25 — Approfondissement des événements de scène (v45) ✅ LIVRÉE (v45)
+- [x] Chaîne « L'Empire » en 4 étapes : le plan de Saul → investissement industriel au superlab → réseau de rue → le conseil de l'empire *(livré en v45)*
+- [x] Indicateur d'étape dans le banner des scènes : 🔗 titre + « étape 2/3 » pour les événements en chaîne *(livré en v45)*
+- [x] 3 nouveaux événements aléatoires : contrat de flotte au carwash, panne du fourgon (bricolage 50/50), prêche surprise sur la plaza *(livré en v45)*
+- [x] Succès « Maître des chaînes » : mener les 3 chaînes à leur terme (+50 000$, +15 respect) *(livré en v45)*
+- [ ] Prochaines pistes : contrats express à durée limitée, chaîne de prestige post-reset, événements qui modifient les décors de façon persistante

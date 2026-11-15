@@ -2011,6 +2011,9 @@ const CHAR_LOOKS = {
 
 // v21 : noms affichés dans les bulles de dialogue
 const CHAR_NAMES = {
+  saulPitch: "Saul", empireLab: "Cuisinier", empireDealer: "Recruteur",
+  empireFinale: "Mike", carwashFleet: "Gérant", rvBreakdown: "Mécano",
+  streetPreacher: "Prêcheur",
   cargoHijack: "Chauffeur", deaSting: "Hank", methylamineDeal: "Lydia",
   turfThreat: "Dealer", turfMeet: "Tuco",
   labInspector: "Inspecteur", copperScore: "Combo", nailsTip: "Cliente",
@@ -2505,6 +2508,10 @@ ACHIEVEMENTS.push(
   { id: "witness10", icon: "👀", name: "Témoin de tout", desc: "Assister à 10 événements de scène", check: (s) => ((s.stats && s.stats.sceneEventsSeen) || 0) >= 10, reward: { cash: 20_000 } },
   { id: "witness40", icon: "🎬", name: "Toujours au courant", desc: "Assister à 40 événements de scène", check: (s) => ((s.stats && s.stats.sceneEventsSeen) || 0) >= 40, reward: { respect: 10 } },
 );
+// v45 — succès des chaînes
+ACHIEVEMENTS.push(
+  { id: "chainMaster", icon: "🔗", name: "Maître des chaînes", desc: "Mener les 3 chaînes d'événements à leur terme", check: (s) => !!(s.evSeen && s.evSeen.deaSting && s.evSeen.methylamineDeal && s.evSeen.turfMeet), reward: { cash: 50_000, respect: 15 } },
+);
 
 // ------------------------------------------------------------
 // v29 — ÉVÉNEMENTS SUPPLÉMENTAIRES
@@ -2760,6 +2767,7 @@ EVENTS.push(
 EVENTS.push(
   {
     id: "cargoHijack", loc: "junkyard", emoji: "🚚", weight: 0, type: "choice",
+    chainStep: 2, chainMax: 3,
     title: "Cargaison bloquée",
     text: "Un semi-remorque immobilisé par la grève croupit à la casse. Old Joe : « Personne n'est venu le chercher. Personne ne le cherchera. »",
     choices: [
@@ -2783,6 +2791,7 @@ EVENTS.push(
   },
   {
     id: "deaSting", loc: "dea", emoji: "🚔", weight: 0, type: "choice",
+    chainStep: 3, chainMax: 3,
     cond: (s) => s.day >= 8,
     title: "Piège de la DEA",
     text: "Hank a retracé le camion volé. Le parking de la DEA est vide… beaucoup trop vide. C'est une souricière.",
@@ -2812,6 +2821,7 @@ EVENTS.push(
   },
   {
     id: "methylamineDeal", loc: "superlab", emoji: "🧪", weight: 0, type: "choice",
+    chainStep: 2, chainMax: 2,
     title: "Offre de méthylamine",
     text: "La canicule a forcé un concurrent à brader ses réserves. Un bidon de méthylamine qualité pharmaceutique est à saisir.",
     choices: [
@@ -2835,6 +2845,7 @@ EVENTS.push(
   },
   {
     id: "turfThreat", loc: "corner", emoji: "⚠️", weight: 0, type: "choice",
+    chainStep: 2, chainMax: 3,
     title: "Sale temps sur le coin",
     text: "Des dealers inconnus vendent sur VOTRE coin de rue. Ils vous regardent en souriant.",
     choices: [
@@ -2859,6 +2870,7 @@ EVENTS.push(
   },
   {
     id: "turfMeet", loc: "tuco", emoji: "🏜️", weight: 0, type: "choice",
+    chainStep: 3, chainMax: 3,
     title: "Rendez-vous dans le désert",
     text: "Le chef des intrus vous convoque au milieu du désert. Deux voitures, moteurs tournants, hommes armés.",
     choices: [
@@ -2880,6 +2892,160 @@ EVENTS.push(
         },
       },
     ],
+  },
+);
+
+// ------------------------------------------------------------
+// v45 — CHAÎNE « L'EMPIRE » (4 étapes) + événements aléatoires
+// ------------------------------------------------------------
+EVENTS.push(
+  {
+    id: "saulPitch", loc: "saul", emoji: "💼", weight: 5, type: "auto",
+    title: "Le plan de Saul",
+    text: "Saul étale des schémas sur son bureau : « Un labo plus gros, des vendeurs en nombre, une vraie STRUCTURE. On signe ? »",
+    apply(s) {
+      s.respect = cap(s.respect + 2, 0, 100);
+      log("💼 Saul vous a convaincu. Respect +2. L'expansion commence…", "good");
+    },
+    chainNext: "empireLab",
+  },
+  {
+    id: "empireLab", loc: "superlab", emoji: "🏗️", weight: 0, type: "choice",
+    chainStep: 2, chainMax: 4,
+    title: "Investissement industriel",
+    text: "Le plan de Saul passe par un labo modernisé : cuves doublées, extraction repensée. Le chantier est chiffré.",
+    choices: [
+      {
+        label: "Investir (−50 000$, Pureté +3, Stock +8 kg)",
+        can: (s) => s.cash >= 50_000,
+        apply(s) {
+          s.cash -= 50_000;
+          s.purity = cap(s.purity + 3, 0, 100);
+          s.stock = Math.min(stockCap(), s.stock + 8);
+          log("🏗️ Le superlab passe au niveau supérieur. Pureté +3, stock +8 kg.", "good");
+        },
+      },
+      {
+        label: "Reporter l'investissement",
+        apply(s) {
+          log("🏗️ Le chantier attend. Saul soupire.", "info");
+        },
+      },
+    ],
+    chainNext: "empireDealer",
+  },
+  {
+    id: "empireDealer", loc: "corner", emoji: "🧢", weight: 0, type: "choice",
+    chainStep: 3, chainMax: 4,
+    title: "Réseau de rue",
+    text: "Pour écouler le volume, Saul propose de recruter une équipe de vendeurs dédiée sur le coin.",
+    choices: [
+      {
+        label: "Recruter l'équipe (−20 000$, +60 000$ sale, Chaleur +10)",
+        can: (s) => s.cash >= 20_000,
+        apply(s) {
+          s.cash -= 20_000;
+          s.dirty += 60_000;
+          addHeat(10);
+          log("🧢 L'équipe tourne à plein régime. +60 000$ sale, chaleur +10.", "good");
+        },
+      },
+      {
+        label: "Rester prudent (Respect +3)",
+        apply(s) {
+          s.respect = cap(s.respect + 3, 0, 100);
+          log("🧢 Discrétion avant tout. Respect +3.", "good");
+        },
+      },
+    ],
+    chainNext: "empireFinale",
+  },
+  {
+    id: "empireFinale", loc: "hq", emoji: "🏙️", weight: 0, type: "choice",
+    cond: (s) => s.day >= 12,
+    chainStep: 4, chainMax: 4,
+    title: "Le conseil de l'empire",
+    text: "Au sommet de la tour, les partenaires veulent un nom, un visage, une signature. Le vôtre.",
+    choices: [
+      {
+        label: "Accepter le titre (Respect +10, Chaleur +10)",
+        apply(s) {
+          s.respect = cap(s.respect + 10, 0, 100);
+          addHeat(10);
+          log("🏙️ L'empire a un visage. Respect +10, chaleur +10.", "good");
+        },
+      },
+      {
+        label: "Rester dans l'ombre (Chaleur −5, +30 000$ propre)",
+        apply(s) {
+          s.heat = cap(s.heat - 5, 0, 100);
+          s.cash += 30_000;
+          log("🏙️ L'homme mystérieux, c'est vous. Chaleur −5, +30 000$.", "good");
+        },
+      },
+    ],
+  },
+  // v45 — événements aléatoires
+  {
+    id: "carwashFleet", loc: "carwash", emoji: "🚙", weight: 4, type: "choice",
+    title: "Contrat de flotte",
+    text: "Une entreprise locale propose un abonnement pour sa flotte de utilitaires. Le gérant vous regarde espérant.",
+    choices: [
+      {
+        label: "Signer l'abonnement (+8 000$ propre)",
+        apply(s) {
+          s.cash += 8_000;
+          log("🚙 Flotte entière chaque semaine. +8 000$ propre.", "good");
+        },
+      },
+      {
+        label: "Négocier plus cher",
+        apply(s) {
+          if (Math.random() < 0.5) {
+            s.cash += 14_000;
+            log("🚙 Négociation musclée : +14 000$ propre.", "good");
+          } else {
+            s.cash += 4_000;
+            log("🚙 Ils ont haussé les épaules : +4 000$ seulement.", "info");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "rvBreakdown", loc: "rv", emoji: "🛠️", weight: 4, type: "choice",
+    title: "Panne sèche",
+    text: "Le fourgon refuse de démarrer, au milieu de nulle part. Le radiateur fume.",
+    choices: [
+      {
+        label: "Remorquage express (−6 000$)",
+        can: (s) => s.cash >= 6_000,
+        apply(s) {
+          s.cash -= 6_000;
+          log("🛠️ Dépanneuse sur place en 20 minutes. −6 000$.", "info");
+        },
+      },
+      {
+        label: "Bricoler soi-même",
+        apply(s) {
+          if (Math.random() < 0.6) {
+            log("🛠️ Réparé avec du fil de fer et de la sueur. Rien de cassé.", "good");
+          } else {
+            s.stock = Math.max(0, s.stock - 1);
+            log("🛠️ Un bidon a percé pendant la réparation. Stock −1 kg.", "bad");
+          }
+        },
+      },
+    ],
+  },
+  {
+    id: "streetPreacher", loc: "plaza", emoji: "📣", weight: 4, type: "auto",
+    title: "Prêche surprise",
+    text: "Un prêcheur rassemble la foule sur la plaza. Les patrouilles accourent, bien trop occupées pour vous.",
+    apply(s) {
+      s.heat = cap(s.heat - 4, 0, 100);
+      log("📣 La police a mieux à faire. Chaleur −4.", "good");
+    },
   },
 );
 
@@ -2936,10 +3102,25 @@ const EVENT_VISITORS = {
   methylamineDeal: CHAR_LOOKS.lydia,
   turfThreat: { shirt: "#7a2a3a", pants: "#26262e", gold: true, loud: true },
   turfMeet: CHAR_LOOKS.tuco,
+  // v45 — visiteurs de la chaîne « L'Empire » + aléatoires
+  saulPitch: CHAR_LOOKS.saul,
+  empireLab: CHAR_LOOKS.hazmat,
+  empireDealer: { shirt: "#7a2a3a", pants: "#26262e", cap: "#3a2a2a", gold: true },
+  empireFinale: CHAR_LOOKS.mike,
+  carwashFleet: { shirt: "#3a6a8a", pants: "#2a3440", flatCap: true },
+  rvBreakdown: { shirt: "#6a5a3a", pants: "#4a4030", beard: "#3a2a1a" },
+  streetPreacher: { shirt: "#2a2a2a", pants: "#1a1a1a", flatCap: true, glasses: true },
 };
 
 // v21 : répliques d'événements (bulles des visiteurs dans les scènes)
 const EVENT_QUOTES = {
+  saulPitch: ["Un labo plus gros, des vendeurs en nombre.", "Signez ici. Et ici. Et là aussi."],
+  empireLab: ["Les cuves doublées, c'est du grand art.", "Le béton, ça coûte. Mais ça rapporte."],
+  empireDealer: ["Une équipe dédiée, zéro intermédiaire.", "La rue, c'est du volume."],
+  empireFinale: ["L'empire a besoin d'un visage.", "Un nom, une signature. Le vôtre."],
+  carwashFleet: ["Dix-sept utilitaires, chaque semaine.", "On paie au mois, pas au lavage."],
+  rvBreakdown: ["Le radiateur a rendu l'âme.", "Vous avez du fil de fer, au moins ?"],
+  streetPreacher: ["REPENTEZ-VOUS, ALBUQUERQUE !", "Le salut est gratuit, mes frères !"],
   cargoHijack: ["Ce camion appartient au domaine du silence.", "On vide ça avant le lever du jour."],
   deaSting: ["Sortez les mains. Lentement.", "Ce camion vous a mené droit à moi."],
   methylamineDeal: ["Un bidon. Qualité pharma. Pas une goutte de plus.", "Ce bidon n'a jamais existé. Compris ?"],
@@ -3097,6 +3278,9 @@ ACHIEVEMENTS.push(
 // ============================================================
 
 const EV_MOODS = {
+  saulPitch: "happy", empireLab: "neutral", empireDealer: "worried",
+  empireFinale: "neutral", carwashFleet: "happy", rvBreakdown: "worried",
+  streetPreacher: "neutral",
   cargoHijack: "worried", deaSting: "angry", methylamineDeal: "worried",
   turfThreat: "angry", turfMeet: "angry",
   labInspector: "worried", copperScore: "happy", nailsTip: "neutral",
@@ -3117,6 +3301,9 @@ const EV_MOODS = {
 // ============================================================
 
 const EVENT_REPLIES = {
+  saulPitch: { who: "Jesse", text: "Yo, est-ce qu'on signe ou quoi ?" },
+  empireFinale: { who: "Mike", text: "Un titre, ça attire les regards. Réfléchissez bien." },
+  rvBreakdown: { who: "Badger", text: "J'ai regardé le tuto deux fois. Ça va le faire." },
   deaSting: { who: "Saul", text: "Pas un mot. Pas un geste. Je m'occupe de tout." },
   turfThreat: { who: "Jesse", text: "Yo, c'est NOTRE coin, ils peuvent pas faire ça !" },
   turfMeet: { who: "Tuco", text: "Touchez à son coin et je vous fais goûter au bitume !" },
@@ -3140,6 +3327,9 @@ const EVENT_REPLIES = {
 // ============================================================
 
 const EV_SOUNDS = {
+  saulPitch: "golden", empireLab: "crystal", empireDealer: "shot",
+  empireFinale: "golden", carwashFleet: "cash", rvBreakdown: "alarm",
+  streetPreacher: "horn",
   deaSting: "alarm", turfMeet: "shot", methylamineDeal: "crystal",
   cargoHijack: "cash", turfThreat: "horn",
   railStrike: "alarm", villaParty: "golden", plazaConcert: "horn",
