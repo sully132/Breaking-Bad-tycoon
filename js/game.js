@@ -462,6 +462,7 @@ function playCinematic(arc) {
   let i = 0;
   let timer = null;
   let busy = false;
+  let typeTimer = null, curLine = null, curText = "", curPos = 0; // v32 : typewriter
   function showBeat() {
     if (i >= beats.length) { end(); return; }
     if (busy) return;
@@ -469,14 +470,31 @@ function playCinematic(arc) {
     const b = beats[i];
     cine.classList.remove("visible");
     setTimeout(() => {
-      cine.innerHTML = '<div class="story-icon">' + b.icon + '</div><div class="story-line">' + b.line + '</div>';
+      // v32 : locuteur en or + texte au typewriter
+      const whoHtml = b.who ? '<div class="story-who">' + b.who + '</div>' : "";
+      cine.innerHTML = '<div class="story-icon">' + b.icon + '</div>' + whoHtml + '<div class="story-line"></div>';
       cine.classList.add("visible");
+      curLine = cine.querySelector(".story-line");
+      if (curLine) curLine.classList.remove("done");
+      curText = b.line || "";
+      curPos = 0;
+      if (typeTimer) clearInterval(typeTimer);
+      typeTimer = setInterval(() => {
+        curPos += 1;
+        if (curLine) curLine.textContent = curText.slice(0, curPos);
+        if (curPos >= curText.length) {
+          clearInterval(typeTimer);
+          typeTimer = null;
+          if (curLine) curLine.classList.add("done");
+        }
+      }, 26);
       i += 1;
       busy = false;
-      timer = setTimeout(showBeat, 3000);
+      timer = setTimeout(showBeat, 2000 + curText.length * 32);
     }, 350);
   }
   function end() {
+    if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
     overlay.classList.add("hidden");
     cine.classList.remove("visible");
     if (typeof document !== "undefined") document.removeEventListener("click", onTap);
@@ -486,6 +504,16 @@ function playCinematic(arc) {
     save();
   }
   function onTap() {
+    // v32 : 1er tap = compléter la ligne, 2e tap = avancer
+    if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+    if (curLine && curPos < curText.length) {
+      curLine.textContent = curText;
+      curPos = curText.length;
+      if (curLine.classList) curLine.classList.add("done");
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(showBeat, 1400);
+      return;
+    }
     if (timer) clearTimeout(timer);
     showBeat();
   }

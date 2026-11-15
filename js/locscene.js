@@ -371,7 +371,7 @@
     ctx.strokeRect(x, y, w2, h2);
   }
 
-  function drawPerson(x, y, s, look) {
+  function drawPerson(x, y, s, look, mood) {
     if (!look) return;
     const t = anim / 1000;
     const bob = Math.sin(t * 2 + x * 0.05) * 1.5 * s;
@@ -414,23 +414,23 @@
       return;
     }
 
-    const walk = Math.sin(t * 5 + x * 0.13) * 0.09;
-    ctx.save();
-    ctx.translate(-4.2, -16);
-    ctx.rotate(walk);
-    ctx.fillStyle = look.pants || "#3a3a44";
-    ctx.fillRect(-2.75, 0, 5.5, 16);
-    ctx.fillStyle = "#2a2a2a";
-    ctx.fillRect(-3.75, 14, 7, 3);
-    ctx.restore();
-    ctx.save();
-    ctx.translate(4.2, -16);
-    ctx.rotate(-walk);
-    ctx.fillStyle = look.pants || "#3a3a44";
-    ctx.fillRect(-2.75, 0, 5.5, 16);
-    ctx.fillStyle = "#2a2a2a";
-    ctx.fillRect(-3.25, 14, 7, 3);
-    ctx.restore();
+    // v32 : jambes articulées — cuisse + tibia, genou qui plie
+    for (let side = -1; side <= 1; side += 2) {
+      const ph = side < 0 ? 0 : Math.PI;
+      const a1 = Math.sin(t * 5 + x * 0.13 + ph) * 0.30;
+      const a2 = Math.max(0, Math.sin(t * 5 + x * 0.13 + ph + 1.2)) * 0.5;
+      ctx.save();
+      ctx.translate(side * 4.2, -16);
+      ctx.rotate(a1);
+      ctx.fillStyle = look.pants || "#3a3a44";
+      ctx.fillRect(-2.75, 0, 5.5, 9);
+      ctx.translate(0, 9);
+      ctx.rotate(a2);
+      ctx.fillRect(-2.5, 0, 5, 7);
+      ctx.fillStyle = "#2a2a2a";
+      ctx.fillRect(-3.4, 6, 6.8, 3);
+      ctx.restore();
+    }
 
     ctx.fillStyle = look.shirt || "#4a6a8a";
     rr(-9, -36, 18, 21, 4);
@@ -574,6 +574,40 @@
       ctx.arc(3.6, -45.2, 0.45, 0, Math.PI * 2);
       ctx.fill();
     }
+    // v32 : expressions — sourcils + bouche selon l'humeur
+    const m = mood || "neutral";
+    ctx.strokeStyle = "#3a2a1c";
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    if (m === "angry") {
+      ctx.moveTo(-5.4, -49.2); ctx.lineTo(-1.6, -47.8);
+      ctx.moveTo(1.6, -47.8); ctx.lineTo(5.4, -49.2);
+    } else if (m === "worried") {
+      ctx.moveTo(-5.4, -48.2); ctx.lineTo(-1.6, -49.2);
+      ctx.moveTo(1.6, -49.2); ctx.lineTo(5.4, -48.2);
+    } else if (m === "happy") {
+      ctx.moveTo(-5.2, -48.6); ctx.lineTo(-1.6, -48.9);
+      ctx.moveTo(1.6, -48.9); ctx.lineTo(5.2, -48.6);
+    } else {
+      ctx.moveTo(-5.2, -48.2); ctx.lineTo(-1.6, -48.4);
+      ctx.moveTo(1.6, -48.4); ctx.lineTo(5.2, -48.2);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(40, 22, 14, 0.85)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    if (m === "happy") {
+      ctx.arc(0, -40.4, 2.7, 0.2, Math.PI - 0.2);
+    } else if (m === "angry") {
+      ctx.arc(0, -37.6, 2.7, Math.PI + 0.3, Math.PI * 2 - 0.3);
+    } else if (m === "shout") {
+      ctx.ellipse(0, -39.4, 1.7, 2.3, 0, 0, Math.PI * 2);
+    } else if (m === "worried") {
+      ctx.ellipse(0, -39.6, 1.2, 1.5, 0, 0, Math.PI * 2);
+    } else {
+      ctx.moveTo(-2.4, -39.7); ctx.lineTo(2.4, -39.7);
+    }
+    ctx.stroke();
 
     if (look.beard) {
       ctx.fillStyle = look.beard;
@@ -658,7 +692,8 @@
       const range = w * 0.022;
       const x = w * pos[0] + Math.sin(tw * 0.4 + i * 2.3) * range;
       const sc = 1.5 * (pos[1] || 1);
-      drawPerson(x, ground, sc, looks[list[i]]);
+      const cm = (charMood && charMood.id === list[i] && anim < charMoodUntil) ? charMood.mood : "neutral";
+      drawPerson(x, ground, sc, looks[list[i]], cm);
       charScreens.push({ id: list[i], x, y: ground, s: sc });
     }
   }
@@ -680,6 +715,7 @@
   // v28 : animation d'entrée, bannière, braises, flash
   let lastEvId = null, evEnterAt = 0, evParts = [], evFlash = 0, evBanner = null;
   let evCine = null; // v31 : cinématique d'événement
+  let charMood = null, charMoodUntil = 0; // v32 : humeur temporaire
   function drawEventVisitor(w, h, t, def) {
     const ev = sceneEventFor(currentLocId);
     if (!ev) { eventVisitor = null; evQuote = null; evBanner = null; lastEvId = null; return; }
@@ -728,7 +764,8 @@
     sg.addColorStop(1, "rgba(255, 220, 150, 0)");
     ctx.fillStyle = sg;
     ctx.fillRect(x - 200 * sc, ground - 360 * sc, 400 * sc, 380 * sc);
-    drawPerson(x, ground - bob, sc, look);
+    const vMood = inCine ? ((typeof EV_MOODS !== "undefined" && EV_MOODS[ev.id]) || "neutral") : "neutral";
+    drawPerson(x, ground - bob, sc, look, vMood);
     eventVisitor = { x, y: ground, s: sc };
     for (const p of evParts) {
       p.x += p.vx * 0.016; p.y += p.vy * 0.016; p.life -= 0.006;
@@ -2687,6 +2724,8 @@
     if (hitChar && typeof QUOTES !== "undefined" && QUOTES[hitChar.id]) {
       const lines = QUOTES[hitChar.id];
       bubble = { id: hitChar.id, text: lines[Math.floor(Math.random() * lines.length)], until: anim + 3000 };
+      charMood = { id: hitChar.id, mood: "happy" };
+      charMoodUntil = anim + 2600;
       if (typeof haptic === "function") haptic(10);
       for (let i = 0; i < 5; i++) {
         sparks.push({ x: mx, y: my, vx: (Math.random() - 0.5) * 120, vy: -40 - Math.random() * 80, life: 0.4 });

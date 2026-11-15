@@ -2755,6 +2755,21 @@ ACHIEVEMENTS.push(
 // cinématique plein écran à leur déblocage.
 // ============================================================
 
+// ============================================================
+// v32 — EXPRESSIONS : humeur des visiteurs d'événement
+// (neutre, happy, angry, worried, shout) — pilotée par drawPerson
+// ============================================================
+
+const EV_MOODS = {
+  tuco: "angry", turfwar: "angry", rivalbuy: "angry", rats: "angry",
+  scoutsPayback: "angry", cousin: "angry",
+  junkie: "worried", blackout: "worried", wire: "worried", health: "worried",
+  jessesales: "worried", nightbreakin: "worried", lydiaList: "worried",
+  streetrace: "happy", chickenrun: "happy", windfall: "happy", precursor: "happy",
+  scouts: "happy", hankBBQ: "happy", carwashCrowd: "happy", comboMessage: "happy",
+  wkKaraoke: "happy", wkGift: "happy",
+};
+
 const STORY_ARCS = [
   {
     id: "rise", icon: "⚗️", name: "L'Ascension",
@@ -2773,9 +2788,9 @@ const STORY_ARCS = [
         text: "La rue ne prononce plus son nom qu'à voix basse. Walter White est resté sur la route 25. Il reste le danger." },
     ],
     finale: [
-      { icon: "⚗️", line: "La chimie est l'étude de la transformation." },
+      { who: "Walter", icon: "⚗️", line: "La chimie est l'étude de la transformation." },
       { icon: "🎩", line: "Walter White est mort. Heisenberg est né." },
-      { icon: "💬", line: "« Je ne suis pas en danger, Skyler. JE SUIS le danger. »" },
+      { who: "Walter", icon: "💬", line: "« Je ne suis pas en danger, Skyler. JE SUIS le danger. »" },
     ],
   },
   {
@@ -2794,7 +2809,7 @@ const STORY_ARCS = [
     ],
     finale: [
       { icon: "🚔", line: "Trois labos démantelés. Zéro preuve." },
-      { icon: "🕵️", line: "Hank regarde le dossier se refermer. Il sait. Il ne peut rien prouver." },
+      { who: "Hank", icon: "🕵️", line: "Hank regarde le dossier se refermer. Il sait. Il ne peut rien prouver." },
       { icon: "🌫️", line: "Le fantôme d'Albuquerque reprend du service." },
     ],
   },
@@ -2816,7 +2831,7 @@ const STORY_ARCS = [
     ],
     finale: [
       { icon: "🍗", line: "Los Pollos Hermanos. « Le meilleur poulet frit de la région. »" },
-      { icon: "💼", line: "Gustavo Fring sert le café. Personne ne refuse la deuxième tasse." },
+      { who: "Gus", icon: "💼", line: "Gustavo Fring sert le café. Personne ne refuse la deuxième tasse." },
       { icon: "🏙️", line: "L'empire de verre brille. Il ne lui manque qu'un cuisinier à sa hauteur." },
     ],
   },

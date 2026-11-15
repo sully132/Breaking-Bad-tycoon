@@ -97,3 +97,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Personnages plus distinctifs : carnations variées, moustaches, badge de flic, colliers, tabliers, vestes ouvertes, revers de costume, cravates colorées *(livré en v31)*
 - [x] 18 apparences retravaillées : chaque perso a sa signature (Walter tablier + moustache, Heisenberg veste noire, Hank badge, Gus moustache, Mike barbe grise + veste, Tuco moustache + chaîne…) *(livré en v31)*
 - [x] Premiers plans en silhouette par décor (cactus, lampadaire allumé, barils, pneus, barrières, buissons) *(livré en v31)*
+
+## Phase 12 — Vivant & émotions (v32) ✅ LIVRÉE (v32)
+- [x] Expressions faciales : sourcils + bouche dessinés selon l'humeur (neutre, content, furieux, inquiet, cri) *(livré en v32)*
+- [x] Humeurs contextuelles : persos contents quand on les tape, visiteurs d'événement avec l'humeur de leur événement (Tuco furieux, junkie inquiet, Hank BBQ content…) *(livré en v32)*
+- [x] Jambes articulées : cuisse + tibia avec genou qui plie, marche plus naturelle *(livré en v32)*
+- [x] Cinématiques story en mode cinéma : letterbox, locuteur en or, texte au typewriter avec caret, tap = compléter la ligne puis avancer *(livré en v32)*
+- [ ] Prochaines pistes : scènes d'arrière-plan animées pendant les cinématiques, doublage sonore (bips type Animal Crossing), réactions des autres persos pendant un événement

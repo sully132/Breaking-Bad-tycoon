@@ -1555,3 +1555,39 @@ button {
 .loc-btn:not(.done):active { transform: scale(0.97); filter: brightness(1.15); }
 .mg-box { border-color: rgba(217, 195, 60, 0.4); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(122, 182, 72, 0.12) inset; }
 #locscene-close { backdrop-filter: blur(4px); }
+
+/* ============================================================
+   v32 — ÉMOTIONS : story cinéma (letterbox + locuteur + typing)
+   ============================================================ */
+.story-overlay::before,
+.story-overlay::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 11%;
+  background: #05060a;
+  z-index: 1;
+  pointer-events: none;
+}
+.story-overlay::before { top: 0; }
+.story-overlay::after { bottom: 0; }
+.story-overlay > * { position: relative; z-index: 2; }
+.story-who {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #e8c84a;
+  margin-bottom: 8px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
+}
+#story-cine .story-line { min-height: 3.1em; }
+#story-cine .story-line::after {
+  content: "▌";
+  color: rgba(255, 220, 140, 0.75);
+  margin-left: 2px;
+  animation: story-caret 0.8s steps(1) infinite;
+}
+#story-cine .story-line.done::after { content: ""; animation: none; }
+@keyframes story-caret { 50% { opacity: 0; } }
