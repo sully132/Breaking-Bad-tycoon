@@ -371,7 +371,7 @@
     ctx.strokeRect(x, y, w2, h2);
   }
 
-  function drawPerson(x, y, s, look, mood) {
+  function drawPerson(x, y, s, look, mood, pose) {
     if (!look) return;
     const t = anim / 1000;
     const bob = Math.sin(t * 2 + x * 0.05) * 1.5 * s;
@@ -513,23 +513,37 @@
       ctx.arc(0, -30, 1.4, 0, Math.PI * 2);
       ctx.fill();
     }
-    const armSw = Math.sin(t * 5 + x * 0.13 + Math.PI) * 0.13;
-    ctx.save();
-    ctx.translate(-11, -33);
-    ctx.rotate(armSw);
-    ctx.fillStyle = look.shirt || "#4a6a8a";
-    ctx.fillRect(-2, 0, 4, 13);
-    ctx.fillStyle = look.skin || "#e8b58a";
-    ctx.fillRect(-2, 13, 4, 3.2);
-    ctx.restore();
-    ctx.save();
-    ctx.translate(11, -33);
-    ctx.rotate(-armSw);
-    ctx.fillStyle = look.shirt || "#4a6a8a";
-    ctx.fillRect(-2, 0, 4, 13);
-    ctx.fillStyle = look.skin || "#e8b58a";
-    ctx.fillRect(-2, 13, 4, 3.2);
-    ctx.restore();
+    if (pose === "crossed") {
+      // v33 : bras croisés — pose de cinématique
+      ctx.fillStyle = shade(look.shirt || "#4a6a8a", -12);
+      rr(-11, -30, 22, 5.5, 2.5);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(15, 12, 8, 0.45)";
+      ctx.lineWidth = 1;
+      rr(-11, -30, 22, 5.5, 2.5);
+      ctx.stroke();
+      ctx.fillStyle = look.skin || "#e8b58a";
+      ctx.fillRect(-11, -27.5, 4, 3.2);
+      ctx.fillRect(7, -27.5, 4, 3.2);
+    } else {
+      const armSw = Math.sin(t * 5 + x * 0.13 + Math.PI) * 0.13;
+      ctx.save();
+      ctx.translate(-11, -33);
+      ctx.rotate(armSw);
+      ctx.fillStyle = look.shirt || "#4a6a8a";
+      ctx.fillRect(-2, 0, 4, 13);
+      ctx.fillStyle = look.skin || "#e8b58a";
+      ctx.fillRect(-2, 13, 4, 3.2);
+      ctx.restore();
+      ctx.save();
+      ctx.translate(11, -33);
+      ctx.rotate(-armSw);
+      ctx.fillStyle = look.shirt || "#4a6a8a";
+      ctx.fillRect(-2, 0, 4, 13);
+      ctx.fillStyle = look.skin || "#e8b58a";
+      ctx.fillRect(-2, 13, 4, 3.2);
+      ctx.restore();
+    }
 
     if (look.tie) {
       ctx.fillStyle = typeof look.tie === "string" ? look.tie : "#a02a2a";
@@ -689,10 +703,13 @@
     const tw = anim / 1000;
     for (let i = 0; i < list.length; i++) {
       const pos = (positions && positions[i]) || [0.42 + i * 0.14, 1];
-      const range = w * 0.022;
+      // v33 : pendant une cinématique, les persos s'arrêtent et regardent
+      const cineOn = !!evCine;
+      const range = cineOn ? w * 0.004 : w * 0.022;
       const x = w * pos[0] + Math.sin(tw * 0.4 + i * 2.3) * range;
       const sc = 1.5 * (pos[1] || 1);
-      const cm = (charMood && charMood.id === list[i] && anim < charMoodUntil) ? charMood.mood : "neutral";
+      const cm = (charMood && charMood.id === list[i] && anim < charMoodUntil) ? charMood.mood
+        : (cineOn ? ((typeof EV_MOODS !== "undefined" && evCine.ev && EV_MOODS[evCine.ev.id]) || "worried") : "neutral");
       drawPerson(x, ground, sc, looks[list[i]], cm);
       charScreens.push({ id: list[i], x, y: ground, s: sc });
     }
@@ -764,8 +781,12 @@
     sg.addColorStop(1, "rgba(255, 220, 150, 0)");
     ctx.fillStyle = sg;
     ctx.fillRect(x - 200 * sc, ground - 360 * sc, 400 * sc, 380 * sc);
-    const vMood = inCine ? ((typeof EV_MOODS !== "undefined" && EV_MOODS[ev.id]) || "neutral") : "neutral";
-    drawPerson(x, ground - bob, sc, look, vMood);
+    let vMood = "neutral";
+    if (inCine) {
+      const base = (typeof EV_MOODS !== "undefined" && EV_MOODS[ev.id]) || "neutral";
+      vMood = evCine.idx > 0 ? (base === "angry" ? "shout" : base) : "neutral";
+    }
+    drawPerson(x, ground - bob, sc, look, vMood, inCine ? "crossed" : null);
     eventVisitor = { x, y: ground, s: sc };
     for (const p of evParts) {
       p.x += p.vx * 0.016; p.y += p.vy * 0.016; p.life -= 0.006;
@@ -896,6 +917,7 @@
     if (!ev) return;
     evFlash = 1;
     evBanner = null;
+    bubble = null; // v33 : place nette pour la cinématique
     if (typeof playSfx === "function") playSfx("event");
     if (typeof haptic === "function") haptic(15);
     // v31 : cinématique — cinémascope + sous-titres au typewriter
@@ -936,6 +958,11 @@
     const line = evCine.lines[evCine.idx];
     if (!line) { cineFinish(); return; }
     const shown = evCine.reveal ? line.text.length : Math.min(line.text.length, Math.floor((anim - evCine.lineStart) / 26));
+    // v33 : bips de dialogue pendant l'écriture
+    if (shown > (evCine.bipAt || 0)) {
+      if (shown % 3 === 0 && typeof playSfx === "function") playSfx("bip");
+      evCine.bipAt = shown;
+    }
     const txt = line.text.slice(0, shown);
     if (shown >= line.text.length && anim - evCine.lineStart > 2400 + line.text.length * 24) {
       evCine.idx += 1;
@@ -1037,7 +1064,7 @@
       nextBubbleAt = anim + 4500 + Math.random() * 4500;
       return;
     }
-    if (!bubble && anim > nextBubbleAt && chars && chars.length) {
+    if (!bubble && !evCine && anim > nextBubbleAt && chars && chars.length) {
       const id = chars[Math.floor(Math.random() * chars.length)];
       const lines = QUOTES[id];
       if (lines && lines.length) {

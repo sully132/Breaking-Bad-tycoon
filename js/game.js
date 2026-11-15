@@ -481,6 +481,7 @@ function playCinematic(arc) {
       if (typeTimer) clearInterval(typeTimer);
       typeTimer = setInterval(() => {
         curPos += 1;
+        if (curPos % 3 === 0 && typeof playSfx === "function") playSfx("bip"); // v33
         if (curLine) curLine.textContent = curText.slice(0, curPos);
         if (curPos >= curText.length) {
           clearInterval(typeTimer);

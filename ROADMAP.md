@@ -104,3 +104,10 @@ légende, missions quotidiennes, succès, PWA installable.
 - [x] Jambes articulées : cuisse + tibia avec genou qui plie, marche plus naturelle *(livré en v32)*
 - [x] Cinématiques story en mode cinéma : letterbox, locuteur en or, texte au typewriter avec caret, tap = compléter la ligne puis avancer *(livré en v32)*
 - [ ] Prochaines pistes : scènes d'arrière-plan animées pendant les cinématiques, doublage sonore (bips type Animal Crossing), réactions des autres persos pendant un événement
+
+## Phase 13 — Cinématiques vivantes (v33) ✅ LIVRÉE (v33)
+- [x] Bips de dialogue pendant les sous-titres (cinématiques d'événement + story) *(livré en v33)*
+- [x] Pose bras croisés du visiteur pendant la cinématique ; les persos furieux crient au moment de leur réplique *(livré en v33)*
+- [x] Les persos de la scène s'arrêtent de marcher et regardent l'événement avec l'humeur adaptée *(livré en v33)*
+- [x] Bulles de dialogue auto coupées pendant les cinématiques *(livré en v33)*
+- [ ] Prochaines pistes : caméra (zoom/pan léger pendant les cinématiques), répliques à deux voix (visiteur + perso de la scène), nappes musicales de cinématique
